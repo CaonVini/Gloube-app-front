@@ -1,8 +1,10 @@
+import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/presentation/auth/AuthProvider';
 import { Button, Muted, Screen } from '../src/presentation/components/ui';
+import { fontAssets } from '../src/presentation/theme/auth-theme';
 
 function RootStack() {
   const { status, retryBoot } = useAuth();
@@ -39,6 +41,9 @@ function RootStack() {
 }
 
 export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts(fontAssets);
+  // Aguarda a Inter para evitar "flash" de fonte do sistema; em caso de falha segue com a fonte padrão.
+  if (!fontsLoaded && !fontError) return null;
   return (
     <AuthProvider>
       <StatusBar style="dark" />
