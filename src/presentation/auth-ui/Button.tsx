@@ -8,10 +8,14 @@ interface PrimaryButtonProps {
   onPress: () => void;
   loading?: boolean;
   disabled?: boolean;
+  /** Ícone opcional à esquerda (o lado direito sempre leva a seta). */
+  leftIcon?: ReactNode;
+  /** 'hero': versão alta e mais arredondada, usada em chamadas principais da Home. */
+  size?: 'default' | 'hero';
 }
 
 /** Botão principal (verde escuro) com seta à direita. */
-export function PrimaryButton({ title, onPress, loading, disabled }: PrimaryButtonProps) {
+export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, size = 'default' }: PrimaryButtonProps) {
   const off = disabled || loading;
   return (
     <Pressable
@@ -20,9 +24,9 @@ export function PrimaryButton({ title, onPress, loading, disabled }: PrimaryButt
       accessibilityState={{ disabled: !!off, busy: !!loading }}
       disabled={off}
       onPress={onPress}
-      style={({ pressed }) => [s.primary, off && s.off, pressed && s.pressed]}
+      style={({ pressed }) => [s.primary, size === 'hero' && s.hero, off && s.off, pressed && s.pressed]}
     >
-      <View style={s.side} />
+      <View style={s.side}>{loading ? null : leftIcon}</View>
       {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={s.primaryText}>{title}</Text>}
       <View style={[s.side, s.arrow]}>{loading ? null : <ArrowRightIcon />}</View>
     </Pressable>
@@ -58,7 +62,8 @@ const s = StyleSheet.create({
     minHeight: 42, borderRadius: radius.field, backgroundColor: authColors.primary, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
   },
-  side: { width: 28 },
+  hero: { minHeight: 58, borderRadius: 22 },
+  side: { width: 34 },
   arrow: { alignItems: 'flex-end' },
   primaryText: { flex: 1, textAlign: 'center', color: authColors.primaryText, fontFamily: fonts.semibold, fontSize: 16 },
   social: {

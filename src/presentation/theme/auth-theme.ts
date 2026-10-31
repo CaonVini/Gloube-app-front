@@ -29,4 +29,12 @@ export const fontAssets = {
   [fonts.bold]: require('../../../assets/fonts/Inter-Bold.ttf'),
 };
 
+/** Tokens extras da Home (mockup): fundo creme claro e destaque petróleo para a saudação. */
+export const homeColors = {
+  background: '#FDFBF6',
+  greeting: '#0F6A82',
+  avatarBg: '#E4EDE6',
+  subtitle: '#4B5654',
+} as const;
+
 export const radius = { card: 28, field: 9 } as const;

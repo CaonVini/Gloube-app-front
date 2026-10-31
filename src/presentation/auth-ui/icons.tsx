@@ -10,6 +10,8 @@ const sources = {
   arrow: require('../../../assets/images/icons/arrow-right.png'),
   google: require('../../../assets/images/icons/google.png'),
   facebook: require('../../../assets/images/icons/facebook.png'),
+  sparkle: require('../../../assets/images/icons/sparkle.png'),
+  chevronDown: require('../../../assets/images/icons/chevron-down.png'),
 } satisfies Record<string, ImageSourcePropType>;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -39,6 +41,8 @@ export const LockIcon = make(sources.lock, 20);
 export const ArrowRightIcon = make(sources.arrow, 26);
 export const GoogleIcon = make(sources.google, 24);
 export const FacebookIcon = make(sources.facebook, 24);
+export const SparkleIcon = make(sources.sparkle, 30);
+export const ChevronDownIcon = make(sources.chevronDown, 24);
 
 const eyeOn = make(sources.eye, 24);
 const eyeOff = make(sources.eyeOff, 24);
