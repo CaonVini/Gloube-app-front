@@ -3,7 +3,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getInitials } from '../../domain/demo-user';
 import { PrimaryButton } from '../auth-ui/Button';
 import { GloubeLogo } from '../auth-ui/GloubeLogo';
-import { SparkleIcon } from '../auth-ui/icons';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { AvatarMenu } from './AvatarMenu';
 
@@ -57,7 +56,7 @@ export function HomeScreen({ firstName, fullName, onPlanTrip, onSignOut }: Props
             accessibilityLabel="Ilustração com passaporte, mala e mapa de viagem"
           />
 
-          <PrimaryButton title="Planejar minha viagem" onPress={onPlanTrip} size="hero" leftIcon={<SparkleIcon />} />
+          <PrimaryButton title="Planejar minha viagem" onPress={onPlanTrip} size="hero" />
         </View>
       </View>
     </ScrollView>
