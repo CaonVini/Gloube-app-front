@@ -1,0 +1,270 @@
+import type React from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SIMULATED_ORIGIN, addDestination, canAdvance, destinationsLabel, moveDestination, removeDestination,
+  searchDestinations, type Destination,
+} from '../../domain/trip-plan';
+import { getInitials } from '../../domain/demo-user';
+import { PrimaryButton } from '../auth-ui/Button';
+import { GloubeLogo } from '../auth-ui/GloubeLogo';
+import { AvatarMenu } from '../home/AvatarMenu';
+import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
+import { authColors, fonts, homeColors } from '../theme/auth-theme';
+import { TripIcon } from './TripIcon';
+
+const MAX_COLUMN = 480;
+const H_PADDING = 16;
+const FIELD_BG = '#F3F1EC';
+const BANNER_BG = '#E4EDE6';
+const INITIAL_DESTINATIONS: readonly Destination[] = [
+  { id: 'paris', city: 'Paris', country: 'França' },
+  { id: 'roma', city: 'Roma', country: 'Itália' },
+];
+
+interface Props {
+  fullName: string;
+  onSignOut: () => void;
+  onNext?: () => void;
+  onDiscover?: () => void;
+}
+
+/** Passo 1 de 3 de "Nova viagem". Tudo local/fictício: origem simulada, busca em catálogo local, sem rede. */
+export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props) {
+  const insets = useSafeAreaInsets();
+  const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+  const [origin, setOrigin] = useState('');
+  const [query, setQuery] = useState('');
+  const [destinations, setDestinations] = useState<readonly Destination[]>(INITIAL_DESTINATIONS);
+
+  const suggestions = useMemo(() => searchDestinations(query, destinations), [query, destinations]);
+  const ready = canAdvance(origin, destinations);
+
+  const add = useCallback((d: Destination) => {
+    setDestinations((list) => addDestination(list, d));
+    setQuery('');
+  }, []);
+  const remove = useCallback((id: string) => setDestinations((list) => removeDestination(list, id)), []);
+  // O ícone de arrastar sobe o item; o primeiro desce (sem biblioteca de gestos, acessível por toque).
+  const shift = useCallback((index: number) => {
+    setDestinations((list) => moveDestination(list, index, index === 0 ? 1 : index - 1));
+  }, []);
+
+  return (
+    <View style={s.root}>
+      <ScrollView
+        style={s.flex}
+        contentContainerStyle={[s.content, { paddingTop: Math.max(insets.top, 47) + 6 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={s.column}>
+          <View style={s.header}>
+            <GloubeLogo width={150} tone="dark" />
+            <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
+          </View>
+
+          <View style={s.progressRow} accessible accessibilityLabel="Nova viagem, etapa 1 de 3">
+            <Text style={s.kicker}>NOVA VIAGEM</Text>
+            <View style={s.bars}>
+              <View style={[s.bar, s.barOn]} /><View style={s.bar} /><View style={s.bar} />
+            </View>
+            <Text style={s.kicker}>1 de 3</Text>
+          </View>
+
+          <Text style={s.title} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>Vamos desenhar sua viagem</Text>
+          <Text style={s.subtitle}>Defina a origem e escolha seus destinos.</Text>
+
+          <View style={s.card}>
+            <Text style={s.h2} accessibilityRole="header">Onde estamos?</Text>
+            <Text style={s.hint}>De qual cidade você vai sair?</Text>
+            <View style={s.field}>
+              <TripIcon name="crosshair" size={22} color={authColors.text} />
+              <TextInput
+                accessibilityLabel="Cidade de partida"
+                placeholder="Informe sua cidade de partida"
+                placeholderTextColor={authColors.placeholder}
+                value={origin}
+                onChangeText={setOrigin}
+                maxLength={80}
+                style={s.input}
+              />
+            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Usar minha localização"
+              onPress={() => setOrigin(SIMULATED_ORIGIN)}
+              hitSlop={6}
+              style={({ pressed }) => [s.linkRow, pressed && s.pressed]}
+            >
+              <TripIcon name="pin" size={20} color={authColors.link} />
+              <Text style={s.link}>Usar minha localização</Text>
+            </Pressable>
+
+            <View style={s.divider} />
+
+            <Text style={s.h2} accessibilityRole="header">Para onde vamos?</Text>
+            <View style={s.field}>
+              <TripIcon name="search" size={22} color={authColors.text} />
+              <TextInput
+                ref={searchRef}
+                accessibilityLabel="Buscar cidade ou país"
+                placeholder="Busque uma cidade ou país"
+                placeholderTextColor={authColors.placeholder}
+                value={query}
+                onChangeText={setQuery}
+                maxLength={60}
+                style={s.input}
+              />
+            </View>
+            {suggestions.length > 0 ? (
+              <View style={s.suggestions}>
+                {suggestions.map((d) => (
+                  <Pressable
+                    key={d.id}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Adicionar ${d.city}, ${d.country}`}
+                    onPress={() => add(d)}
+                    style={({ pressed }) => [s.suggestion, pressed && s.pressed]}
+                  >
+                    <Text style={s.city}>{d.city}</Text>
+                    <Text style={s.country}>{d.country}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+
+            <View style={s.list}>
+              {destinations.map((d, i) => (
+                <View key={d.id} style={s.row}>
+                  <View style={s.badgeCol}>
+                    <View style={s.badge}><Text style={s.badgeText}>{i + 1}</Text></View>
+                    {i < destinations.length - 1 ? <View style={s.connector} /> : null}
+                  </View>
+                  <View style={s.dest}>
+                    <TripIcon name="pin" size={24} color={authColors.text} />
+                    <View style={s.destText}>
+                      <Text style={s.city} numberOfLines={1}>{d.city}</Text>
+                      <Text style={s.country} numberOfLines={1}>{d.country}</Text>
+                    </View>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remover ${d.city}`}
+                      onPress={() => remove(d.id)}
+                      hitSlop={8}
+                      style={({ pressed }) => pressed && s.pressed}
+                    >
+                      <TripIcon name="close" size={18} color={authColors.muted} />
+                    </Pressable>
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel={i === 0 ? `Mover ${d.city} para baixo` : `Mover ${d.city} para cima`}
+                      disabled={destinations.length < 2}
+                      onPress={() => shift(i)}
+                      hitSlop={8}
+                      style={({ pressed }) => [pressed && s.pressed, destinations.length < 2 && s.off]}
+                    >
+                      <TripIcon name="grip" size={24} color={authColors.placeholder} />
+                    </Pressable>
+                  </View>
+                </View>
+              ))}
+            </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Adicionar outro destino"
+              onPress={() => searchRef.current?.focus()}
+              style={({ pressed }) => [s.linkRow, pressed && s.pressed]}
+            >
+              <View style={s.plus}><TripIcon name="plus" size={18} color="#FFFFFF" /></View>
+              <Text style={s.link}>Adicionar outro destino</Text>
+            </Pressable>
+            <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>
+          </View>
+
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Ainda não sabe para onde ir? Descubra um destino com a sua cara."
+            onPress={onDiscover}
+            style={({ pressed }) => [s.banner, pressed && s.pressed]}
+          >
+            <View style={s.bannerIcon}><TripIcon name="compass" size={34} color={authColors.text} /></View>
+            <View style={s.flex}>
+              <Text style={s.bannerTitle}>Ainda não sabe para onde ir?</Text>
+              <Text style={s.bannerText}>Descubra um destino com a sua cara.</Text>
+            </View>
+            <TripIcon name="chevronRight" size={22} color={authColors.text} />
+          </Pressable>
+
+          <View style={s.footer}>
+            <Text style={s.count} accessibilityLiveRegion="polite">{destinationsLabel(destinations.length)}</Text>
+            <PrimaryButton title="Próximo" onPress={() => onNext?.()} disabled={!ready} size="hero" />
+          </View>
+        </View>
+      </ScrollView>
+      {/* Navegação fictícia: "Descubra" fixo como aba ativa desta tela. */}
+      <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={noop} />
+    </View>
+  );
+}
+
+function noop() {}
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: homeColors.background },
+  flex: { flex: 1 },
+  content: { paddingHorizontal: H_PADDING, paddingBottom: 24 },
+  column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', gap: 0 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  kicker: { fontFamily: fonts.regular, fontSize: 13, letterSpacing: 0.3, color: homeColors.subtitle },
+  bars: { flex: 1, flexDirection: 'row', gap: 6 },
+  bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E1E3E0' },
+  barOn: { backgroundColor: authColors.primary },
+  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B', marginTop: 16 },
+  subtitle: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 24, color: homeColors.subtitle, marginTop: 2 },
+  card: {
+    marginTop: 20, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3',
+    paddingHorizontal: 16, paddingVertical: 18, gap: 10,
+  },
+  h2: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28, color: authColors.text },
+  hint: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle, marginTop: -6 },
+  field: {
+    flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46, borderRadius: 14, borderWidth: 1,
+    borderColor: authColors.border, backgroundColor: FIELD_BG, paddingHorizontal: 14,
+  },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: authColors.body, paddingVertical: 8 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
+  link: { fontFamily: fonts.medium, fontSize: 16, color: authColors.link },
+  divider: { height: 1, backgroundColor: authColors.border, marginVertical: 8 },
+  suggestions: { borderRadius: 14, borderWidth: 1, borderColor: authColors.border, overflow: 'hidden' },
+  suggestion: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
+  list: { marginTop: 4 },
+  row: { flexDirection: 'row', alignItems: 'stretch', gap: 12, marginBottom: 6 },
+  badgeCol: { width: 44, alignItems: 'center' },
+  badge: { width: 44, height: 44, borderRadius: 22, backgroundColor: BANNER_BG, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 20, color: authColors.text },
+  connector: { position: 'absolute', top: 46, height: 12, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
+  dest: {
+    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 54, borderRadius: 16,
+    backgroundColor: FIELD_BG, paddingHorizontal: 14,
+  },
+  destText: { flex: 1 },
+  city: { fontFamily: fonts.semibold, fontSize: 18, lineHeight: 22, color: '#111' },
+  country: { fontFamily: fonts.regular, fontSize: 15, color: authColors.link },
+  plus: { width: 32, height: 32, borderRadius: 16, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
+  note: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
+  banner: {
+    marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: BANNER_BG, borderRadius: 18,
+    paddingHorizontal: 12, paddingVertical: 14,
+  },
+  bannerIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
+  bannerTitle: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22, color: '#111' },
+  bannerText: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle },
+  footer: { marginTop: 18, gap: 8 },
+  count: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle },
+  pressed: { opacity: 0.7 },
+  off: { opacity: 0.4 },
+});
