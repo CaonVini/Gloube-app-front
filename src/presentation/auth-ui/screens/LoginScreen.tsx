@@ -42,8 +42,8 @@ export function LoginScreen({ actions, onGoToRegister }: Props) {
   };
 
   return (
-    <AuthLayout>
-      <View style={f.form}>
+    <AuthLayout heroRatio={0.345}>
+      <View style={[f.form, { gap: 12 }]}>
         <View>
           <Text style={f.title} accessibilityRole="header">Entre na sua conta</Text>
           <Text style={f.subtitle}>Sua próxima viagem começa aqui.</Text>

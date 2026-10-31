@@ -10,7 +10,7 @@ export const Divider = ({ label }: { label: string }) => (
 );
 
 const s = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   line: { flex: 1, height: StyleSheet.hairlineWidth * 2, backgroundColor: authColors.border },
-  text: { fontFamily: fonts.regular, fontSize: 15, color: authColors.muted },
+  text: { fontFamily: fonts.regular, fontSize: 14, color: authColors.muted },
 });

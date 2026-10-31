@@ -14,10 +14,13 @@ const heroImage = require('../../../assets/images/landscape.jpg');
  * Moldura comum de login/cadastro: foto com logo e slogan no topo e um cartão creme
  * (cantos superiores arredondados) sobreposto. Rola com o teclado aberto e limita a largura em telas grandes.
  */
-export function AuthLayout({ children }: { children: ReactNode }) {
+export function AuthLayout({ children, heroRatio = 0.315 }: { children: ReactNode; heroRatio?: number }) {
   const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const heroHeight = Math.min(Math.max(height * 0.3, 230), 340);
+  // Mockup (430x912): o cartão começa em ~31,5% da altura (cadastro) / ~34,5% (login); a foto cobre até o fim da curva.
+  const cardTop = Math.min(Math.max(height * heroRatio, 250), 340);
+  // O mockup assume a barra de status do iPhone (~47pt): usa esse piso também no Android/web para o logo alinhar.
+  const heroHeight = cardTop + radius.card;
 
   return (
     <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -30,9 +33,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         bounces={false}
         overScrollMode="never"
       >
-        <ImageBackground source={heroImage} resizeMode="cover" style={[s.hero, { height: heroHeight + insets.top }]}>
-          <View style={[s.heroInner, { paddingTop: insets.top + 24 }]}>
-            <GloubeLogo width={150} color="#FFFFFF" />
+        <ImageBackground source={heroImage} resizeMode="cover" style={[s.hero, { height: heroHeight }]}>
+          <View style={[s.heroInner, { paddingTop: Math.max(insets.top, 47) + 10 }]}>
+            <GloubeLogo width={156} color="#FFFFFF" />
             <Text style={s.tagline} accessibilityRole="header">O mundo espera por você.</Text>
           </View>
         </ImageBackground>
@@ -49,14 +52,14 @@ const s = StyleSheet.create({
   flex: { flex: 1, backgroundColor: authColors.card },
   content: { flexGrow: 1, backgroundColor: authColors.card },
   hero: { width: '100%', backgroundColor: '#2D6F73' },
-  heroInner: { flex: 1, paddingHorizontal: 24, justifyContent: 'space-between', paddingBottom: 44 },
+  heroInner: { flex: 1, paddingHorizontal: 26, justifyContent: 'space-between', paddingBottom: radius.card + 8 },
   tagline: {
-    color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 17,
+    color: '#FFFFFF', fontFamily: fonts.medium, fontSize: 16, lineHeight: 20,
     textShadowColor: authColors.overlay, textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4,
   },
   card: {
     flexGrow: 1, marginTop: -radius.card, backgroundColor: authColors.card,
-    borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, paddingTop: 28, paddingHorizontal: 24,
+    borderTopLeftRadius: radius.card, borderTopRightRadius: radius.card, paddingTop: 24, paddingHorizontal: 28,
   },
   cardInner: { width: '100%', maxWidth: 480, alignSelf: 'center' },
 });

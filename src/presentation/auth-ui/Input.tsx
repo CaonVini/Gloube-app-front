@@ -65,16 +65,16 @@ export function PasswordInput(props: Omit<InputProps, 'secureTextEntry' | 'trail
 
 const s = StyleSheet.create({
   group: { gap: 6 },
-  label: { fontFamily: fonts.semibold, fontSize: 15, color: authColors.text },
+  label: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 18, color: authColors.text },
   box: {
-    flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: radius.field, borderWidth: 1,
-    borderColor: authColors.border, backgroundColor: authColors.surface, paddingHorizontal: 14, gap: 12,
+    flexDirection: 'row', alignItems: 'center', minHeight: 45, borderRadius: radius.field, borderWidth: 1,
+    borderColor: authColors.border, backgroundColor: authColors.surface, paddingHorizontal: 16, gap: 23,
   },
   focused: { borderColor: authColors.link, borderWidth: 1.5 },
   errorBox: { borderColor: authColors.danger },
-  icon: { width: 24, alignItems: 'center' },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: authColors.body, paddingVertical: 12 },
+  icon: { width: 20, alignItems: 'center' },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: authColors.body, paddingVertical: 8 },
   eye: { padding: 2 },
-  hint: { fontFamily: fonts.regular, fontSize: 13, color: authColors.muted },
+  hint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 16, color: authColors.muted },
   error: { fontFamily: fonts.medium, fontSize: 13, color: authColors.danger },
 });

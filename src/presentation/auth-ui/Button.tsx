@@ -55,18 +55,18 @@ export function SocialButton({ title, icon, onPress, disabled }: SocialButtonPro
 
 const s = StyleSheet.create({
   primary: {
-    minHeight: 54, borderRadius: radius.field, backgroundColor: authColors.primary, flexDirection: 'row',
+    minHeight: 42, borderRadius: radius.field, backgroundColor: authColors.primary, flexDirection: 'row',
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
   },
   side: { width: 28 },
   arrow: { alignItems: 'flex-end' },
-  primaryText: { flex: 1, textAlign: 'center', color: authColors.primaryText, fontFamily: fonts.semibold, fontSize: 18 },
+  primaryText: { flex: 1, textAlign: 'center', color: authColors.primaryText, fontFamily: fonts.semibold, fontSize: 16 },
   social: {
-    minHeight: 50, borderRadius: radius.field, borderWidth: 1, borderColor: authColors.border,
+    minHeight: 41, borderRadius: radius.field, borderWidth: 1, borderColor: authColors.border,
     backgroundColor: authColors.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
     paddingHorizontal: 16,
   },
-  socialText: { fontFamily: fonts.medium, fontSize: 16, color: authColors.body },
+  socialText: { fontFamily: fonts.medium, fontSize: 15, color: authColors.body },
   off: { opacity: 0.55 },
   pressed: { opacity: 0.85 },
 });
