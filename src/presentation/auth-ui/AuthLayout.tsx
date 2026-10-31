@@ -35,7 +35,7 @@ export function AuthLayout({ children, heroRatio = 0.315 }: { children: ReactNod
       >
         <ImageBackground source={heroImage} resizeMode="cover" style={[s.hero, { height: heroHeight }]}>
           <View style={[s.heroInner, { paddingTop: Math.max(insets.top, 47) + 10 }]}>
-            <GloubeLogo width={156} color="#FFFFFF" />
+            <GloubeLogo width={156} />
             <Text style={s.tagline} accessibilityRole="header">O mundo espera por você.</Text>
           </View>
         </ImageBackground>
