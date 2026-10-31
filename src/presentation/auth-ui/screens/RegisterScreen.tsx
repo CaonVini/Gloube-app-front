@@ -6,10 +6,8 @@ import { AuthLayout } from '../AuthLayout';
 import type { AuthActions } from '../authActions';
 import { PrimaryButton } from '../Button';
 import { Checkbox, InlineLink } from '../Checkbox';
-import { Divider } from '../Divider';
 import { LockIcon, MailIcon, UserIcon } from '../icons';
 import { Input, PasswordInput } from '../Input';
-import { SocialButtons } from '../SocialButtons';
 import { formStyles as f } from './form-styles';
 
 type Field = 'name' | 'email' | 'password' | 'acceptedTerms';
@@ -78,14 +76,11 @@ export function RegisterScreen({ actions, onGoToLogin }: Props) {
           accessibilityLabel="Li e aceito os Termos de Uso e a Política de Privacidade"
         >
           Li e aceito os <InlineLink onPress={actions.openTerms}>Termos de Uso</InlineLink> e a{' '}
-          <InlineLink onPress={actions.openPrivacy}>Política de Privacidade</InlineLink>.
+          <InlineLink onPress={actions.openPrivacy}>Política de Privacidade</InlineLink>
         </Checkbox>
 
         {formError ? <Text accessibilityRole="alert" style={f.formError}>{formError}</Text> : null}
         <PrimaryButton title="Criar conta" onPress={submit} loading={loading} />
-
-        <Divider label="ou cadastre-se com" />
-        <SocialButtons onGoogle={actions.loginWithGoogle} onFacebook={actions.loginWithFacebook} disabled={loading} />
 
         <Text style={f.footer}>
           Já tem uma conta? <InlineLink onPress={onGoToLogin}>Entrar</InlineLink>
