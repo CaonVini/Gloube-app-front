@@ -1,8 +1,8 @@
 import { Redirect } from 'expo-router';
-import { useAuth } from '../src/presentation/auth/AuthProvider';
+import { useDemoSession } from '../src/presentation/session/DemoSession';
 
-/** Ponto de entrada ("/"): envia para o perfil ou para o login conforme a sessão. */
+/** Ponto de entrada ("/"): envia para a Home ou para o login conforme a sessão fictícia. */
 export default function Index() {
-  const { status } = useAuth();
-  return <Redirect href={status === 'authenticated' ? '/profile' : '/login'} />;
+  const { signedIn } = useDemoSession();
+  return <Redirect href={signedIn ? '/home' : '/login'} />;
 }

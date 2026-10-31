@@ -1,9 +1,13 @@
 import { useRouter } from 'expo-router';
-import { stubAuthActions } from '../../src/presentation/auth-ui/authActions';
+import { useMemo } from 'react';
+import { createDemoAuthActions } from '../../src/presentation/auth-ui/authActions';
 import { RegisterScreen } from '../../src/presentation/auth-ui/screens/RegisterScreen';
+import { useDemoSession } from '../../src/presentation/session/DemoSession';
 
-// UI sem integração: usa stubAuthActions. Para religar a API, injete um adaptador sobre useAuth().
+// Fluxo fictício: entrar abre a sessão de demonstração (sem API). Para religar a API, injete um adaptador sobre useAuth().
 export default function Register() {
   const router = useRouter();
-  return <RegisterScreen actions={stubAuthActions} onGoToLogin={() => router.replace('/login')} />;
+  const { signIn } = useDemoSession();
+  const actions = useMemo(() => createDemoAuthActions(signIn), [signIn]);
+  return <RegisterScreen actions={actions} onGoToLogin={() => router.replace('/login')} />;
 }

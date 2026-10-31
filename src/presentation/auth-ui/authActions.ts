@@ -28,3 +28,12 @@ export const stubAuthActions: AuthActions = {
   openTerms: () => {},
   openPrivacy: () => {},
 };
+
+/**
+ * Ações do fluxo fictício: qualquer entrada/cadastro (inclusive social) apenas "abre" a sessão de demonstração.
+ * Não há validação de credenciais no servidor nem persistência; as validações de formulário continuam na UI.
+ */
+export function createDemoAuthActions(signIn: () => void): AuthActions {
+  const enter = async () => signIn();
+  return { ...stubAuthActions, login: enter, register: enter, loginWithGoogle: enter, loginWithFacebook: enter };
+}

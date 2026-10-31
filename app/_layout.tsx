@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/presentation/auth/AuthProvider';
 import { Button, Muted, Screen } from '../src/presentation/components/ui';
+import { DemoSessionProvider, useDemoSession } from '../src/presentation/session/DemoSession';
 import { fontAssets } from '../src/presentation/theme/auth-theme';
 
 function RootStack() {
@@ -25,7 +26,8 @@ function RootStack() {
     );
   }
 
-  const authed = status === 'authenticated';
+  // Fluxo fictício: a guarda usa a sessão de demonstração (em memória), não a API.
+  const { signedIn: authed } = useDemoSession();
   // Stack.Protected: rotas só existem para o estado correspondente (sem "piscar" a tela errada).
   return (
     <Stack screenOptions={{ headerShown: false }}>
@@ -46,8 +48,10 @@ export default function RootLayout() {
   if (!fontsLoaded && !fontError) return null;
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
-      <RootStack />
+      <DemoSessionProvider>
+        <StatusBar style="dark" />
+        <RootStack />
+      </DemoSessionProvider>
     </AuthProvider>
   );
 }
