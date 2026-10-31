@@ -38,15 +38,15 @@ export const InlineLink = ({ children, onPress }: { children: ReactNode; onPress
 
 const s = StyleSheet.create({
   wrap: { gap: 6 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 44 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 18, minHeight: 44 },
   box: {
-    width: 28, height: 28, borderRadius: 6, borderWidth: 1.5, borderColor: authColors.primary,
+    width: 22, height: 22, borderRadius: 5, borderWidth: 1.5, borderColor: authColors.primary,
     backgroundColor: authColors.surface, alignItems: 'center', justifyContent: 'center',
   },
   boxOn: { backgroundColor: authColors.primary },
   boxErr: { borderColor: authColors.danger },
-  tick: { color: '#FFFFFF', fontSize: 16, fontFamily: fonts.bold, lineHeight: 20 },
-  text: { flex: 1, fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: authColors.body },
+  tick: { color: '#FFFFFF', fontSize: 14, fontFamily: fonts.bold, lineHeight: 18 },
+  text: { flex: 1, fontFamily: fonts.regular, fontSize: 14, lineHeight: 18, color: authColors.body },
   link: { fontFamily: fonts.medium, color: authColors.link },
   error: { fontFamily: fonts.medium, fontSize: 13, color: authColors.danger },
 });

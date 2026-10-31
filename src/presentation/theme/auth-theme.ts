@@ -29,4 +29,4 @@ export const fontAssets = {
   [fonts.bold]: require('../../../assets/fonts/Inter-Bold.ttf'),
 };
 
-export const radius = { card: 28, field: 12 } as const;
+export const radius = { card: 28, field: 9 } as const;

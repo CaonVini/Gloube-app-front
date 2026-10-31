@@ -8,21 +8,21 @@ interface IconProps {
 // Ícones de traço (24x24). Decorativos: ocultos para leitores de tela (o campo/botão já tem rótulo).
 const stroke = { fill: 'none', strokeWidth: 1.6, strokeLinecap: 'round', strokeLinejoin: 'round' } as const;
 
-export const UserIcon = ({ size = 22, color = '#1F3D36' }: IconProps) => (
+export const UserIcon = ({ size = 20, color = '#1F3D36' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Circle cx={12} cy={8} r={4} stroke={color} {...stroke} />
     <Path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7" stroke={color} {...stroke} />
   </Svg>
 );
 
-export const MailIcon = ({ size = 22, color = '#1F3D36' }: IconProps) => (
+export const MailIcon = ({ size = 20, color = '#1F3D36' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Path d="M3 6h18v12H3z" stroke={color} {...stroke} />
     <Path d="M3 7l9 6.5L21 7" stroke={color} {...stroke} />
   </Svg>
 );
 
-export const LockIcon = ({ size = 22, color = '#1F3D36' }: IconProps) => (
+export const LockIcon = ({ size = 20, color = '#1F3D36' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Path d="M5 11h14v10H5z" stroke={color} {...stroke} />
     <Path d="M8 11V8a4 4 0 0 1 8 0v3" stroke={color} {...stroke} />
@@ -37,7 +37,7 @@ export const EyeIcon = ({ size = 24, color = '#1F3D36', off = false }: IconProps
   </Svg>
 );
 
-export const ArrowRightIcon = ({ size = 24, color = '#FFFFFF' }: IconProps) => (
+export const ArrowRightIcon = ({ size = 26, color = '#FFFFFF' }: IconProps) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
     <Path d="M4 12h16M14 6l6 6-6 6" stroke={color} {...stroke} />
   </Svg>
