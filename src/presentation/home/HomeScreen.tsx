@@ -41,21 +41,24 @@ export function HomeScreen({ firstName, fullName, onPlanTrip, onSignOut }: Props
           <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
         </View>
 
-        <View style={s.texts}>
-          <Text style={s.greeting}>Bem-vindo, {firstName}</Text>
-          <Text style={s.title} accessibilityRole="header">Sua próxima viagem começa aqui.</Text>
-          <Text style={s.subtitle}>Escolha os lugares que você ama.{'\n'}A Aurora organiza o caminho.</Text>
+        {/* Bloco central: ocupa o espaço restante e centraliza texto, ilustração e botão na vertical. */}
+        <View style={s.center}>
+          <View style={s.texts}>
+            <Text style={s.greeting}>Bem-vindo, {firstName}</Text>
+            <Text style={s.title} accessibilityRole="header">Sua próxima viagem começa aqui.</Text>
+            <Text style={s.subtitle}>Escolha os lugares que você ama.{'\n'}A Aurora organiza o caminho.</Text>
+          </View>
+
+          <Image
+            source={heroImage}
+            style={{ width: heroWidth, height: heroHeight }}
+            resizeMode="contain"
+            accessibilityRole="image"
+            accessibilityLabel="Ilustração com passaporte, mala e mapa de viagem"
+          />
+
+          <PrimaryButton title="Planejar minha viagem" onPress={onPlanTrip} size="hero" leftIcon={<SparkleIcon />} />
         </View>
-
-        <Image
-          source={heroImage}
-          style={{ width: heroWidth, height: heroHeight }}
-          resizeMode="contain"
-          accessibilityRole="image"
-          accessibilityLabel="Ilustração com passaporte, mala e mapa de viagem"
-        />
-
-        <PrimaryButton title="Planejar minha viagem" onPress={onPlanTrip} size="hero" leftIcon={<SparkleIcon />} />
       </View>
     </ScrollView>
   );
@@ -64,9 +67,10 @@ export function HomeScreen({ firstName, fullName, onPlanTrip, onSignOut }: Props
 const s = StyleSheet.create({
   flex: { flex: 1, backgroundColor: homeColors.background },
   content: { flexGrow: 1, paddingHorizontal: H_PADDING },
-  column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', gap: 26 },
+  column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', flexGrow: 1 },
+  center: { flexGrow: 1, justifyContent: 'center', gap: 26, paddingBottom: 24 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  texts: { gap: 6, marginTop: 6 },
+  texts: { gap: 6 },
   greeting: { fontFamily: fonts.semibold, fontSize: 22, lineHeight: 28, color: homeColors.greeting },
   title: { fontFamily: fonts.bold, fontSize: 40, lineHeight: 44, letterSpacing: -1, color: authColors.text },
   subtitle: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 26, color: homeColors.subtitle, marginTop: 8 },
