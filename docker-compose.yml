@@ -1,0 +1,35 @@
+# Sobe o frontend Expo:
+#   cp .env.example .env     # (opcional) ajuste HOST_IP e a URL da API
+#   docker compose up --build
+# Web:    http://localhost:8081
+# Celular: leia o QR code mostrado nos logs com o Expo Go (mesma rede Wi-Fi) — defina HOST_IP no .env.
+
+services:
+  app:
+    build: .
+    container_name: aurora-front
+    ports:
+      - "8081:8081"
+    environment:
+      # IP do SEU computador na rede (ex.: 192.168.0.10). Sem ele, o QR code mostra o IP interno do
+      # container e o celular não conecta.
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${HOST_IP:-}
+      # URL da API vista pelo APP (não pelo container). Veja .env.example.
+      EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:3333}
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID:-}
+      EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID: ${EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID:-}
+      EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID: ${EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID:-}
+      EXPO_PUBLIC_FACEBOOK_APP_ID: ${EXPO_PUBLIC_FACEBOOK_APP_ID:-}
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      # Hot reload: código do host dentro do container...
+      - ./:/app
+      # ...mas node_modules fica no volume (instalado no build; evita misturar binários do host).
+      - node_modules:/app/node_modules
+    # Metro aceita stdin para atalhos (w, r...). `docker attach aurora-front` se quiser usá-los.
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+
+volumes:
+  node_modules:
