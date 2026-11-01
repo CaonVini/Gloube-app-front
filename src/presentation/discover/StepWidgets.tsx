@@ -1,12 +1,12 @@
-import { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { BUDGETS, findBudget } from '../../domain/discover/budget';
-import { MONTH_NAMES, monthGrid, nightsBetween, parseBrParts, pickRangeDate, shortLabel, toBr } from '../../domain/discover/dates';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { findBudget, formatBRL, parseMoneyInput } from '../../domain/discover/budget';
+import { MONTH_NAMES, defaultRange, monthGrid, nightsBetween, parseBrParts, pickRangeDate, shortLabel, toBr } from '../../domain/discover/dates';
 import { clampDays } from '../../domain/discover/quiz';
 import type { Answers, BudgetId } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
 import { DIcon } from './icons';
-import { cardShadow, dc } from './ui';
+import { dc } from './ui';
 
 type Patch = (patch: Partial<Answers>) => void;
 
@@ -33,13 +33,36 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
   const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
   const atMinMonth = view.year === today.getFullYear() && view.month === today.getMonth() + 1;
 
+  // Datas padrão marcadas desde o início (editáveis): ida em 30 dias, volta 7 noites depois.
+  const seed = useMemo(() => defaultRange(today), [today]);
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (seeded.current || a.period.mode !== null) return;
+    seeded.current = true;
+    const n = nightsBetween(seed.start, seed.end);
+    const p = parseBrParts(seed.start);
+    if (p) setView({ year: p.year, month: p.month });
+    onChange({ period: { mode: 'definidas', startDate: seed.start, endDate: seed.end }, ...(n ? { days: clampDays(n) } : {}) });
+  }, [a.period.mode, onChange, seed]);
+
   const pick = (m: (typeof OPTIONS)[number]['mode']) => {
-    if (m === 'definidas') onChange({ period: { mode: 'definidas', startDate: start, endDate: end } });
+    if (m === 'definidas') {
+      const s0 = start || seed.start;
+      const e0 = start ? end : seed.end;
+      const p = parseBrParts(s0);
+      if (p) setView({ year: p.year, month: p.month });
+      onChange({ period: { mode: 'definidas', startDate: s0, endDate: e0 } });
+    }
     else onChange({ period: { mode: 'indefinido' } });
   };
   const shiftMonth = (delta: number) => setView((v) => {
     const d = new Date(v.year, v.month - 1 + delta, 1);
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  });
+  const shiftYear = (delta: number) => setView((v) => {
+    const y = Math.max(today.getFullYear(), v.year + delta);
+    const month = y === today.getFullYear() && v.month < today.getMonth() + 1 ? today.getMonth() + 1 : v.month;
+    return { year: y, month };
   });
   const tapDay = (day: number) => {
     const next = pickRangeDate(start, end, toBr(view.year, view.month, day));
@@ -80,7 +103,18 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
             <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" disabled={atMinMonth} onPress={() => shiftMonth(-1)} hitSlop={10} style={[s.navBtn, atMinMonth && { opacity: 0.3 }]}>
               <DIcon name="chevronLeft" size={20} color={dc.dark} />
             </Pressable>
-            <Text style={s.monthTitle} accessibilityLiveRegion="polite">{(MONTH_NAMES[view.month - 1] ?? '').replace(/^./, (c) => c.toUpperCase())} {view.year}</Text>
+            <View style={s.titleRow}>
+              <Text style={s.monthTitle} accessibilityLiveRegion="polite">{(MONTH_NAMES[view.month - 1] ?? '').replace(/^./, (c) => c.toUpperCase())}</Text>
+              <View style={s.yearBox}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Ano anterior" disabled={view.year <= today.getFullYear()} onPress={() => shiftYear(-1)} hitSlop={8} style={[s.navBtn, { width: 24 }, view.year <= today.getFullYear() && { opacity: 0.3 }]}>
+                  <DIcon name="chevronLeft" size={16} color={dc.dark} />
+                </Pressable>
+                <Text style={s.yearText} accessibilityLabel={`Ano ${view.year}`}>{view.year}</Text>
+                <Pressable accessibilityRole="button" accessibilityLabel="Próximo ano" onPress={() => shiftYear(1)} hitSlop={8} style={[s.navBtn, { width: 24 }]}>
+                  <DIcon name="chevronRight" size={16} color={dc.dark} />
+                </Pressable>
+              </View>
+            </View>
             <Pressable accessibilityRole="button" accessibilityLabel="Próximo mês" onPress={() => shiftMonth(1)} hitSlop={10} style={s.navBtn}>
               <DIcon name="chevronRight" size={20} color={dc.dark} />
             </Pressable>
@@ -124,48 +158,63 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
 
 /* ───────────────────────── Orçamento ───────────────────────── */
 
-
-const STAIRS: { id: BudgetId; short: string; n: number }[] = [
-  { id: 'ate-2k', short: 'Até 2 mil', n: 1 },
-  { id: '2k-5k', short: '2 a 5 mil', n: 2 },
-  { id: '5k-10k', short: '5 a 10 mil', n: 3 },
-  { id: '10k-mais', short: '10 mil+', n: 4 },
+const TIERS: { id: BudgetId; kicker: string; value: string }[] = [
+  { id: 'ate-2k', kicker: 'ATÉ', value: 'R$ 2 mil' },
+  { id: '2k-5k', kicker: 'R$ 2 MIL A', value: 'R$ 5 mil' },
+  { id: '5k-10k', kicker: 'R$ 5 MIL A', value: 'R$ 10 mil' },
+  { id: '10k-15k', kicker: 'R$ 10 MIL A', value: 'R$ 15 mil' },
 ];
 
-/** Degraus crescentes: quanto maior o degrau, maior o orçamento. Resumo da faixa escolhida no topo. */
+/** 4 faixas em 2x2, valor exato opcional e "Ainda não defini". Sem rolagem: as faixas ocupam o espaço restante. */
 export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChange: Patch }) {
-  const chosen = findBudget(a.budget);
+  const { height } = useWindowDimensions();
+  const compact = height < 800;
+  const custom = a.budget === 'custom';
   const flex = a.budget === 'flexivel';
+  const tier = (t: (typeof TIERS)[number]) => {
+    const on = a.budget === t.id;
+    return (
+      <Pressable key={t.id} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${findBudget(t.id)?.label} por pessoa`} onPress={() => onChange({ budget: t.id })} style={({ pressed }) => [s.tier, on && s.tierOn, pressed && { opacity: 0.9 }]}>
+        <View style={[s.radio, s.tierRadio, on && s.radioOn]}>{on ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
+        <Text style={s.tierKicker}>{t.kicker}</Text>
+        <Text style={[s.tierValue, compact && { fontSize: 22 }]}>{t.value}</Text>
+        <Text style={s.tierHint}>por pessoa</Text>
+      </Pressable>
+    );
+  };
   return (
     <View style={s.fill}>
-      <View style={s.hero}>
-        <View style={s.heroRule} />
-        <Text style={s.heroKicker}>ORÇAMENTO POR PESSOA</Text>
-        <Text style={s.heroValue} numberOfLines={1} adjustsFontSizeToFit accessibilityLiveRegion="polite">{chosen ? chosen.label : 'Escolha um degrau'}</Text>
-        <Text style={s.heroNote}>Inclui passagem (ida e volta) e hospedagem.</Text>
-      </View>
+      <View style={s.tierRow}>{TIERS.slice(0, 2).map(tier)}</View>
+      <View style={s.tierRow}>{TIERS.slice(2).map(tier)}</View>
 
-      <View style={s.stairs} accessibilityRole="radiogroup">
-        {STAIRS.map((st) => {
-          const on = a.budget === st.id;
-          return (
-            <Pressable key={st.id} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={findBudget(st.id)?.label} onPress={() => onChange({ budget: st.id })} style={({ pressed }) => [s.stairCol, pressed && { opacity: 0.85 }]}>
-              <View style={{ flexGrow: 5 - st.n, flexBasis: 0 }} />
-              <View style={[s.step, !on && s.stepOff, { flexGrow: st.n }, on && s.stepOn]}>
-                <Text style={[s.stepGlyph, on && { color: dc.lime }]}>{'$'.repeat(st.n)}</Text>
-                {on ? <View style={s.stepCheck}><DIcon name="check" size={14} color={dc.dark} /></View> : null}
-              </View>
-              <Text style={[s.stepLabel, on && { fontFamily: fonts.bold }]} numberOfLines={1}>{st.short}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <Pressable accessibilityRole="radio" accessibilityState={{ checked: custom }} accessibilityLabel="Definir outro valor" onPress={() => onChange({ budget: 'custom' })} style={[s.opt, s.customCard, compact && { minHeight: 48 }, custom && s.optOn]}>
+        <View style={s.customHead}>
+          <DIcon name="edit" size={22} color={dc.dark} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.optTitle}>Definir outro valor</Text>
+            {custom ? <Text style={s.optHint}>Seu limite por pessoa</Text> : null}
+          </View>
+          <View style={[s.radio, custom && s.radioOn]}>{custom ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
+        </View>
+        {custom ? (
+          <TextInput
+            accessibilityLabel="Valor máximo por pessoa em reais"
+            keyboardType="number-pad"
+            placeholder="R$ 3.500"
+            placeholderTextColor="#B8BDBB"
+            maxLength={14}
+            value={a.customBudget ? formatBRL(a.customBudget) : ''}
+            onChangeText={(txt) => onChange({ budget: 'custom', customBudget: parseMoneyInput(txt) })}
+            style={s.moneyInput}
+          />
+        ) : null}
+      </Pressable>
 
-      <Pressable accessibilityRole="radio" accessibilityState={{ checked: flex }} accessibilityLabel={BUDGETS[4]?.label} onPress={() => onChange({ budget: 'flexivel' })} style={({ pressed }) => [s.flex, cardShadow, flex && s.flexOn, pressed && { opacity: 0.85 }]}>
-        <View style={s.seal}><DIcon name="infinity" size={22} color={dc.dark} /></View>
+      <Pressable accessibilityRole="radio" accessibilityState={{ checked: flex }} accessibilityLabel="Ainda não defini" onPress={() => onChange({ budget: 'flexivel' })} style={[s.opt, compact && { minHeight: 48 }, flex && s.optOn]}>
+        <DIcon name="infinity" size={26} color={dc.dark} />
         <View style={{ flex: 1 }}>
-          <Text style={s.flexTitle}>Ainda não defini</Text>
-          <Text style={s.flexHint}>Não limitamos por valor</Text>
+          <Text style={s.optTitle}>Ainda não defini</Text>
+          {compact ? null : <Text style={s.optHint}>Quero explorar sem limitar o valor</Text>}
         </View>
         <View style={[s.radio, flex && s.radioOn]}>{flex ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
       </Pressable>
@@ -174,11 +223,13 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
 }
 
 const s = StyleSheet.create({
-  fill: { flex: 1, gap: 12 },
+  fill: { flex: 1, gap: 10 },
   opt: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
   optOn: { borderColor: dc.dark, backgroundColor: '#EEF3EF' },
   optTitle: { fontFamily: fonts.semibold, fontSize: 17, color: dc.dark },
   optHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#C9CDCB', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  radioOn: { backgroundColor: dc.dark, borderColor: dc.dark },
   cal: { flex: 1, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', padding: 12, gap: 6 },
   fieldsRow: { flexDirection: 'row', gap: 10 },
   dateField: { flex: 1, borderRadius: 14, borderWidth: 1, borderColor: '#D9DDDA', paddingHorizontal: 12, paddingVertical: 6 },
@@ -189,6 +240,9 @@ const s = StyleSheet.create({
   monthHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   navBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
   monthTitle: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  yearBox: { flexDirection: 'row', alignItems: 'center', gap: 2, borderRadius: 14, backgroundColor: '#F1F3F0', paddingHorizontal: 4 },
+  yearText: { fontFamily: fonts.semibold, fontSize: 15, color: dc.dark, minWidth: 40, textAlign: 'center' },
   weekRow: { flexDirection: 'row' },
   weekday: { flex: 1, textAlign: 'center', fontFamily: fonts.medium, fontSize: 12, color: dc.muted },
   grid: { flex: 1, gap: 2 },
@@ -203,24 +257,14 @@ const s = StyleSheet.create({
   dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
   calNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 
-  hero: { paddingVertical: 4, gap: 4 },
-  heroRule: { width: 28, height: 2, borderRadius: 1, backgroundColor: dc.lime, marginBottom: 6 },
-  heroKicker: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.8, color: dc.muted },
-  heroValue: { fontFamily: fonts.semibold, fontSize: 30, lineHeight: 36, letterSpacing: -0.5, color: dc.dark },
-  heroNote: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
-  stairs: { flex: 1, flexDirection: 'row', gap: 8, alignItems: 'stretch' },
-  stairCol: { flex: 1, justifyContent: 'flex-end', gap: 6 },
-  step: { flexBasis: 0, minHeight: 44, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'flex-start', paddingTop: 10 },
-  stepOff: { borderWidth: 1, borderColor: '#D9DDDA' },
-  stepOn: { backgroundColor: dc.dark, borderTopWidth: 3, borderTopColor: dc.lime },
-  seal: { width: 40, height: 40, borderRadius: 20, backgroundColor: dc.mint, borderWidth: 1, borderColor: 'rgba(31,61,54,0.18)', alignItems: 'center', justifyContent: 'center' },
-  stepGlyph: { fontFamily: fonts.bold, fontSize: 18, color: dc.teal },
-  stepCheck: { marginTop: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
-  stepLabel: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 0.2, color: dc.dark, textAlign: 'center' },
-  flex: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: dc.border },
-  flexOn: { borderWidth: 1.5, borderColor: dc.dark, backgroundColor: '#FAFBE3' },
-  flexTitle: { fontFamily: fonts.bold, fontSize: 17, color: dc.dark },
-  flexHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#C9CDCB', alignItems: 'center', justifyContent: 'center' },
-  radioOn: { backgroundColor: dc.dark, borderColor: dc.dark },
+  tierRow: { flex: 1, flexDirection: 'row', gap: 10, maxHeight: 150 },
+  tier: { flex: 1, justifyContent: 'center', gap: 2, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
+  tierOn: { borderColor: dc.dark, borderWidth: 1.5, backgroundColor: '#EEF3EF' },
+  tierRadio: { position: 'absolute', top: 10, right: 10 },
+  tierKicker: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.4, color: dc.muted },
+  tierValue: { fontFamily: fonts.bold, fontSize: 25, letterSpacing: -0.4, color: dc.dark },
+  tierHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
+  customCard: { flexDirection: 'column', alignItems: 'stretch', justifyContent: 'center', gap: 8, paddingVertical: 10 },
+  customHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  moneyInput: { fontFamily: fonts.semibold, fontSize: 20, color: dc.dark, borderRadius: 12, borderWidth: 1, borderColor: '#D9DDDA', backgroundColor: '#FFFFFF', paddingHorizontal: 12, paddingVertical: 8, outlineStyle: 'none' } as never,
 });

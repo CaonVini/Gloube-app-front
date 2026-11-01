@@ -13,7 +13,7 @@ function answers(over: Partial<Answers> = {}): Answers {
   return {
     ...emptyAnswers(),
     climate: 'calor', experiences: ['praia'], reach: 'internacional', origin: 'sao-paulo',
-    companion: 'casal', originAssumed: false, period: { mode: 'indefinido' }, days: 10, budget: '10k-mais',
+    companion: 'casal', originAssumed: false, period: { mode: 'indefinido' }, days: 10, budget: 'flexivel',
     ...over,
   };
 }

@@ -1,3 +1,4 @@
+import { findBudget } from './budget';
 import { parseBrDate } from './dates';
 import { resolveOrigin } from './geo';
 import type { Answers, Need, Experience } from './types';
@@ -22,7 +23,7 @@ export const STEPS: readonly StepDef[] = [
   { id: 'cuidados', title: 'Algum cuidado especial?', subtitle: 'Marque o que se aplica ou pule.', optional: true },
   { id: 'periodo', title: 'Quando começa sua próxima viagem?', subtitle: 'Escolha o que você já sabe sobre as datas.', optional: false },
   { id: 'dias', title: 'Quantos dias de viagem?', subtitle: 'Considere o tempo no destino.', optional: false },
-  { id: 'orcamento', title: 'Qual o orçamento por pessoa?', subtitle: 'Valores aproximados, com passagem (ida e volta) e hospedagem.', optional: false },
+  { id: 'orcamento', title: 'Qual é seu orçamento por pessoa?', subtitle: 'Para toda a viagem, incluindo passagem de ida e volta e hospedagem.', optional: false },
 ];
 
 export const MIN_DAYS = 1;
@@ -33,7 +34,7 @@ export function emptyAnswers(originText?: string | null): Answers {
   const o = resolveOrigin(originText);
   return {
     climate: null, experiences: [], reach: null, origin: o.id, originAssumed: o.assumed, companion: null,
-    needs: [], period: { mode: null }, days: DEFAULT_DAYS, budget: null,
+    needs: [], period: { mode: null }, days: DEFAULT_DAYS, budget: null, customBudget: null,
   };
 }
 
@@ -68,7 +69,7 @@ export function isStepComplete(id: StepId, a: Answers, today: Date = new Date())
       if (a.period.mode === 'definidas') return parseBrDate(a.period.startDate, today) !== null;
       return false;
     case 'dias': return a.days >= MIN_DAYS && a.days <= MAX_DAYS;
-    case 'orcamento': return a.budget !== null;
+    case 'orcamento': return findBudget(a.budget, a.customBudget) !== undefined;
   }
 }
 

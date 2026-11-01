@@ -93,3 +93,29 @@ describe('calendário de ida e volta', () => {
     expect(pickRangeDate('12/12/2026', '17/12/2026', '20/12/2026')).toEqual({ start: '20/12/2026', end: '' });
   });
 });
+
+import { defaultRange } from '../src/domain/discover/dates';
+import { findBudget, parseMoneyInput } from '../src/domain/discover/budget';
+
+describe('orçamento e datas padrão', () => {
+  it('sugere ida em 30 dias e volta 7 noites depois (virando o ano)', () => {
+    expect(defaultRange(new Date(2026, 9, 31))).toEqual({ start: '30/11/2026', end: '07/12/2026' });
+    expect(defaultRange(new Date(2026, 11, 20))).toEqual({ start: '19/01/2027', end: '26/01/2027' });
+  });
+  it('lê o valor digitado em reais e limita o teto', () => {
+    expect(parseMoneyInput('R$ 3.500')).toBe(3500);
+    expect(parseMoneyInput('R$ 3.500,00')).toBe(3500);
+    expect(parseMoneyInput('')).toBeNull();
+    expect(parseMoneyInput('99999999')).toBe(1_000_000);
+  });
+  it('valor exato vira o teto da faixa; sem valor não há faixa', () => {
+    expect(findBudget('custom', 3500)).toMatchObject({ id: 'custom', min: 0, max: 3500 });
+    expect(findBudget('custom', null)).toBeUndefined();
+    expect(findBudget('10k-15k')).toMatchObject({ min: 10000, max: 15000 });
+  });
+  it('etapa de orçamento só completa com faixa válida', () => {
+    const a = { ...emptyAnswers(), budget: 'custom' as const };
+    expect(isStepComplete('orcamento', a, TODAY)).toBe(false);
+    expect(isStepComplete('orcamento', { ...a, customBudget: 4000 }, TODAY)).toBe(true);
+  });
+});

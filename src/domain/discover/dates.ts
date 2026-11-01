@@ -86,3 +86,10 @@ export function pickRangeDate(start: string, end: string | undefined, tapped: st
   if (diff > 0) return { start, end: tapped };
   return { start: tapped, end: '' };
 }
+
+/** Datas sugeridas por padrão: ida daqui a 30 dias, volta 7 noites depois. */
+export function defaultRange(today: Date): { start: string; end: string } {
+  const s = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
+  const e = new Date(s.getFullYear(), s.getMonth(), s.getDate() + 7);
+  return { start: toBr(s.getFullYear(), s.getMonth() + 1, s.getDate()), end: toBr(e.getFullYear(), e.getMonth() + 1, e.getDate()) };
+}

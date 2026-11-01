@@ -8,6 +8,7 @@ const sources = {
   home: require('../../../assets/images/discover/icons/home.png'),
   pin: require('../../../assets/images/discover/icons/pin.png'),
   world: require('../../../assets/images/discover/icons/world.png'),
+  edit: require('../../../assets/images/discover/icons/edit.png'),
   heart: require('../../../assets/images/discover/icons/heart.png'),
   heartOutline: require('../../../assets/images/discover/icons/heart-outline.png'),
   couple: require('../../../assets/images/discover/icons/couple.png'),

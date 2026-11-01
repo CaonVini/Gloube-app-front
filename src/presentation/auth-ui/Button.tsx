@@ -35,13 +35,15 @@ export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, siz
 
 interface SocialButtonProps {
   title: string;
+  /** Texto curto exibido no botão (o `title` completo continua sendo o rótulo de acessibilidade). */
+  label?: string;
   icon: ReactNode;
   onPress: () => void;
   disabled?: boolean;
 }
 
 /** Botão de provedor social (contorno claro). */
-export function SocialButton({ title, icon, onPress, disabled }: SocialButtonProps) {
+export function SocialButton({ title, label, icon, onPress, disabled }: SocialButtonProps) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -49,10 +51,10 @@ export function SocialButton({ title, icon, onPress, disabled }: SocialButtonPro
       accessibilityState={{ disabled: !!disabled }}
       disabled={disabled}
       onPress={onPress}
-      style={({ pressed }) => [s.social, disabled && s.off, pressed && s.pressed]}
+      style={({ pressed }) => [s.social, label ? s.socialCompact : null, disabled && s.off, pressed && s.pressed]}
     >
       {icon}
-      <Text style={s.socialText}>{title}</Text>
+      <Text style={s.socialText}>{label ?? title}</Text>
     </Pressable>
   );
 }
@@ -71,6 +73,7 @@ const s = StyleSheet.create({
     backgroundColor: authColors.surface, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12,
     paddingHorizontal: 16,
   },
+  socialCompact: { flex: 1, minHeight: 38, gap: 8, paddingHorizontal: 10 },
   socialText: { fontFamily: fonts.medium, fontSize: 15, color: authColors.body },
   off: { opacity: 0.55 },
   pressed: { opacity: 0.85 },

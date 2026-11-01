@@ -71,10 +71,9 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   const restart = useCallback(() => { setAnswers(emptyAnswers(originText)); setStepIndex(0); setPhase('quiz'); }, []);
   const editAnswers = useCallback(() => { setStepIndex(STEPS.length - 1); setPhase('quiz'); }, []);
 
-  const top = Math.max(insets.top, 16) + 4;
   const shell = (children: React.ReactNode, withNav = true) => (
     <View style={s.root}>
-      <View style={[s.column, { paddingTop: top }]}>
+      <View style={s.column}>
         <DiscoverHeader fullName={fullName} onSignOut={onSignOut} />
       </View>
       {children}

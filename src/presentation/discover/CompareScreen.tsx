@@ -1,7 +1,6 @@
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { buildComparison, comparisonHighlights } from '../../domain/discover/compare';
 import type { Recommendation } from '../../domain/discover/types';
-import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { destinationImages } from './assets';

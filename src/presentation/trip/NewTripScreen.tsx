@@ -1,16 +1,12 @@
 import type React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SIMULATED_ORIGIN, addDestination, canAdvance, moveDestination, removeDestination,
   searchDestinations, type Destination,
 } from '../../domain/trip-plan';
-import { getInitials } from '../../domain/demo-user';
 import { PrimaryButton } from '../auth-ui/Button';
-import { GloubeLogo } from '../auth-ui/GloubeLogo';
-import { AvatarMenu } from '../home/AvatarMenu';
-import { avatarPhoto } from '../discover/assets';
+import { AppHeader } from '../home/AppHeader';
 import { BottomNavBar, DEFAULT_NAV_ITEMS, NAV_FAB_CLEARANCE } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
@@ -34,7 +30,6 @@ interface Props {
 
 /** Passo 1 de 3 de "Nova viagem". Tudo local/fictício: origem simulada, busca em catálogo local, sem rede. */
 export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props) {
-  const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const originRef = useRef<React.ComponentRef<typeof TextInput>>(null);
@@ -67,12 +62,9 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
 
   return (
     <View style={s.root}>
-      <View style={[s.content, { paddingTop: Math.max(insets.top, 12) + 2 }]}>
+      <View style={s.content}>
         <View style={s.column}>
-          <View style={s.header}>
-            <GloubeLogo width={Math.round(150 * Math.min(1, k + 0.1))} tone="dark" />
-            <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} photo={avatarPhoto} />
-          </View>
+          <AppHeader fullName={fullName} onSignOut={onSignOut} />
 
           <View style={s.progressRow} accessible accessibilityLabel="Nova viagem, etapa 1 de 3">
             <Text style={s.kicker}>NOVA VIAGEM</Text>

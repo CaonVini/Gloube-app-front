@@ -1,10 +1,8 @@
 import { Image, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getInitials } from '../../domain/demo-user';
 import { PrimaryButton } from '../auth-ui/Button';
-import { GloubeLogo } from '../auth-ui/GloubeLogo';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
-import { AvatarMenu } from './AvatarMenu';
+import { AppHeader } from './AppHeader';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const heroImage = require('../../../assets/images/home-hero.png');
@@ -29,16 +27,13 @@ export function HomeScreen({ firstName, fullName, onPlanTrip, onSignOut }: Props
   return (
     <ScrollView
       style={s.flex}
-      contentContainerStyle={[s.content, { paddingTop: Math.max(insets.top, 47) + 6, paddingBottom: Math.max(insets.bottom, 16) + 24 }]}
+      contentContainerStyle={[s.content, { paddingTop: 0, paddingBottom: Math.max(insets.bottom, 16) + 24 }]}
       showsVerticalScrollIndicator={false}
       bounces={false}
       overScrollMode="never"
     >
       <View style={s.column}>
-        <View style={s.header}>
-          <GloubeLogo width={150} tone="dark" />
-          <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
-        </View>
+        <AppHeader fullName={fullName} onSignOut={onSignOut} />
 
         {/* Bloco central: ocupa o espaço restante e centraliza texto, ilustração e botão na vertical. */}
         <View style={s.center}>

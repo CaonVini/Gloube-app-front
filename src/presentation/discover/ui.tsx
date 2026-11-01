@@ -1,10 +1,8 @@
 import { memo, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { getInitials } from '../../domain/demo-user';
-import { GloubeLogo } from '../auth-ui/GloubeLogo';
-import { AvatarMenu } from '../home/AvatarMenu';
+import { AppHeader } from '../home/AppHeader';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
-import { avatarPhoto, type QuizPhotoKey, quizPhotos } from './assets';
+import { type QuizPhotoKey, quizPhotos } from './assets';
 import { DIcon, type DiscoverIconName } from './icons';
 
 /** Paleta do fluxo (mesma do app: verde escuro, teal, creme e o amarelo-limão da navbar). */
@@ -27,14 +25,9 @@ export const cardShadow = {
   elevation: 2,
 } as const;
 
-/** Cabeçalho do app: logo Gloube + avatar (mesmo da Home / Nova viagem). */
+/** Cabeçalho do app: o mesmo componente das demais telas. */
 export function DiscoverHeader({ fullName, onSignOut }: { fullName: string; onSignOut: () => void }) {
-  return (
-    <View style={s.header}>
-      <GloubeLogo width={150} tone="dark" />
-      <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} photo={avatarPhoto} />
-    </View>
-  );
+  return <AppHeader fullName={fullName} onSignOut={onSignOut} />;
 }
 
 /** Rótulo em caixa alta + barra em segmentos + "n de N". */
