@@ -149,7 +149,7 @@ export const PhotoCard = memo(function PhotoCard({ photo, title, subtitle, selec
       onPress={onPress}
       style={({ pressed }) => [s.photoCard, cardShadow, pressed && s.pressed]}
     >
-      <Image source={quizPhotos[photo]} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Image source={quizPhotos[photo]} style={s.photoImg} resizeMode="cover" />
       <Shade height={compact ? '55%' : '50%'} />
       <View style={s.photoSelect}><SelectDot on={selected} /></View>
       <View style={[s.photoText, compact && { padding: 12 }]}>
@@ -224,6 +224,8 @@ const s = StyleSheet.create({
   },
   pressed: { opacity: 0.85 },
   photoCard: { flex: 1, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1F3D36' },
+  // Imagem ancorada no topo e ~20% mais alta que o cartão: o rodapé (onde fica o texto) corta a base da foto e o assunto não fica sob o título.
+  photoImg: { position: 'absolute', top: 0, left: 0, width: '100%', height: '118%' },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0 },
   photoSelect: { position: 'absolute', top: 12, right: 12 },
   photoText: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 2 },
