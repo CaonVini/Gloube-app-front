@@ -5,7 +5,7 @@ import type { Answers, Climate, Companion, Experience, Need, Reach } from '../..
 import { fonts } from '../theme/auth-theme';
 import type { QuizPhotoKey } from './assets';
 import { BudgetStep, PeriodStep } from './StepWidgets';
-import { Chip, PhotoCard, cardShadow, dc } from './ui';
+import { PhotoCard, dc } from './ui';
 
 const CLIMATES: { id: Climate; label: string; hint: string; photo: QuizPhotoKey }[] = [
   { id: 'frio', label: 'Frio', hint: 'Refúgios e aconchego', photo: 'clima-frio' },
@@ -98,8 +98,6 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
       const pct = ((a.days - MIN_DAYS) / (MAX_DAYS - MIN_DAYS)) * 100;
       return (
         <View style={s.daysCard}>
-          <View pointerEvents="none" style={s.ringA} />
-          <View pointerEvents="none" style={s.ringB} />
           <Text style={s.daysKicker}>DURAÇÃO DA VIAGEM</Text>
           <View style={s.stepper}>
             <StepButton label="−" a11y="Diminuir um dia" onPress={() => onChange({ days: clampDays(a.days - 1) })} />
@@ -123,7 +121,7 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
               );
             })}
           </View>
-          <Text style={s.range}>Atalhos em dias</Text>
+          
         </View>
       );
     }
@@ -143,25 +141,23 @@ function StepButton({ label, onPress, a11y }: { label: string; onPress: () => vo
 const s = StyleSheet.create({
   fill: { flex: 1, gap: 12 },
   row: { flex: 1, flexDirection: 'row', gap: 12 },
-  daysCard: { flex: 1, justifyContent: 'space-between', alignItems: 'center', backgroundColor: dc.dark, borderRadius: 28, paddingVertical: 22, paddingHorizontal: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(241,239,113,0.35)', ...cardShadow },
-  ringA: { position: 'absolute', right: -60, top: -60, width: 220, height: 220, borderRadius: 110, borderWidth: 1, borderColor: 'rgba(241,239,113,0.22)' },
-  ringB: { position: 'absolute', left: -50, bottom: -70, width: 200, height: 200, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(241,239,113,0.16)' },
-  daysKicker: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 2, color: 'rgba(255,255,255,0.7)' },
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch' },
-  stepBtn: { width: 56, height: 56, borderRadius: 28, borderWidth: 1.5, borderColor: 'rgba(241,239,113,0.7)', backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
-  stepBtnText: { fontFamily: fonts.medium, fontSize: 30, lineHeight: 34, color: dc.lime },
+  daysCard: { flex: 1, justifyContent: 'space-evenly', alignItems: 'center', paddingVertical: 8 },
+  daysKicker: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 2, color: dc.muted },
+  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 8 },
+  stepBtn: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: dc.dark, alignItems: 'center', justifyContent: 'center' },
+  stepBtnText: { fontFamily: fonts.regular, fontSize: 28, lineHeight: 32, color: dc.dark },
   daysBox: { alignItems: 'center' },
-  daysNumber: { fontFamily: fonts.bold, fontSize: 104, lineHeight: 112, letterSpacing: -3, color: dc.lime },
-  daysLabel: { fontFamily: fonts.medium, fontSize: 18, letterSpacing: 1, color: 'rgba(255,255,255,0.85)' },
-  trackBox: { alignSelf: 'stretch', gap: 8, paddingHorizontal: 6 },
-  track: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'center' },
-  trackFill: { position: 'absolute', left: 0, height: 4, borderRadius: 2, backgroundColor: dc.lime },
-  knob: { position: 'absolute', width: 16, height: 16, borderRadius: 8, marginLeft: -8, backgroundColor: dc.lime, borderWidth: 3, borderColor: dc.dark },
+  daysNumber: { fontFamily: fonts.bold, fontSize: 96, lineHeight: 104, letterSpacing: -3, color: dc.dark },
+  daysLabel: { fontFamily: fonts.regular, fontSize: 16, letterSpacing: 1, color: dc.muted },
+  trackBox: { alignSelf: 'stretch', gap: 10, paddingHorizontal: 8 },
+  track: { height: 2, borderRadius: 1, backgroundColor: '#D9DDDA', justifyContent: 'center' },
+  trackFill: { position: 'absolute', left: 0, height: 2, backgroundColor: dc.dark },
+  knob: { position: 'absolute', width: 14, height: 14, borderRadius: 7, marginLeft: -7, backgroundColor: dc.lime, borderWidth: 1.5, borderColor: dc.dark },
   trackLabels: { flexDirection: 'row', justifyContent: 'space-between' },
   presets: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', justifyContent: 'center' },
-  preset: { flex: 1, maxWidth: 62, height: 48, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' },
-  presetOn: { backgroundColor: dc.lime, borderColor: dc.lime },
-  presetText: { fontFamily: fonts.semibold, fontSize: 17, color: '#FFFFFF' },
-  presetTextOn: { color: dc.dark, fontFamily: fonts.bold },
-  range: { fontFamily: fonts.regular, fontSize: 12, color: 'rgba(255,255,255,0.6)' },
+  preset: { flex: 1, maxWidth: 62, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#D9DDDA', alignItems: 'center', justifyContent: 'center' },
+  presetOn: { backgroundColor: dc.dark, borderColor: dc.dark },
+  presetText: { fontFamily: fonts.medium, fontSize: 16, color: dc.dark },
+  presetTextOn: { color: '#FFFFFF', fontFamily: fonts.semibold },
+  range: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 });

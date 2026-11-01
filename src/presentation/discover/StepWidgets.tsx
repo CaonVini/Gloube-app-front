@@ -37,7 +37,7 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
         return (
           <View key={o.mode} style={[s.opt, cardShadow, on && s.optOn, grows ? { flex: 1, minHeight: 150 } : { flexGrow: 1, flexBasis: 0, maxHeight: 96, minHeight: 72 }]}>
             <Pressable accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${o.label}. ${o.hint}`} onPress={() => pick(o.mode)} style={({ pressed }) => [s.optHead, !grows && { flex: 1 }, pressed && { opacity: 0.85 }]}>
-              <View style={[s.optIcon, on && { backgroundColor: dc.lime }]}><DIcon name={o.icon} size={26} color={dc.dark} /></View>
+              <View style={s.optIcon}><DIcon name={o.icon} size={26} color={dc.dark} /></View>
               <View style={{ flex: 1 }}>
                 <Text style={s.optTitle}>{o.label}</Text>
                 <Text style={s.optHint}>{o.hint}</Text>
@@ -87,14 +87,6 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
 
 /* ───────────────────────── Orçamento ───────────────────────── */
 
-/** Brilho sutil no topo do degrau (faixas brancas translúcidas, sem dependência de gradiente nativo). */
-function Sheen() {
-  return (
-    <View pointerEvents="none" style={s.sheen}>
-      {Array.from({ length: 10 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: `rgba(255,255,255,${(0.55 * (1 - i / 10) ** 2).toFixed(3)})` }} />)}
-    </View>
-  );
-}
 
 const STAIRS: { id: BudgetId; short: string; n: number }[] = [
   { id: 'ate-2k', short: 'Até 2 mil', n: 1 },
@@ -109,9 +101,7 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
   const flex = a.budget === 'flexivel';
   return (
     <View style={s.fill}>
-      <View style={[s.hero, cardShadow]}>
-        <View pointerEvents="none" style={s.ringA} />
-        <View pointerEvents="none" style={s.ringB} />
+      <View style={s.hero}>
         <View style={s.heroRule} />
         <Text style={s.heroKicker}>ORÇAMENTO POR PESSOA</Text>
         <Text style={s.heroValue} numberOfLines={1} adjustsFontSizeToFit accessibilityLiveRegion="polite">{chosen ? chosen.label : 'Escolha um degrau'}</Text>
@@ -125,7 +115,6 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
             <Pressable key={st.id} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={findBudget(st.id)?.label} onPress={() => onChange({ budget: st.id })} style={({ pressed }) => [s.stairCol, pressed && { opacity: 0.85 }]}>
               <View style={{ flexGrow: 5 - st.n, flexBasis: 0 }} />
               <View style={[s.step, !on && s.stepOff, { flexGrow: st.n }, on && s.stepOn]}>
-                {on ? null : <Sheen />}
                 <Text style={[s.stepGlyph, on && { color: dc.lime }]}>{'$'.repeat(st.n)}</Text>
                 {on ? <View style={s.stepCheck}><DIcon name="check" size={14} color={dc.dark} /></View> : null}
               </View>
@@ -136,7 +125,7 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
       </View>
 
       <Pressable accessibilityRole="radio" accessibilityState={{ checked: flex }} accessibilityLabel={BUDGETS[4]?.label} onPress={() => onChange({ budget: 'flexivel' })} style={({ pressed }) => [s.flex, cardShadow, flex && s.flexOn, pressed && { opacity: 0.85 }]}>
-        <View style={[s.seal, flex && { backgroundColor: dc.lime }]}><DIcon name="infinity" size={22} color={dc.dark} /></View>
+        <View style={s.seal}><DIcon name="infinity" size={22} color={dc.dark} /></View>
         <View style={{ flex: 1 }}>
           <Text style={s.flexTitle}>Ainda não defini</Text>
           <Text style={s.flexHint}>Não limitamos por valor</Text>
@@ -159,24 +148,21 @@ const s = StyleSheet.create({
   dateInput: { fontFamily: fonts.bold, fontSize: 32, color: dc.dark, width: '100%', paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: dc.lime, outlineStyle: 'none' } as never,
   months: { flex: 1, paddingHorizontal: 12, paddingBottom: 12, gap: 8 },
   monthRow: { flex: 1, flexDirection: 'row', gap: 6 },
-  month: { flex: 1, minHeight: 40, borderRadius: 14, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
+  month: { flex: 1, minHeight: 40, borderRadius: 14, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'center' },
   monthOn: { backgroundColor: dc.lime, borderWidth: 2, borderColor: dc.dark },
   monthText: { fontFamily: fonts.semibold, fontSize: 14, color: dc.dark },
   monthTextOn: { fontFamily: fonts.bold },
 
-  hero: { backgroundColor: dc.dark, borderRadius: 26, padding: 20, gap: 4, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(241,239,113,0.35)' },
-  ringA: { position: 'absolute', right: -40, top: -50, width: 150, height: 150, borderRadius: 75, borderWidth: 1, borderColor: 'rgba(241,239,113,0.25)' },
-  ringB: { position: 'absolute', right: 10, top: -10, width: 90, height: 90, borderRadius: 45, borderWidth: 1, borderColor: 'rgba(241,239,113,0.18)' },
+  hero: { paddingVertical: 4, gap: 4 },
   heroRule: { width: 28, height: 2, borderRadius: 1, backgroundColor: dc.lime, marginBottom: 6 },
-  heroKicker: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.6, color: 'rgba(255,255,255,0.7)' },
-  heroValue: { fontFamily: fonts.semibold, fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: dc.lime },
-  heroNote: { fontFamily: fonts.regular, fontSize: 13, color: 'rgba(255,255,255,0.85)' },
+  heroKicker: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.8, color: dc.muted },
+  heroValue: { fontFamily: fonts.semibold, fontSize: 30, lineHeight: 36, letterSpacing: -0.5, color: dc.dark },
+  heroNote: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
   stairs: { flex: 1, flexDirection: 'row', gap: 8, alignItems: 'stretch' },
   stairCol: { flex: 1, justifyContent: 'flex-end', gap: 6 },
-  step: { flexBasis: 0, minHeight: 44, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: dc.mintStrong, alignItems: 'center', justifyContent: 'flex-start', paddingTop: 10 },
-  stepOff: { overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(31,61,54,0.12)', shadowColor: '#1F3D36', shadowOpacity: 0.1, shadowRadius: 8, shadowOffset: { width: 0, height: 4 } },
-  stepOn: { backgroundColor: dc.dark, borderTopWidth: 3, borderTopColor: dc.lime, shadowColor: '#1F3D36', shadowOpacity: 0.28, shadowRadius: 12, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  sheen: { position: 'absolute', top: 0, left: 0, right: 0, height: '45%' },
+  step: { flexBasis: 0, minHeight: 44, borderTopLeftRadius: 18, borderTopRightRadius: 18, borderBottomLeftRadius: 6, borderBottomRightRadius: 6, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'flex-start', paddingTop: 10 },
+  stepOff: { borderWidth: 1, borderColor: '#D9DDDA' },
+  stepOn: { backgroundColor: dc.dark, borderTopWidth: 3, borderTopColor: dc.lime },
   seal: { width: 40, height: 40, borderRadius: 20, backgroundColor: dc.mint, borderWidth: 1, borderColor: 'rgba(31,61,54,0.18)', alignItems: 'center', justifyContent: 'center' },
   stepGlyph: { fontFamily: fonts.bold, fontSize: 18, color: dc.teal },
   stepCheck: { marginTop: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },

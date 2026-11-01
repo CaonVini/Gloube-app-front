@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  SIMULATED_ORIGIN, addDestination, canAdvance, destinationsLabel, moveDestination, removeDestination,
+  SIMULATED_ORIGIN, addDestination, canAdvance, moveDestination, removeDestination,
   searchDestinations, type Destination,
 } from '../../domain/trip-plan';
 import { getInitials } from '../../domain/demo-user';
@@ -169,7 +169,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
                       onLongPress={() => remove(d.id)}
                       style={s.dest}
                     >
-                      <TripIcon name="pin" size={24} color={authColors.text} />
+                      <View style={s.pinCircle}><TripIcon name="pin" size={20} color={authColors.text} /></View>
                       <View style={s.destText}>
                         <Text style={s.city} numberOfLines={1}>{d.city}</Text>
                         <Text style={s.country} numberOfLines={1}>{d.country}</Text>
@@ -219,9 +219,19 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
             <TripIcon name="chevronRight" size={20} color={authColors.text} />
           </Pressable>
 
-          <View style={[s.footer, { paddingBottom: (compact ? 2 : 6) + NAV_FAB_CLEARANCE }]}>
-            <Text style={s.count} accessibilityLiveRegion="polite">{destinationsLabel(destinations.length)}</Text>
+          <View style={s.footer}>
             <PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="hero" />
+            {/* Faixa ao lado da bola central da navbar (que se projeta para cima): contagem à esquerda, dica à direita. */}
+            <View style={[s.strip, { height: NAV_FAB_CLEARANCE + (compact ? 0 : 4) }]}>
+              <View style={s.stripSide}>
+                <View style={s.countSeal}><Text style={s.countSealText}>{destinations.length}</Text></View>
+                <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>{destinations.length === 1 ? 'destino' : 'destinos'}</Text>
+              </View>
+              <View style={s.stripGap} />
+              <View style={[s.stripSide, { justifyContent: 'flex-end' }]}>
+                <Text style={s.stripHint} numberOfLines={1}>Segure p/ remover</Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
@@ -288,8 +298,15 @@ const s = StyleSheet.create({
   bannerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   bannerTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 21, color: '#111' },
   bannerText: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
-  footer: { paddingTop: 8, paddingBottom: 10, gap: 6 },
-  count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle, textAlign: 'center' },
+  footer: { paddingTop: 8 },
+  strip: { flexDirection: 'row', alignItems: 'center' },
+  stripSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stripGap: { width: 92 },
+  countSeal: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 6, backgroundColor: '#F1EF71', alignItems: 'center', justifyContent: 'center' },
+  countSealText: { fontFamily: fonts.bold, fontSize: 14, color: authColors.text },
+  count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle },
+  stripHint: { fontFamily: fonts.regular, fontSize: 12, color: homeColors.subtitle },
+  pinCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },
 });
