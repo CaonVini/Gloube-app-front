@@ -94,6 +94,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit }: Props) {
   if (phase === 'compare') {
     return shell(
       <CompareScreen favorites={pickFavorites(recs, favorites)} chosenId={chosenId} onChoose={setChosenId} onBack={() => setPhase('results')} />,
+      false,
     );
   }
 

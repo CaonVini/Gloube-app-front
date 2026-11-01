@@ -46,7 +46,8 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   const ready = canAdvance(origin, destinations);
 
   // Tudo cabe em UMA tela (sem rolagem): medidas escalam com a altura (referência 844) e o título com a largura.
-  const k = Math.min(1.1, Math.max(0.78, height / 844));
+  const k = Math.min(1.1, Math.max(0.72, height / 844));
+  const compact = height < 800; // telas baixas: esconde a nota e aperta o espaçamento
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
   const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
@@ -85,9 +86,9 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
         </View>
 
         <View style={[s.column, s.flex]}>
-          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad }]}>
+          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 4 : 6 }]}>
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
-            <Text style={s.hint}>De qual cidade você vai sair?</Text>
+            {compact ? null : <Text style={s.hint}>De qual cidade você vai sair?</Text>}
             <View style={[s.field, { minHeight: m.field }]}>
               <TripIcon name="crosshair" size={20} color={authColors.text} />
               <TextInput
@@ -188,7 +189,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               <View style={s.plus}><TripIcon name="plus" size={16} color="#FFFFFF" /></View>
               <Text style={s.link}>Adicionar outro destino</Text>
             </Pressable>
-            <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>
+            {compact ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
           </View>
 
           <Pressable
@@ -271,7 +272,7 @@ const s = StyleSheet.create({
   bannerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   bannerTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 21, color: '#111' },
   bannerText: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
-  footer: { marginTop: 'auto', paddingTop: 8, paddingBottom: 14, gap: 4 },
+  footer: { marginTop: 'auto', paddingTop: 6, paddingBottom: 10, gap: 4 },
   count: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },

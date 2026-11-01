@@ -25,7 +25,8 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
   const d = rec.destination;
   const inner = Math.min(width, MAX_COLUMN + H_PAD * 2) - H_PAD * 2;
   const { height } = useWindowDimensions();
-  const photoH = Math.round(Math.min(280, Math.max(190, height * 0.27)));
+  const photoH = Math.round(Math.min(280, Math.max(124, height * 0.23)));
+  const roomy = height >= 800;
   return (
     <View style={{ width, alignItems: 'center' }}>
       <ScrollView style={{ width: inner + H_PAD * 2 }} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -59,13 +60,15 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
           </View>
         </View>
 
+        {roomy ? (
         <View style={s.tags}>
           <Tag>{CLIMATE_LABEL[d.climate]}</Tag>
           {d.experiences.map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
           <Tag tone="lime">Mín. {d.minDays} dias</Tag>
         </View>
+        ) : null}
 
-        <Text style={s.desc} numberOfLines={2}>{d.description}</Text>
+        {roomy ? <Text style={s.desc} numberOfLines={2}>{d.description}</Text> : null}
 
         <View style={s.why}>
           <View style={s.whyHead}>
@@ -83,7 +86,7 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
 
         <View style={s.priceCard}>
           <View style={s.priceCol}>
-            <Text style={s.priceLabel}>Estimativa por pessoa</Text>
+            <Text style={s.priceLabel}>Estimativa fictícia por pessoa</Text>
             <Text style={s.price}>~{formatBRL(rec.estimatedCost)}</Text>
           </View>
           <View style={s.priceDivider} />
@@ -92,14 +95,13 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
             <Text style={s.priceSmall}>{formatBRL(rec.transportCost)}</Text>
           </View>
         </View>
-        <Text style={s.disclaimer}>Valores estimados e fictícios para demonstração. Confirme preços e regras antes de reservar.</Text>
       </ScrollView>
     </View>
   );
 });
 
 const s = StyleSheet.create({
-  content: { paddingHorizontal: H_PAD, paddingTop: 2, paddingBottom: 10, gap: 12 },
+  content: { paddingHorizontal: H_PAD, paddingTop: 2, paddingBottom: 8, gap: 10 },
   photoWrap: { borderRadius: 26, overflow: 'hidden', backgroundColor: dc.dark },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' },
   overlayText: { position: 'absolute', left: 18, right: 18, bottom: 16, gap: 2 },
@@ -116,7 +118,7 @@ const s = StyleSheet.create({
   country: { fontFamily: fonts.semibold, fontSize: 16, color: '#FFFFFF' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   desc: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: dc.muted },
-  why: { backgroundColor: dc.mint, borderRadius: 20, padding: 14, gap: 8, borderLeftWidth: 5, borderLeftColor: dc.dark },
+  why: { backgroundColor: dc.mint, borderRadius: 20, padding: 12, gap: 6, borderLeftWidth: 5, borderLeftColor: dc.dark },
   whyHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   whyIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
   whyTitle: { fontFamily: fonts.bold, fontSize: 18, color: dc.dark },

@@ -35,10 +35,10 @@ const COMPANIONS: { id: Companion; label: string; hint: string; photo: QuizPhoto
   { id: 'solo', label: 'Solo', hint: 'Só você e o mundo', photo: 'comp-solo' },
 ];
 const NEEDS: { id: Need; label: string; hint: string; icon: DiscoverIconName }[] = [
-  { id: 'criancas', label: 'Crianças', hint: 'Ritmo e passeios para os pequenos', icon: 'child' },
-  { id: 'idosos', label: 'Idosos', hint: 'Menos deslocamento, mais conforto', icon: 'elder' },
-  { id: 'acessibilidade', label: 'Acessibilidade', hint: 'Só mostramos o que for verificado', icon: 'access' },
-  { id: 'pets', label: 'Pets', hint: 'Só mostramos o que for verificado', icon: 'paw' },
+  { id: 'criancas', label: 'Crianças', hint: 'Passeios para os pequenos', icon: 'child' },
+  { id: 'idosos', label: 'Idosos', hint: 'Mais conforto no ritmo', icon: 'elder' },
+  { id: 'acessibilidade', label: 'Acessibilidade', hint: 'Informação verificada', icon: 'access' },
+  { id: 'pets', label: 'Pets', hint: 'Informação verificada', icon: 'paw' },
 ];
 const PERIODS = {
   definidas: { label: 'Tenho datas definidas', hint: 'Informe a data de ida', icon: 'calendar' },
@@ -147,7 +147,7 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
     case 'orcamento':
       return (
         <View style={s.list}>
-          {BUDGETS.map((b) => <OptionCard key={b.id} icon={BUDGET_ICONS[b.id]} label={b.label} hint={b.id === 'flexivel' ? 'Não limitamos por valor' : 'Por pessoa, com passagem e hospedagem'} selected={a.budget === b.id} onPress={() => onChange({ budget: b.id })} />)}
+          {BUDGETS.map((b) => <OptionCard key={b.id} icon={BUDGET_ICONS[b.id]} label={b.label} hint={b.id === 'flexivel' ? 'Não limitamos por valor' : 'Por pessoa'} selected={a.budget === b.id} onPress={() => onChange({ budget: b.id })} />)}
         </View>
       );
   }

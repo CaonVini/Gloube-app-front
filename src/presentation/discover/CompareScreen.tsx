@@ -1,4 +1,4 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { buildComparison, comparisonHighlights } from '../../domain/discover/compare';
 import type { Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
@@ -19,7 +19,10 @@ interface Props {
 
 /** Comparação dos favoritos: um cartão por destino (rolagem horizontal), com as mesmas linhas em todos. */
 export function CompareScreen({ favorites, chosenId, onChoose, onBack }: Props) {
-  const rows = buildComparison(favorites);
+  const { height } = useWindowDimensions();
+  const compact = height < 800;
+  // Em telas baixas, esconde as linhas menos decisivas para nada ficar cortado.
+  const rows = buildComparison(favorites).filter((r) => !compact || !['Passagem estimada', 'Melhor época'].includes(r.label));
   const { cheapestId, shortestId } = comparisonHighlights(favorites);
   const chosen = favorites.find((r) => r.destination.id === chosenId);
   return (
@@ -32,7 +35,7 @@ export function CompareScreen({ favorites, chosenId, onChoose, onBack }: Props) 
             <Text style={s.bannerText}>Você escolheu {chosen.destination.name}. Próximo passo: planejar com a Aurora (em breve).</Text>
           </View>
         ) : (
-          <Text style={s.subtitle}>Escolha o destino que mais combina com você.</Text>
+          <Text style={s.subtitle}>Escolha o que mais combina com você.</Text>
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cards} style={s.flex}>
@@ -79,22 +82,22 @@ const s = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
   head: { paddingHorizontal: 16, gap: 6, marginBottom: 12 },
-  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B' },
+  title: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, letterSpacing: -0.6, color: '#0B0B0B' },
   subtitle: { fontFamily: fonts.medium, fontSize: 17, color: dc.teal },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: dc.lime, borderRadius: 16, padding: 12 },
   bannerText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: dc.dark },
   cards: { paddingHorizontal: 16, gap: 14, paddingBottom: 8 },
   card: { width: CARD_W, backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: dc.border, ...cardShadow },
   cardOn: { borderColor: dc.dark, borderWidth: 2 },
-  cardInner: { padding: 12, gap: 10 },
-  photo: { width: '100%', height: 130, borderRadius: 16 },
-  name: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 27, color: dc.dark },
+  cardInner: { padding: 12, gap: 8 },
+  photo: { width: '100%', height: 72, borderRadius: 16 },
+  name: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 24, color: dc.dark },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  row: { gap: 2, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dc.border },
-  rowLabel: { fontFamily: fonts.medium, fontSize: 12, color: dc.muted },
-  rowValue: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 21, color: '#1A1A1A' },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, paddingTop: 6, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dc.border },
+  rowLabel: { width: 96, fontFamily: fonts.medium, fontSize: 12, lineHeight: 18, color: dc.muted },
+  rowValue: { flex: 1, textAlign: 'right', fontFamily: fonts.semibold, fontSize: 13, lineHeight: 18, color: '#1A1A1A' },
   warn: { color: '#8A6100' },
-  choose: { minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderColor: dc.dark, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  choose: { minHeight: 44, borderRadius: 14, borderWidth: 1.5, borderColor: dc.dark, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
   chooseOn: { backgroundColor: dc.dark },
   chooseText: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },
   chooseTextOn: { color: '#FFFFFF' },

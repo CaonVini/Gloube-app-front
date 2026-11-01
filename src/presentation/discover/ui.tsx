@@ -85,7 +85,7 @@ export const OptionCard = memo(function OptionCard({ icon, label, hint, selected
       style={({ pressed }) => [s.option, cardShadow, selected && s.optionOn, pressed && s.pressed]}
     >
       <View style={[s.iconCircle, selected && s.iconCircleOn]}>
-        <DIcon name={icon} size={30} color={dc.dark} />
+        <DIcon name={icon} size={28} color={dc.dark} />
       </View>
       <View style={s.optionText}>
         <Text style={s.optionLabel}>{label}</Text>
@@ -195,15 +195,15 @@ const s = StyleSheet.create({
   title: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 33, letterSpacing: -0.6, color: '#0B0B0B' },
   subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86' },
   option: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 72, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card,
   },
   optionOn: { borderColor: dc.dark, borderWidth: 2 },
-  iconCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
+  iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
   iconCircleOn: { backgroundColor: dc.lime },
   optionText: { flex: 1, gap: 2 },
   optionLabel: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22, color: dc.dark },
-  optionHint: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 19, color: dc.muted },
+  optionHint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 17, color: dc.muted },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#C9CDCB', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   checkOn: { borderColor: dc.dark, backgroundColor: dc.dark },
   chip: {
