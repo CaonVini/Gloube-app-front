@@ -1,68 +1,96 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { formatBRL } from '../../domain/discover/budget';
-import { buildItineraryPreview } from '../../domain/discover/choice';
-import type { Answers, Recommendation } from '../../domain/discover/types';
+import type { ItineraryPreview } from '../../domain/discover/choice';
 import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { destinationImages } from './assets';
-import { cardShadow, dc } from './ui';
+import { SegmentedProgress, cardShadow, dc } from './ui';
 
 const SHOWN_DAYS = 3;
 
-/** Prévia do roteiro do destino confirmado. A "geração" é local e curta (sem rede). */
-export function ItineraryScreen({ rec, answers, onBackToChoice, onDone }: { rec: Recommendation; answers: Answers; onBackToChoice: () => void; onDone: () => void }) {
+export interface ItinerarySection {
+  id: string;
+  name: string;
+  preview: ItineraryPreview;
+  /** Ex.: "~R$ 5.000 por pessoa (estimativa)". Só quando existe estimativa. */
+  costText?: string;
+}
+
+interface Props {
+  sections: readonly ItinerarySection[];
+  onEditPlaces: () => void;
+  /** Só no fluxo Descubra: voltar a escolher outro destino. */
+  onBackToChoice?: () => void;
+  onDone: () => void;
+}
+
+/** Prévia do roteiro baseada nos locais escolhidos. A "geração" é local e curta (sem rede). */
+export function ItineraryScreen({ sections, onEditPlaces, onBackToChoice, onDone }: Props) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setReady(true), 900);
     return () => clearTimeout(t);
   }, []);
-  const preview = useMemo(() => buildItineraryPreview(rec, answers), [rec, answers]);
 
   if (!ready) {
     return (
       <View style={s.loading} accessibilityLiveRegion="polite">
         <ActivityIndicator color={dc.dark} />
-        <Text style={s.loadingText}>Montando a prévia do seu roteiro em {rec.destination.name}…</Text>
+        <Text style={s.loadingText}>Montando a prévia do seu roteiro…</Text>
       </View>
     );
   }
-  const shown = preview.days.slice(0, SHOWN_DAYS);
-  const more = preview.days.length - shown.length;
+  const single = sections.length === 1;
   return (
     <View style={s.root}>
+      <SegmentedProgress kicker="ROTEIRO" current={2} total={2} />
       <ScrollView style={s.flex} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
         <Text style={s.kicker}>PRÉVIA DO ROTEIRO</Text>
-        <Text style={s.title} accessibilityRole="header">{preview.title}</Text>
-        <View style={[s.photoWrap, cardShadow]}>
-          <Image source={destinationImages[rec.destination.id]} style={s.photo} resizeMode="cover" accessibilityLabel={`Imagem de ${rec.destination.name}`} />
-        </View>
-        <Text style={s.cost}>~{formatBRL(rec.estimatedCost)} <Text style={s.costNote}>por pessoa (estimativa)</Text></Text>
-        {shown.map((d) => (
-          <View key={d.day} style={s.day}>
-            <Text style={s.dayTitle}>Dia {d.day} · {d.title}</Text>
-            {d.items.map((it) => <Text key={it} style={s.item}>• {it}</Text>)}
-          </View>
-        ))}
-        {more > 0 ? <Text style={s.more}>+ {more} {more === 1 ? 'dia' : 'dias'} no roteiro completo</Text> : null}
-        {preview.notes.map((n) => <Text key={n} style={s.note}>{n}</Text>)}
+        {single ? null : <Text style={s.title} accessibilityRole="header">Seu roteiro</Text>}
+        {sections.map((sec) => {
+          const shown = sec.preview.days.slice(0, SHOWN_DAYS);
+          const more = sec.preview.days.length - shown.length;
+          const img = destinationImages[sec.id];
+          return (
+            <View key={sec.id} style={s.section}>
+              <Text style={single ? s.title : s.sectionTitle} accessibilityRole="header">{sec.preview.title}</Text>
+              {img ? (
+                <View style={[s.photoWrap, cardShadow]}>
+                  <Image source={img} style={s.photo} resizeMode="cover" accessibilityLabel={`Imagem de ${sec.name}`} />
+                </View>
+              ) : null}
+              {sec.costText ? <Text style={s.cost}>{sec.costText}</Text> : null}
+              {shown.map((d) => (
+                <View key={d.day} style={s.day}>
+                  <Text style={s.dayTitle}>Dia {d.day} · {d.title}</Text>
+                  {d.items.map((it) => <Text key={it} style={s.item}>• {it}</Text>)}
+                </View>
+              ))}
+              {more > 0 ? <Text style={s.more}>+ {more} {more === 1 ? 'dia' : 'dias'} no roteiro completo</Text> : null}
+            </View>
+          );
+        })}
+        {Array.from(new Set(sections.flatMap((x) => x.preview.notes))).map((n) => <Text key={n} style={s.note}>{n}</Text>)}
       </ScrollView>
       <View style={s.footer}>
         <PrimaryButton title="Concluir" onPress={onDone} size="hero" />
-        <SecondaryTextButton title="Escolher outro destino" onPress={onBackToChoice} />
+        <SecondaryTextButton title="Editar locais" onPress={onEditPlaces} />
+        {onBackToChoice ? <SecondaryTextButton title="Escolher outro destino" onPress={onBackToChoice} /> : null}
       </View>
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16 },
+  root: { flex: 1, width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16, gap: 8 },
   flex: { flex: 1 },
   content: { gap: 10, paddingBottom: 8 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 32 },
   loadingText: { fontFamily: fonts.medium, fontSize: 16, color: dc.dark, textAlign: 'center' },
   kicker: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 1.8, color: dc.muted },
+  section: { gap: 10 },
+  sectionTitle: { fontFamily: fonts.bold, fontSize: 20, lineHeight: 26, color: dc.dark },
   title: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 31, letterSpacing: -0.5, color: '#0B0B0B' },
   photoWrap: { borderRadius: 22, overflow: 'hidden', backgroundColor: dc.dark },
   photo: { width: '100%', height: 150 },

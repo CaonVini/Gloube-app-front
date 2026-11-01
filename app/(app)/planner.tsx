@@ -6,5 +6,5 @@ import { NewTripScreen } from '../../src/presentation/trip/NewTripScreen';
 export default function Planner() {
   const router = useRouter();
   const { user, signOut } = useDemoSession();
-  return <NewTripScreen fullName={user.fullName} onSignOut={signOut} onDiscover={(origin) => router.push({ pathname: '/discover', params: { origin } })} />;
+  return <NewTripScreen fullName={user.fullName} onSignOut={signOut} onNext={(ids) => router.push({ pathname: '/places', params: { dests: ids.join(',') } })} onDiscover={(origin) => router.push({ pathname: '/discover', params: { origin } })} />;
 }

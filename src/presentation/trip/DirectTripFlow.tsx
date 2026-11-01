@@ -1,0 +1,46 @@
+import { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { buildDirectPreview } from '../../domain/discover/choice';
+import { selectedPlaces } from '../../domain/discover/places';
+import type { Destination } from '../../domain/trip-plan';
+import { AppHeader } from '../home/AppHeader';
+import { ItineraryScreen } from '../discover/ItineraryScreen';
+import { PlacesScreen } from '../discover/PlacesScreen';
+import { homeColors } from '../theme/auth-theme';
+
+interface Props {
+  fullName: string;
+  onSignOut: () => void;
+  onExit: () => void;
+  /** Destinos que a pessoa já definiu na tela Nova viagem: pula exploração/comparação/escolha. */
+  destinations: readonly Destination[];
+}
+
+/** Destino já definido → direto para a escolha de locais e a prévia do roteiro. Tudo local/fictício. */
+export function DirectTripFlow({ fullName, onSignOut, onExit, destinations }: Props) {
+  const insets = useSafeAreaInsets();
+  const [phase, setPhase] = useState<'places' | 'itinerary'>('places');
+  const [selection, setSelection] = useState<Readonly<Record<string, readonly string[]>>>({});
+  const targets = useMemo(() => destinations.map((d) => ({ id: d.id, name: d.city })), [destinations]);
+  const sections = useMemo(() => destinations.map((d) => ({
+    id: d.id,
+    name: d.city,
+    preview: buildDirectPreview(d.city, selectedPlaces(d.id, selection[d.id] ?? [])),
+  })), [destinations, selection]);
+
+  return (
+    <View style={s.root}>
+      <View style={s.column}><AppHeader fullName={fullName} onSignOut={onSignOut} /></View>
+      {phase === 'places'
+        ? <PlacesScreen targets={targets} selection={selection} onChange={setSelection} onBack={onExit} onContinue={() => setPhase('itinerary')} />
+        : <ItineraryScreen sections={sections} onEditPlaces={() => setPhase('places')} onDone={onExit} />}
+      <View style={{ height: Math.max(insets.bottom, 12) }} />
+    </View>
+  );
+}
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: homeColors.background },
+  column: { width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16 },
+});

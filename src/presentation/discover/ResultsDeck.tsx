@@ -4,7 +4,6 @@ import { nextCardIndex } from '../../domain/discover/choice';
 import type { Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
-import { NAV_FAB_WIDTH } from '../navigation';
 import { fonts } from '../theme/auth-theme';
 import { BackCard, DestinationCard } from './DestinationCard';
 import { DetailsSheet } from './DetailsSheet';
@@ -119,16 +118,15 @@ export function ResultsDeck({ recs, favorites, onReact, onCompare, onRestart, on
           </View>
         ) : null}
       </View>
-      {/* Barra de ações dividida ao redor da bola central da navbar. */}
+      {/* Ações: não gostei (✕) e gostei (♥). */}
       <View style={s.footer}>
-        <View style={[s.footSide, { justifyContent: 'center' }]}>
+        <View style={s.footSide}>
           <Pressable accessibilityRole="button" accessibilityLabel="Não gostei, próximo destino" onPress={() => react(false)} style={({ pressed }) => [s.actBtn, s.nopeBtn, pressed && { opacity: 0.85 }]}>
             <View style={[s.xBar, { transform: [{ rotate: '45deg' }] }]} />
             <View style={[s.xBar, { transform: [{ rotate: '-45deg' }] }]} />
           </Pressable>
         </View>
-        <View style={{ width: NAV_FAB_WIDTH }} />
-        <View style={[s.footSide, { justifyContent: 'center' }]}>
+        <View style={s.footSide}>
           <Pressable accessibilityRole="button" accessibilityLabel="Gostei, salvar nos favoritos e ver o próximo" onPress={() => react(true)} style={({ pressed }) => [s.actBtn, s.likeBtn, pressed && { opacity: 0.85 }]}>
             <DIcon name="heart" size={28} color="#FFFFFF" />
           </Pressable>
@@ -145,8 +143,8 @@ const s = StyleSheet.create({
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
   abs: { position: 'absolute', top: 0, left: 0 },
   position: { fontFamily: fonts.medium, fontSize: 13, color: dc.muted, textAlign: 'center', paddingBottom: 6 },
-  footer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6, width: '100%', maxWidth: 512, alignSelf: 'center' },
-  footSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 56, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  footSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   actBtn: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
   nopeBtn: { borderWidth: 1.5, borderColor: '#D9663F', backgroundColor: '#FFFFFF' },
   likeBtn: { backgroundColor: dc.dark },

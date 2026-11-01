@@ -1,3 +1,4 @@
+import { FALLBACK_EXPERIENCE, distributePlaces, suggestedDays, type Place } from './places';
 import type { Answers, Experience, Recommendation } from './types';
 
 /** Todas as sugestões na ordem da tela final: favoritos primeiro (mantendo o ranking), depois as demais. */
@@ -32,32 +33,63 @@ export interface ItineraryPreview {
   notes: string[];
 }
 
-/**
- * Prévia ilustrativa do roteiro a partir do destino confirmado e das respostas. Determinística (sem rede).
- * Nunca afirma acessibilidade ou pets: apenas lembra de confirmar antes de reservar.
- */
-export function buildItineraryPreview(rec: Recommendation, a: Answers): ItineraryPreview {
-  const d = rec.destination;
-  const total = Math.max(1, a.days);
-  const exps: readonly Experience[] = d.experiences.length > 0 ? d.experiences : ['cidade'];
-  const days: ItineraryDay[] = Array.from({ length: total }, (_, i) => {
+function placeTitle(ps: readonly Place[]): string {
+  if (ps.length === 1) return ps[0]!.name;
+  if (ps.length === 2) return `${ps[0]!.name} e ${ps[1]!.name}`;
+  return `${ps[0]!.name} e mais ${ps.length - 1}`;
+}
+
+/** Monta os dias: chegada e volta + locais escolhidos distribuídos; sem locais, sugestões gerais por experiência. */
+export function buildDays(total: number, exps: readonly Experience[], places: readonly Place[]): ItineraryDay[] {
+  const n = Math.max(1, total);
+  const perDay = distributePlaces(places, n);
+  const base = exps.length > 0 ? exps : [FALLBACK_EXPERIENCE];
+  return Array.from({ length: n }, (_, i) => {
     const day = i + 1;
-    if (day === 1) return { day, title: 'Chegada e primeiras impressões', items: ['Check-in e descanso da viagem', 'Caminhada leve para conhecer os arredores'] };
-    if (day === total && total > 1) return { day, title: 'Últimos passeios e volta', items: ['Manhã livre para lembranças e compras', 'Traslado e voo de volta'] };
-    const exp = exps[(day - 2) % exps.length]!;
+    const mine = perDay[i]!.map((p) => `Visita: ${p.name}`);
+    if (day === 1) return { day, title: 'Chegada e primeiras impressões', items: ['Check-in e descanso da viagem', ...(mine.length ? mine : ['Caminhada leve para conhecer os arredores'])] };
+    if (day === n) return { day, title: 'Últimos passeios e volta', items: [...mine, 'Manhã livre para lembranças e compras', 'Traslado e voo de volta'] };
+    if (mine.length > 0) return { day, title: placeTitle(perDay[i]!), items: mine };
+    const exp = base[(day - 2) % base.length]!;
     const list = ACTIVITIES[exp];
     const first = list[(day - 2) % list.length]!;
     const second = list[(day - 1) % list.length]!;
     return { day, title: `Dia de ${exp}`, items: first === second ? [first] : [first, second] };
   });
-  const notes: string[] = ['Prévia ilustrativa: horários, reservas e valores serão refinados nas próximas etapas.'];
-  if (a.needs.includes('pets')) notes.push('Pets: confirme as regras de cada hospedagem e passeio antes de reservar.');
-  if (a.needs.includes('acessibilidade')) notes.push('Acessibilidade: confirme os acessos de cada local antes de reservar.');
+}
+
+function baseNotes(needs: readonly string[], hadPlaces: boolean): string[] {
+  const notes: string[] = [hadPlaces
+    ? 'Prévia ilustrativa montada com os locais que você escolheu: horários, reservas e valores serão refinados nas próximas etapas.'
+    : 'Prévia ilustrativa: você não escolheu locais, então sugerimos um roteiro geral. Horários, reservas e valores serão refinados depois.'];
+  if (needs.includes('pets')) notes.push('Pets: confirme as regras de cada hospedagem e passeio antes de reservar.');
+  if (needs.includes('acessibilidade')) notes.push('Acessibilidade: confirme os acessos de cada local antes de reservar.');
+  return notes;
+}
+
+/**
+ * Prévia ilustrativa do roteiro a partir do destino confirmado, das respostas e dos locais escolhidos.
+ * Determinística (sem rede). Nunca afirma acessibilidade ou pets: apenas lembra de confirmar antes de reservar.
+ */
+export function buildItineraryPreview(rec: Recommendation, a: Answers, places: readonly Place[] = []): ItineraryPreview {
+  const d = rec.destination;
+  const total = Math.max(1, a.days);
   return {
     title: `${total} ${total === 1 ? 'dia' : 'dias'} em ${d.name}`,
     summary: rec.why,
-    days,
-    notes,
+    days: buildDays(total, d.experiences, places),
+    notes: baseNotes(a.needs, places.length > 0),
+  };
+}
+
+/** Prévia para quem já chegou com o destino definido (sem questionário): dias sugeridos pela quantidade de locais. */
+export function buildDirectPreview(cityName: string, places: readonly Place[], needs: readonly string[] = []): ItineraryPreview {
+  const total = suggestedDays(places.length);
+  return {
+    title: `${total} ${total === 1 ? 'dia' : 'dias'} em ${cityName}`,
+    summary: '',
+    days: buildDays(total, [], places),
+    notes: [...baseNotes(needs, places.length > 0), 'Duração sugerida pela quantidade de locais; as datas ficam para a próxima etapa.'],
   };
 }
 

@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { applyReaction, orderForChoice } from '../../domain/discover/choice';
+import { applyReaction, buildItineraryPreview, orderForChoice } from '../../domain/discover/choice';
+import { formatBRL } from '../../domain/discover/budget';
+import { selectedPlaces } from '../../domain/discover/places';
 import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
 import type { Answers, Recommendation } from '../../domain/discover/types';
@@ -10,11 +12,12 @@ import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
 import { fonts, homeColors } from '../theme/auth-theme';
 import { ChooseScreen } from './ChooseScreen';
 import { ItineraryScreen } from './ItineraryScreen';
+import { PlacesScreen } from './PlacesScreen';
 import { QuizStepContent } from './QuizStepContent';
 import { ResultsDeck } from './ResultsDeck';
 import { DiscoverHeader, RoundButton, SegmentedProgress, StepTitle, dc } from './ui';
 
-type Phase = 'quiz' | 'results' | 'choose' | 'itinerary';
+type Phase = 'quiz' | 'results' | 'choose' | 'places' | 'itinerary';
 
 const noop = () => {};
 
@@ -36,6 +39,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [favorites, setFavorites] = useState<ReadonlySet<string>>(new Set());
   const [chosen, setChosen] = useState<Recommendation | null>(null);
+  const [placeSel, setPlaceSel] = useState<Readonly<Record<string, readonly string[]>>>({});
   const [showHint, setShowHint] = useState(false);
 
   const steps = useMemo(() => visibleSteps(answers), [answers]);
@@ -96,14 +100,33 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
         favorites={favorites}
         onBack={() => setPhase('results')}
         onAdjust={editAnswers}
-        onConfirm={(r) => { setChosen(r); setPhase('itinerary'); }}
+        onConfirm={(r) => { setChosen(r); setPhase('places'); }}
+      />,
+      false,
+    );
+  }
+  if (phase === 'places' && chosen) {
+    return shell(
+      <PlacesScreen
+        targets={[{ id: chosen.destination.id, name: chosen.destination.name }]}
+        selection={placeSel}
+        onChange={setPlaceSel}
+        onBack={() => setPhase('choose')}
+        onContinue={() => setPhase('itinerary')}
       />,
       false,
     );
   }
   if (phase === 'itinerary' && chosen) {
+    const d = chosen.destination;
+    const places = selectedPlaces(d.id, placeSel[d.id] ?? []);
     return shell(
-      <ItineraryScreen rec={chosen} answers={finalizeAnswers(answers)} onBackToChoice={() => setPhase('choose')} onDone={onExit} />,
+      <ItineraryScreen
+        sections={[{ id: d.id, name: d.name, preview: buildItineraryPreview(chosen, finalizeAnswers(answers), places), costText: `~${formatBRL(chosen.estimatedCost)} por pessoa (estimativa)` }]}
+        onEditPlaces={() => setPhase('places')}
+        onBackToChoice={() => setPhase('choose')}
+        onDone={onExit}
+      />,
       false,
     );
   }
