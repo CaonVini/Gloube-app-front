@@ -1,19 +1,20 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { pickFavorites } from '../../domain/discover/compare';
+import { orderForChoice } from '../../domain/discover/choice';
 import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
 import type { Answers, Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
 import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
 import { fonts, homeColors } from '../theme/auth-theme';
-import { CompareScreen } from './CompareScreen';
+import { ChooseScreen } from './ChooseScreen';
+import { ItineraryScreen } from './ItineraryScreen';
 import { QuizStepContent } from './QuizStepContent';
 import { ResultsDeck } from './ResultsDeck';
 import { DiscoverHeader, RoundButton, SegmentedProgress, StepTitle, dc } from './ui';
 
-type Phase = 'quiz' | 'results' | 'compare';
+type Phase = 'quiz' | 'results' | 'choose' | 'itinerary';
 
 const noop = () => {};
 
@@ -34,7 +35,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   const [answers, setAnswers] = useState<Answers>(() => emptyAnswers(originText));
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [favorites, setFavorites] = useState<ReadonlySet<string>>(new Set());
-  const [chosenId, setChosenId] = useState<string | null>(null);
+  const [chosen, setChosen] = useState<Recommendation | null>(null);
   const [showHint, setShowHint] = useState(false);
 
   const steps = useMemo(() => visibleSteps(answers), [answers]);
@@ -48,7 +49,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
     if (stepIndex < steps.length - 1) { setStepIndex(stepIndex + 1); return; }
     setRecs(recommend(finalizeAnswers(answers), undefined, today));
     setFavorites(new Set());
-    setChosenId(null);
+    setChosen(null);
     setPhase('results');
   }, [complete, stepIndex, steps, answers, today]);
   const skip = useCallback(() => {
@@ -88,18 +89,30 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
       <View style={s.flex}>
         <View style={[s.column, s.resultsHead]}>
           <Text style={s.resultsTitle} accessibilityRole="header">Seus destinos</Text>
+          <Text style={s.compareLink} accessibilityRole="button" accessibilityLabel="Comparar destinos" onPress={() => setPhase('choose')}>Comparar destinos</Text>
         </View>
-        <ResultsDeck recs={recs} favorites={favorites} onToggleSave={toggleSave} onCompare={() => setPhase('compare')} onRestart={restart} onEditAnswers={editAnswers} />
+        <ResultsDeck recs={recs} favorites={favorites} onToggleSave={toggleSave} onCompare={() => setPhase('choose')} onRestart={restart} onEditAnswers={editAnswers} />
       </View>,
     );
   }
-  if (phase === 'compare') {
+  if (phase === 'choose') {
     return shell(
-      <CompareScreen favorites={pickFavorites(recs, favorites)} chosenId={chosenId} onChoose={setChosenId} onBack={() => setPhase('results')} />,
+      <ChooseScreen
+        recs={orderForChoice(recs, favorites)}
+        favorites={favorites}
+        onBack={() => setPhase('results')}
+        onAdjust={editAnswers}
+        onConfirm={(r) => { setChosen(r); setPhase('itinerary'); }}
+      />,
       false,
     );
   }
-
+  if (phase === 'itinerary' && chosen) {
+    return shell(
+      <ItineraryScreen rec={chosen} answers={finalizeAnswers(answers)} onBackToChoice={() => setPhase('choose')} onDone={onExit} />,
+      false,
+    );
+  }
   const last = stepIndex === steps.length - 1;
   const selectedCount = step.id === 'experiencias' ? answers.experiences.length : step.id === 'cuidados' ? answers.needs.length : 0;
   const meta = selectedCount > 0
@@ -148,6 +161,7 @@ const s = StyleSheet.create({
   metaWarn: { color: '#8A6100' },
   skip: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  resultsHead: { marginBottom: 8 },
+  resultsHead: { marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  compareLink: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },
   resultsTitle: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, letterSpacing: -0.6, color: '#0B0B0B' },
 });

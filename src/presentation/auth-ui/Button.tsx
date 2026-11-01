@@ -27,7 +27,7 @@ export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, siz
       style={({ pressed }) => [s.primary, size === 'hero' && s.hero, size === 'half' && s.half, off && s.off, pressed && s.pressed]}
     >
       {size === 'half' ? null : <View style={s.side}>{loading ? null : leftIcon}</View>}
-      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' && s.primaryTextHalf]} numberOfLines={1}>{title}</Text>}
+      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' && s.primaryTextHalf]} numberOfLines={size === 'half' ? 2 : 1}>{title}</Text>}
       <View style={[s.side, s.arrow, size === 'half' && s.sideHalf]}>{loading ? null : <ArrowRightIcon />}</View>
     </Pressable>
   );
@@ -65,7 +65,7 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
   },
   hero: { minHeight: 58, borderRadius: 22 },
-  primaryTextHalf: { fontSize: 15, textAlign: 'left', paddingLeft: 6 },
+  primaryTextHalf: { fontSize: 14, lineHeight: 17, textAlign: 'left', paddingLeft: 6 },
   half: { minHeight: 54, borderRadius: 20, paddingHorizontal: 12 },
   side: { width: 34 },
   sideHalf: { width: 18 },

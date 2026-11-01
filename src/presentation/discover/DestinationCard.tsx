@@ -18,10 +18,11 @@ interface Props {
   saved: boolean;
   position: string;
   onToggleSave: (id: string) => void;
+  onDetails: (rec: Recommendation) => void;
 }
 
 /** Um card = uma "página" do deck. Memoizado: só re-renderiza se o próprio card (ou salvo/não) mudar. */
-export const DestinationCard = memo(function DestinationCard({ rec, width, saved, position, onToggleSave }: Props) {
+export const DestinationCard = memo(function DestinationCard({ rec, width, saved, position, onToggleSave, onDetails }: Props) {
   const d = rec.destination;
   const inner = Math.min(width, MAX_COLUMN + H_PAD * 2) - H_PAD * 2;
   const { height } = useWindowDimensions();
@@ -52,7 +53,10 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
           >
             <DIcon name={saved ? 'heart' : 'heartOutline'} size={24} color={saved ? '#FFFFFF' : dc.dark} />
           </Pressable>
-          <View style={s.overlayText}>
+          <Pressable accessibilityRole="button" accessibilityLabel={`Ver detalhes de ${d.name}`} onPress={() => onDetails(rec)} style={({ pressed }) => [s.detailsPill, pressed && { opacity: 0.85 }]}>
+            <Text style={s.detailsText}>Ver detalhes</Text>
+          </Pressable>
+          <View pointerEvents="none" style={s.overlayText}>
             <Text style={s.name} accessibilityRole="header">{d.name}</Text>
             <View style={s.countryRow}>
               <DIcon name="pin" size={15} color="#FFFFFF" />
@@ -106,6 +110,8 @@ const s = StyleSheet.create({
   photoWrap: { borderRadius: 26, overflow: 'hidden', backgroundColor: dc.dark },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' },
   overlayText: { position: 'absolute', left: 18, right: 18, bottom: 16, gap: 2 },
+  detailsPill: { position: 'absolute', right: 12, bottom: 14, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
+  detailsText: { fontFamily: fonts.semibold, fontSize: 13, color: dc.dark },
   position: { position: 'absolute', left: 14, top: 14, backgroundColor: 'rgba(31,61,54,0.82)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5 },
   positionText: { fontFamily: fonts.semibold, fontSize: 13, color: '#FFFFFF' },
   heart: {

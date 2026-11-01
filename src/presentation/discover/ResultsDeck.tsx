@@ -5,6 +5,7 @@ import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { DestinationCard } from './DestinationCard';
+import { DetailsSheet } from './DetailsSheet';
 import { NAV_FAB_WIDTH } from '../navigation';
 import { RoundButton, dc } from './ui';
 
@@ -22,6 +23,7 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList<Recommendation>>(null);
   const [index, setIndex] = useState(0);
+  const [detail, setDetail] = useState<Recommendation | null>(null);
 
   const goTo = useCallback((i: number) => {
     const clamped = Math.max(0, Math.min(recs.length - 1, i));
@@ -65,7 +67,7 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
         onMomentumScrollEnd={onEnd}
         extraData={favorites}
         renderItem={({ item, index: i }) => (
-          <DestinationCard rec={item} width={width} saved={favorites.has(item.destination.id)} position={`${i + 1} de ${recs.length}`} onToggleSave={onToggleSave} />
+          <DestinationCard rec={item} width={width} saved={favorites.has(item.destination.id)} position={`${i + 1} de ${recs.length} destinos`} onToggleSave={onToggleSave} onDetails={setDetail} />
         )}
       />
       {/* Rodapé dividido ao redor da bola central da navbar: voltar + contagem à esquerda, ação à direita. */}
@@ -76,18 +78,18 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
             <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>
               {favCount === 0 ? '♡ salvar' : favCount === 1 ? '1 salvo' : `${favCount} salvos`}
             </Text>
-            {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
           </View>
         </View>
         <View style={{ width: NAV_FAB_WIDTH }} />
         <View style={s.footSide}>
           <View style={s.flex}>
             {last
-              ? <PrimaryButton title={favCount >= 2 ? 'Comparar' : 'Refazer'} onPress={favCount >= 2 ? onCompare : onRestart} size="half" />
+              ? <PrimaryButton title="Comparar e escolher" onPress={onCompare} size="half" />
               : <PrimaryButton title="Próximo" onPress={() => goTo(index + 1)} size="half" />}
           </View>
         </View>
       </View>
+      <DetailsSheet rec={detail} onClose={() => setDetail(null)} />
     </View>
   );
 }

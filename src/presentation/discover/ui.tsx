@@ -118,8 +118,8 @@ function Shade({ height }: { height: string }) {
   );
 }
 
-export function SelectDot({ on }: { on: boolean }) {
-  return <View style={[s.dot, on && s.dotOn]}>{on ? <DIcon name="check" size={16} color="#FFFFFF" /> : null}</View>;
+export function SelectDot({ on, variant = 'photo' }: { on: boolean; variant?: 'photo' | 'light' }) {
+  return <View style={[s.dot, variant === 'light' && s.dotLight, on && s.dotOn]}>{on ? <DIcon name="check" size={16} color="#FFFFFF" /> : null}</View>;
 }
 
 interface PhotoCardProps {
@@ -226,5 +226,6 @@ const s = StyleSheet.create({
   photoSub: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 19, color: 'rgba(255,255,255,0.92)' },
   photoRing: { ...StyleSheet.absoluteFill, borderRadius: 24, borderWidth: 3, borderColor: dc.lime },
   dot: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  dotLight: { borderColor: '#C9CDCB', backgroundColor: '#FFFFFF' },
   dotOn: { backgroundColor: dc.dark },
 });
