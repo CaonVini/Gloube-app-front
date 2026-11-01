@@ -242,3 +242,9 @@ export function distributePlaces(places: readonly Place[], totalDays: number): P
   places.forEach((p, i) => out[slots[Math.floor((i * slots.length) / places.length)]!]!.push(p));
   return out;
 }
+
+/** "Gostei": inclui o local (idempotente, respeita o teto). "Não gostei" não chama nada. */
+export function addPlace(selected: readonly string[], placeId: string): string[] {
+  if (selected.includes(placeId) || selected.length >= MAX_PLACES_PER_DESTINATION) return [...selected];
+  return [...selected, placeId];
+}

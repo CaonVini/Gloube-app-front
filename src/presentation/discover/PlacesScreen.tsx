@@ -1,9 +1,12 @@
-import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import { KIND_LABEL, placesFor, togglePlace } from '../../domain/discover/places';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KIND_LABEL, addPlace, placesFor, type Place } from '../../domain/discover/places';
 import { PrimaryButton } from '../auth-ui/Button';
+import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
-import { RoundButton, SegmentedProgress, SelectDot, StepTitle, dc } from './ui';
+import { PlaceBackCard, PlaceCard } from './PlaceCard';
+import { SwipeDeck } from './SwipeDeck';
+import { RoundButton, SegmentedProgress, StepTitle, dc } from './ui';
 
 export interface PlaceTarget {
   id: string;
@@ -12,80 +15,92 @@ export interface PlaceTarget {
 
 interface Props {
   targets: readonly PlaceTarget[];
+  /** Locais curtidos por destino (viram o roteiro). */
   selection: Readonly<Record<string, readonly string[]>>;
   onChange: (next: Record<string, readonly string[]>) => void;
   onBack: () => void;
   onContinue: () => void;
 }
 
-const GAP = 10;
+interface Item {
+  place: Place;
+  destinationId: string;
+  destinationName: string;
+}
 
-/** Escolha (opcional, múltipla) de locais de cada destino. Grade 2 colunas que preenche a altura, sem rolagem. */
+/**
+ * Escolha de locais em pilha estilo Tinder (✕ não gostei / ♥ gostei): os curtidos viram o roteiro.
+ * Ao fim, um resumo permite remover locais antes de ver o roteiro. Tudo opcional.
+ */
 export function PlacesScreen({ targets, selection, onChange, onBack, onContinue }: Props) {
-  const [active, setActive] = useState(0);
-  const [h, setH] = useState(0);
-  const target = targets[Math.min(active, targets.length - 1)]!;
-  const places = placesFor(target.id);
-  const chosen = selection[target.id] ?? [];
-  const total = targets.reduce((n, t) => n + (selection[t.id]?.length ?? 0), 0);
-  const rows = Math.max(1, Math.ceil(places.length / 2));
-  const rowH = h > 0 ? Math.max(84, Math.min(150, Math.floor((h - GAP * (rows - 1)) / rows))) : 96;
-  const roomy = rowH >= 104;
+  const items = useMemo<Item[]>(() => targets.flatMap((t) => placesFor(t.id).map((place) => ({ place, destinationId: t.id, destinationName: t.name }))), [targets]);
+  const [phase, setPhase] = useState<'deck' | 'summary'>(items.length === 0 ? 'summary' : 'deck');
+  const [round, setRound] = useState(0);
+  const multi = targets.length > 1;
+  const likedIds = new Set(Object.values(selection).flat());
+  const total = likedIds.size;
 
-  const toggle = (id: string) => onChange({ ...selection, [target.id]: togglePlace(chosen, id) });
-  const onLayout = (e: LayoutChangeEvent) => setH(e.nativeEvent.layout.height);
+  const react = (it: Item, liked: boolean) => {
+    if (!liked) return;
+    onChange({ ...selection, [it.destinationId]: addPlace(selection[it.destinationId] ?? [], it.place.id) });
+  };
+  const remove = (it: Item) => onChange({ ...selection, [it.destinationId]: (selection[it.destinationId] ?? []).filter((id) => id !== it.place.id) });
+  const liked = items.filter((i) => likedIds.has(i.place.id));
+
+  if (phase === 'deck') {
+    return (
+      <View style={s.root}>
+        <View style={s.head}>
+          <SegmentedProgress kicker="ROTEIRO" current={1} total={2} />
+          <StepTitle
+            title={multi ? 'O que você quer conhecer?' : `O que você quer conhecer em ${targets[0]?.name}?`}
+            subtitle="Curta os locais que entram no seu roteiro. Opcional."
+          />
+        </View>
+        <SwipeDeck
+          key={round}
+          items={items}
+          keyOf={(i) => i.place.id}
+          renderFront={(i, w, h) => <PlaceCard place={i.place} destinationId={i.destinationId} destinationName={multi ? i.destinationName : undefined} width={w} height={h} />}
+          renderBack={(i, w, h) => <PlaceBackCard place={i.place} destinationId={i.destinationId} width={w} height={h} />}
+          onReact={react}
+          onFinish={() => setPhase('summary')}
+          positionText={(i, n) => `${i + 1} de ${n} locais${total > 0 ? `  ·  ${total} no roteiro` : ''}`}
+          likeLabel="Gostei, incluir no roteiro e ver o próximo"
+          nopeLabel="Não gostei, próximo local"
+          likeStamp="NO ROTEIRO"
+          nopeStamp="PULAR"
+          headerRight={<Text style={s.skip} accessibilityRole="button" accessibilityLabel="Pular a escolha de locais" onPress={() => setPhase('summary')}>Pular</Text>}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={s.root}>
       <View style={s.head}>
         <SegmentedProgress kicker="ROTEIRO" current={1} total={2} />
         <StepTitle
-          title={targets.length === 1 ? `O que você quer conhecer em ${target.name}?` : 'O que você quer conhecer?'}
-          subtitle="Escolha quantos locais quiser. É opcional: dá para decidir depois."
+          title="Seus locais"
+          subtitle={total === 0 ? 'Nenhum local escolhido: sugerimos um roteiro geral.' : `${total} ${total === 1 ? 'local entra' : 'locais entram'} no seu roteiro.`}
         />
-        {targets.length > 1 ? (
-          <View style={s.tabs} accessibilityRole="tablist">
-            {targets.map((t, i) => {
-              const n = selection[t.id]?.length ?? 0;
-              const on = i === active;
-              return (
-                <Pressable key={t.id} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setActive(i)} style={[s.tab, on && s.tabOn]}>
-                  <Text style={[s.tabText, on && s.tabTextOn]} numberOfLines={1}>{t.name}{n > 0 ? ` · ${n}` : ''}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
       </View>
-
-      <View style={s.grid} onLayout={onLayout}>
-        {places.length === 0 ? (
-          <Text style={s.empty}>Ainda não temos locais sugeridos para este destino. Você pode continuar mesmo assim.</Text>
-        ) : (
-          Array.from({ length: rows }, (_, r) => (
-            <View key={r} style={[s.row, { height: rowH }]}>
-              {[0, 1].map((c) => {
-                const p = places[r * 2 + c];
-                if (!p) return <View key={c} style={s.flex} />;
-                const on = chosen.includes(p.id);
-                return (
-                  <Pressable key={p.id} accessibilityRole="checkbox" accessibilityState={{ checked: on }} accessibilityLabel={`${p.name}. ${p.blurb}`} onPress={() => toggle(p.id)} style={({ pressed }) => [s.card, on && s.cardOn, pressed && { opacity: 0.9 }]}>
-                    <Text style={s.kind}>{KIND_LABEL[p.kind]}</Text>
-                    <Text style={s.name} numberOfLines={2}>{p.name}</Text>
-                    {roomy ? <Text style={s.blurb} numberOfLines={3}>{p.blurb}</Text> : null}
-                    <View style={s.dot}><SelectDot on={on} variant="light" /></View>
-                  </Pressable>
-                );
-              })}
+      <ScrollView style={s.flex} contentContainerStyle={s.list} showsVerticalScrollIndicator={false}>
+        {liked.map((it) => (
+          <View key={it.place.id} style={s.row}>
+            <View style={s.rowText}>
+              <Text style={s.kind}>{KIND_LABEL[it.place.kind]}{multi ? ` · ${it.destinationName.toUpperCase()}` : ''}</Text>
+              <Text style={s.name} numberOfLines={2}>{it.place.name}</Text>
             </View>
-          ))
-        )}
-      </View>
-
+            <Pressable accessibilityRole="button" accessibilityLabel={`Remover ${it.place.name} do roteiro`} onPress={() => remove(it)} hitSlop={8} style={s.removeBtn}>
+              <View style={[s.x, { transform: [{ rotate: '45deg' }] }]} />
+              <View style={[s.x, { transform: [{ rotate: '-45deg' }] }]} />
+            </Pressable>
+          </View>
+        ))}
+        {items.length > 0 ? <SecondaryTextButton title={total === 0 ? 'Ver os locais' : 'Ver os locais de novo'} onPress={() => { setRound((r) => r + 1); setPhase('deck'); }} /> : null}
+      </ScrollView>
       <View style={s.foot}>
-        <Text style={s.meta} accessibilityLiveRegion="polite">
-          {total === 0 ? 'Nenhum local escolhido: sugerimos um roteiro geral.' : `${total} ${total === 1 ? 'local escolhido' : 'locais escolhidos'}`}
-        </Text>
         <View style={s.footRow}>
           <RoundButton icon="chevronLeft" label="Voltar" onPress={onBack} />
           <View style={s.flex}><PrimaryButton title="Ver roteiro" onPress={onContinue} size="hero" /></View>
@@ -98,22 +113,15 @@ export function PlacesScreen({ targets, selection, onChange, onBack, onContinue 
 const s = StyleSheet.create({
   root: { flex: 1, width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16 },
   flex: { flex: 1 },
-  head: { paddingBottom: 10 },
-  tabs: { flexDirection: 'row', gap: 8, paddingTop: 10 },
-  tab: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', paddingVertical: 8, alignItems: 'center' },
-  tabOn: { backgroundColor: dc.dark, borderColor: dc.dark },
-  tabText: { fontFamily: fonts.semibold, fontSize: 13, color: dc.dark },
-  tabTextOn: { color: '#FFFFFF' },
-  grid: { flex: 1, gap: GAP, justifyContent: 'flex-start', overflow: 'hidden' },
-  row: { flexDirection: 'row', gap: GAP },
-  card: { flex: 1, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 12, justifyContent: 'center', gap: 3 },
-  cardOn: { borderColor: dc.dark, borderWidth: 1.5, backgroundColor: '#EEF3EF' },
-  kind: { fontFamily: fonts.medium, fontSize: 10, letterSpacing: 1.4, color: dc.muted, paddingRight: 28 },
-  name: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 20, color: dc.dark },
-  blurb: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: dc.muted },
-  dot: { position: 'absolute', top: 10, right: 10 },
-  empty: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: dc.muted, paddingTop: 12 },
-  foot: { gap: 8, paddingTop: 8, paddingBottom: 8 },
-  meta: { fontFamily: fonts.medium, fontSize: 14, color: dc.muted, minHeight: 20 },
+  head: { paddingBottom: 8 },
+  skip: { fontFamily: fonts.bold, fontSize: 14, color: dc.teal, paddingVertical: 2, paddingHorizontal: 4 },
+  list: { gap: 8, paddingBottom: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
+  rowText: { flex: 1, gap: 2 },
+  kind: { fontFamily: fonts.medium, fontSize: 10, letterSpacing: 1.4, color: dc.muted },
+  name: { fontFamily: fonts.bold, fontSize: 16, color: dc.dark },
+  removeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'center' },
+  x: { position: 'absolute', width: 14, height: 2, borderRadius: 1, backgroundColor: dc.dark },
+  foot: { paddingTop: 8, paddingBottom: 8 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

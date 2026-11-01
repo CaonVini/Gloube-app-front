@@ -47,3 +47,9 @@ export const destinationImages: Record<string, ImageSourcePropType> = {
 
 export const avatarPhoto: ImageSourcePropType = require('../../../assets/images/discover/avatar.jpg');
 /* eslint-enable @typescript-eslint/no-require-imports */
+
+/**
+ * Fotos de locais (ex.: Torre Eiffel), por id de local (`paris:torre-eiffel`). Vazio por enquanto: sem foto, o card usa a
+ * foto do destino (quando existe) ou um fundo de cor. Para usar fotos reais, adicione `'paris:torre-eiffel': require(...)`.
+ */
+export const placeImages: Record<string, ImageSourcePropType> = {};

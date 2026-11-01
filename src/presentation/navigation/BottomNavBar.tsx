@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts } from '../theme/auth-theme';
+import { fonts, homeColors } from '../theme/auth-theme';
 import { bottomPadding, isActive, tabAccessibility, type NavItem } from './nav-items';
 
 const COLORS = {
@@ -14,7 +14,9 @@ const COLORS = {
 } as const;
 
 const FAB = 46; // diâmetro do destaque central (integrado à barra)
+const NOTCH = FAB + 14; // recorte curvo ao redor da bola
 const LIFT = 10; // quanto sobe acima dos demais ícones: só um pouco
+const NOTCH_TOP = -LIFT + FAB / 2 - NOTCH / 2; // centrado na bola
 
 interface Props {
   items: readonly NavItem[];
@@ -33,6 +35,8 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   if (item.highlight) {
     return (
       <View style={s.slot}>
+        {/* Recorte curvo: círculo na cor do fundo atrás da bola, "morde" a borda da barra (sem SVG). */}
+        <View pointerEvents="none" style={s.notch} />
         <Pressable
           {...a11y}
           onPress={() => onChange(item.key)}
@@ -88,6 +92,14 @@ const s = StyleSheet.create({
   labelActive: { fontFamily: fonts.bold, color: COLORS.active },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.active },
   dotHidden: { opacity: 0 },
+  notch: {
+    position: 'absolute',
+    top: NOTCH_TOP,
+    width: NOTCH,
+    height: NOTCH,
+    borderRadius: NOTCH / 2,
+    backgroundColor: homeColors.background,
+  },
   fab: {
     width: FAB,
     height: FAB,

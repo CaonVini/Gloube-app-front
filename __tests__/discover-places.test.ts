@@ -99,3 +99,15 @@ describe('roteiro baseado nos locais', () => {
     expect(pv.days.flatMap((d) => d.items).join('|')).toContain(ps[0]!.name);
   });
 });
+
+import { addPlace } from '../src/domain/discover/places';
+describe('curtir local (pilha)', () => {
+  it('addPlace é idempotente, não muta e respeita o teto', () => {
+    const base: readonly string[] = ['a'];
+    expect(addPlace(base, 'b')).toEqual(['a', 'b']);
+    expect(addPlace(['a', 'b'], 'a')).toEqual(['a', 'b']);
+    expect(base).toEqual(['a']);
+    const full = Array.from({ length: MAX_PLACES_PER_DESTINATION }, (_, i) => `x${i}`);
+    expect(addPlace(full, 'novo')).toEqual(full);
+  });
+});
