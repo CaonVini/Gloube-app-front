@@ -46,14 +46,14 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   const ready = canAdvance(origin, destinations);
 
   // Tudo cabe em UMA tela (sem rolagem): medidas escalam com a altura (referência 844) e o título com a largura.
-  const k = Math.min(1.1, Math.max(0.72, height / 844));
+  const k = Math.min(1, Math.max(0.7, height / 900));
   const narrow = width < 380;
   const compact = height < 800; // telas baixas: esconde a nota e aperta o espaçamento
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
-  const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 14.8)));
+  const titleSize = Math.max(20, Math.min(28, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
-    field: Math.round((compact ? 36 : 40) * k), row: Math.round((compact ? 40 : 46) * k), badge: Math.round((compact ? 40 : 48) * k), h2: Math.round(20 * k), pad: Math.round((compact ? 12 : 14) * k),
-  }), [k, compact]);
+    field: Math.round(38 * k), row: Math.round(44 * k), badge: Math.round(40 * k), h2: Math.round(19 * k), pad: Math.round(16 * k),
+  }), [k]);
 
   const add = useCallback((d: Destination) => {
     setDestinations((list) => addDestination(list, d));
@@ -87,7 +87,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
         </View>
 
         <View style={[s.column, s.flex]}>
-          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 3 : 8 }]}>
+          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 6 : 10 }]}>
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
             {compact ? null : <Text style={s.hint}>De qual cidade você vai sair?</Text>}
             <View style={[s.field, { minHeight: m.field }]}>
@@ -162,14 +162,14 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
                 <View key={d.id} style={s.item}>
                   <View style={[s.row, { minHeight: m.row }]}>
                     <View style={s.badgeCol}>
-                      <View style={[s.badge, { width: m.badge, height: m.badge, borderRadius: m.badge / 2 }]}><Text style={[s.badgeText, { fontSize: m.badge > 44 ? 20 : 18 }]}>{i + 1}</Text></View>
+                      <View style={[s.badge, { width: m.badge, height: m.badge, borderRadius: m.badge / 2 }]}><Text style={[s.badgeText, { fontSize: 16 }]}>{i + 1}</Text></View>
                     </View>
                     <Pressable
                       accessibilityLabel={`${d.city}, ${d.country}. Toque e segure para remover.`}
                       onLongPress={() => remove(d.id)}
                       style={s.dest}
                     >
-                      <View style={s.pinCircle}><TripIcon name="pin" size={20} color={authColors.text} /></View>
+                      <View style={s.pinCircle}><TripIcon name="pin" size={16} color={authColors.text} /></View>
                       <View style={s.destText}>
                         <Text style={s.city} numberOfLines={1}>{d.city}</Text>
                         <Text style={s.country} numberOfLines={1}>{d.country}</Text>
@@ -202,7 +202,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               <View style={s.plus}><TripIcon name="plus" size={16} color="#FFFFFF" /></View>
               <Text style={s.link}>Adicionar outro destino</Text>
             </Pressable>
-            {compact || height < 880 ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
+            {compact || height < 960 ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
           </View>
 
           <Pressable
@@ -221,17 +221,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
 
           <View style={s.footer}>
             <PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="hero" />
-            {/* Faixa ao lado da bola central da navbar (que se projeta para cima): contagem à esquerda, dica à direita. */}
-            <View style={[s.strip, { height: NAV_FAB_CLEARANCE + (compact ? 0 : 4) }]}>
-              <View style={s.stripSide}>
-                <View style={s.countSeal}><Text style={s.countSealText}>{destinations.length}</Text></View>
-                <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>{destinations.length === 1 ? 'destino' : 'destinos'}</Text>
-              </View>
-              <View style={s.stripGap} />
-              <View style={[s.stripSide, { justifyContent: 'flex-end' }]}>
-                <Text style={s.stripHint} numberOfLines={1}>Segure p/ remover</Text>
-              </View>
-            </View>
+            <View style={{ height: NAV_FAB_CLEARANCE }} />
           </View>
         </View>
       </View>
@@ -255,20 +245,20 @@ const s = StyleSheet.create({
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E1E3E0' },
   barOn: { backgroundColor: authColors.primary },
   title: { fontFamily: fonts.bold, letterSpacing: -0.6, color: '#0B0B0B', marginTop: 8 },
-  subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86', marginTop: 0 },
+  subtitle: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#3E7C86', marginTop: 0 },
   card: {
     flex: 1, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
     shadowColor: '#1F3D36', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   h2: { fontFamily: fonts.bold, color: authColors.text },
-  hint: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle, marginTop: -6 },
+  hint: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle, marginTop: -6 },
   field: {
     flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1,
     borderColor: authColors.border, backgroundColor: FIELD_BG, paddingHorizontal: 14,
   },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: authColors.body, paddingVertical: 6 },
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 14, color: authColors.body, paddingVertical: 6 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 28 },
-  link: { fontFamily: fonts.medium, fontSize: 15, color: authColors.link },
+  link: { fontFamily: fonts.medium, fontSize: 14, color: authColors.link },
   divider: { height: 1, backgroundColor: authColors.border, marginVertical: 2 },
   suggestions: {
     position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, borderRadius: 14, borderWidth: 1, borderColor: authColors.border,
@@ -278,26 +268,26 @@ const s = StyleSheet.create({
   suggestion: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
   list: { flex: 1 },
   listContent: { flexGrow: 1, justifyContent: 'center' },
-  item: { flexGrow: 1, flexShrink: 1, maxHeight: 96 },
+  item: { flexGrow: 1, flexShrink: 1, maxHeight: 72 },
   row: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 10 },
-  badgeCol: { width: 52, alignItems: 'center', justifyContent: 'center' },
+  badgeCol: { width: 44, alignItems: 'center', justifyContent: 'center' },
   badge: { backgroundColor: BADGE_BG, alignItems: 'center', justifyContent: 'center' },
-  sep: { width: 52, height: 14, alignItems: 'center' },
+  sep: { width: 44, height: 12, alignItems: 'center' },
   sepLine: { flex: 1, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
-  badgeText: { fontFamily: fonts.bold, fontSize: 18, color: authColors.text },
+  badgeText: { fontFamily: fonts.bold, fontSize: 16, color: authColors.text },
   dest: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: FIELD_BG, paddingHorizontal: 14 },
   destText: { flex: 1 },
-  city: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 21, color: '#111' },
-  country: { fontFamily: fonts.regular, fontSize: 14, color: authColors.link },
-  plus: { width: 28, height: 28, borderRadius: 14, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
+  city: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 19, color: '#111' },
+  country: { fontFamily: fonts.regular, fontSize: 13, color: authColors.link },
+  plus: { width: 24, height: 24, borderRadius: 12, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
   note: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
   banner: {
     marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: BANNER_BG, borderRadius: 18,
     paddingHorizontal: 12, paddingVertical: 8,
   },
-  bannerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
-  bannerTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 21, color: '#111' },
-  bannerText: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
+  bannerIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
+  bannerTitle: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 19, color: '#111' },
+  bannerText: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
   footer: { paddingTop: 8 },
   strip: { flexDirection: 'row', alignItems: 'center' },
   stripSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -306,7 +296,7 @@ const s = StyleSheet.create({
   countSealText: { fontFamily: fonts.bold, fontSize: 14, color: authColors.text },
   count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle },
   stripHint: { fontFamily: fonts.regular, fontSize: 12, color: homeColors.subtitle },
-  pinCircle: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
+  pinCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },
 });
