@@ -27,6 +27,8 @@ export interface Answers {
   experiences: Experience[];
   reach: Reach | null;
   origin: string | null;
+  /** true quando a origem não veio da tela Nova viagem e usamos a padrão. */
+  originAssumed: boolean;
   companion: Companion | null;
   needs: Need[];
   period: Period;

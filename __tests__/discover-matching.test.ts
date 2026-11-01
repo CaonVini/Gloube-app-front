@@ -13,7 +13,7 @@ function answers(over: Partial<Answers> = {}): Answers {
   return {
     ...emptyAnswers(),
     climate: 'calor', experiences: ['praia'], reach: 'internacional', origin: 'sao-paulo',
-    companion: 'casal', period: { mode: 'indefinido' }, days: 10, budget: '10k-mais',
+    companion: 'casal', originAssumed: false, period: { mode: 'indefinido' }, days: 10, budget: '10k-mais',
     ...over,
   };
 }
@@ -43,6 +43,8 @@ describe('recommend', () => {
     const m = r.find((x) => x.destination.id === 'maldivas')!;
     expect(m.why).toContain('Você escolheu praia, calor e uma viagem a dois.');
     expect(m.why).toContain('Saindo de São Paulo');
+    const assumed = recommend(answers({ originAssumed: true }), DESTINATIONS, TODAY).find((x) => x.destination.id === 'maldivas')!;
+    expect(assumed.why).toContain('Sem origem informada, estimamos a partir de São Paulo');
     const idsR = r.map((x) => x.destination.id);
     expect(idsR.indexOf('maldivas')).toBeLessThan(idsR.indexOf('lisboa'));
   });

@@ -21,15 +21,17 @@ interface Props {
   fullName: string;
   onSignOut: () => void;
   onExit: () => void;
+  /** Texto de "Onde estamos?" da tela Nova viagem; define a origem do ranking. */
+  originText?: string;
 }
 
 /** Orquestra o fluxo: questionário → destinos (um por vez) → comparação. Estado 100% local (sem API). */
-export function DiscoverFlow({ fullName, onSignOut, onExit }: Props) {
+export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props) {
   const insets = useSafeAreaInsets();
   const today = useMemo(() => new Date(), []);
   const [phase, setPhase] = useState<Phase>('quiz');
   const [stepIndex, setStepIndex] = useState(0);
-  const [answers, setAnswers] = useState<Answers>(emptyAnswers);
+  const [answers, setAnswers] = useState<Answers>(() => emptyAnswers(originText));
   const [recs, setRecs] = useState<Recommendation[]>([]);
   const [favorites, setFavorites] = useState<ReadonlySet<string>>(new Set());
   const [chosenId, setChosenId] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit }: Props) {
     });
   }, []);
 
-  const restart = useCallback(() => { setAnswers(emptyAnswers()); setStepIndex(0); setPhase('quiz'); }, []);
+  const restart = useCallback(() => { setAnswers(emptyAnswers(originText)); setStepIndex(0); setPhase('quiz'); }, []);
   const editAnswers = useCallback(() => { setStepIndex(STEPS.length - 1); setPhase('quiz'); }, []);
 
   const top = Math.max(insets.top, 16) + 4;

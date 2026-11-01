@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SIMULATED_ORIGIN, addDestination, canAdvance, destinationsLabel, moveDestination, removeDestination,
@@ -29,7 +29,7 @@ interface Props {
   fullName: string;
   onSignOut: () => void;
   onNext?: () => void;
-  onDiscover?: () => void;
+  onDiscover?: (origin: string) => void;
 }
 
 /** Passo 1 de 3 de "Nova viagem". Tudo local/fictício: origem simulada, busca em catálogo local, sem rede. */
@@ -47,11 +47,12 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
 
   // Tudo cabe em UMA tela (sem rolagem): medidas escalam com a altura (referência 844) e o título com a largura.
   const k = Math.min(1.1, Math.max(0.72, height / 844));
+  const narrow = width < 380;
   const compact = height < 800; // telas baixas: esconde a nota e aperta o espaçamento
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
   const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
-    field: Math.round(38 * k), row: Math.round(44 * k), gap: Math.round(6 * k), h2: Math.round(19 * k), pad: Math.round(12 * k),
+    field: Math.round(40 * k), row: Math.round(46 * k), badge: Math.round(48 * k), h2: Math.round(20 * k), pad: Math.round(14 * k),
   }), [k]);
 
   const add = useCallback((d: Destination) => {
@@ -86,7 +87,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
         </View>
 
         <View style={[s.column, s.flex]}>
-          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 4 : 6 }]}>
+          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 6 : 8 }]}>
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
             {compact ? null : <Text style={s.hint}>De qual cidade você vai sair?</Text>}
             <View style={[s.field, { minHeight: m.field }]}>
@@ -148,37 +149,49 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               ) : null}
             </View>
 
-            <View style={s.list}>
+            {/* Timeline: ocupa o espaço que sobra na tela (flex). Só rola se houver muitos destinos. */}
+            <ScrollView
+              style={s.list}
+              contentContainerStyle={s.listContent}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              overScrollMode="never"
+              nestedScrollEnabled
+            >
               {destinations.map((d, i) => (
-                <View key={d.id} style={[s.row, { height: m.row, marginBottom: m.gap }]}>
-                  <View style={s.badgeCol}>
-                    <View style={s.badge}><Text style={s.badgeText}>{i + 1}</Text></View>
-                    {i < destinations.length - 1 ? <View style={[s.connector, { height: m.gap + 4 }]} /> : null}
-                  </View>
-                  <Pressable
-                    accessibilityLabel={`${d.city}, ${d.country}. Toque e segure para remover.`}
-                    onLongPress={() => remove(d.id)}
-                    style={s.dest}
-                  >
-                    <TripIcon name="pin" size={22} color={authColors.text} />
-                    <View style={s.destText}>
-                      <Text style={s.city} numberOfLines={1}>{d.city}</Text>
-                      <Text style={s.country} numberOfLines={1}>{d.country}</Text>
+                <View key={d.id} style={s.item}>
+                  <View style={[s.row, { minHeight: m.row }]}>
+                    <View style={s.badgeCol}>
+                      <View style={[s.badge, { width: m.badge, height: m.badge, borderRadius: m.badge / 2 }]}><Text style={[s.badgeText, { fontSize: m.badge > 44 ? 20 : 18 }]}>{i + 1}</Text></View>
                     </View>
                     <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={i === 0 ? `Mover ${d.city} para baixo` : `Mover ${d.city} para cima`}
-                      disabled={destinations.length < 2}
-                      onPress={() => shift(i)}
-                      hitSlop={10}
-                      style={({ pressed }) => [pressed && s.pressed, destinations.length < 2 && s.off]}
+                      accessibilityLabel={`${d.city}, ${d.country}. Toque e segure para remover.`}
+                      onLongPress={() => remove(d.id)}
+                      style={s.dest}
                     >
-                      <TripIcon name="grip" size={22} color={authColors.placeholder} />
+                      <TripIcon name="pin" size={24} color={authColors.text} />
+                      <View style={s.destText}>
+                        <Text style={s.city} numberOfLines={1}>{d.city}</Text>
+                        <Text style={s.country} numberOfLines={1}>{d.country}</Text>
+                      </View>
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityLabel={i === 0 ? `Mover ${d.city} para baixo` : `Mover ${d.city} para cima`}
+                        disabled={destinations.length < 2}
+                        onPress={() => shift(i)}
+                        hitSlop={10}
+                        style={({ pressed }) => [pressed && s.pressed, destinations.length < 2 && s.off]}
+                      >
+                        <TripIcon name="grip" size={24} color={authColors.placeholder} />
+                      </Pressable>
                     </Pressable>
-                  </Pressable>
+                  </View>
+                  {i < destinations.length - 1 ? (
+                    <View style={s.sep}><View style={s.sepLine} /></View>
+                  ) : null}
                 </View>
               ))}
-            </View>
+            </ScrollView>
 
             <Pressable
               accessibilityRole="button"
@@ -195,13 +208,13 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Ainda não sabe para onde ir? Descubra um destino com a sua cara."
-            onPress={onDiscover}
+            onPress={() => onDiscover?.(origin)}
             style={({ pressed }) => [s.banner, pressed && s.pressed]}
           >
-            <View style={s.bannerIcon}><TripIcon name="compass" size={28} color={authColors.text} /></View>
+            <View style={[s.bannerIcon, narrow && { width: 36, height: 36, borderRadius: 18 }]}><TripIcon name="compass" size={narrow ? 22 : 28} color={authColors.text} /></View>
             <View style={s.flex}>
-              <Text style={s.bannerTitle} numberOfLines={1}>Ainda não sabe para onde ir?</Text>
-              <Text style={s.bannerText} numberOfLines={1}>Descubra um destino com a sua cara.</Text>
+              <Text style={[s.bannerTitle, narrow && { fontSize: 14, lineHeight: 18 }]} numberOfLines={1}>Ainda não sabe para onde ir?</Text>
+              <Text style={[s.bannerText, narrow && { fontSize: 12 }]} numberOfLines={1}>Descubra um destino com a sua cara.</Text>
             </View>
             <TripIcon name="chevronRight" size={20} color={authColors.text} />
           </Pressable>
@@ -234,7 +247,7 @@ const s = StyleSheet.create({
   title: { fontFamily: fonts.bold, letterSpacing: -0.6, color: '#0B0B0B', marginTop: 8 },
   subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86', marginTop: 0 },
   card: {
-    marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
+    flex: 1, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
     shadowColor: '#1F3D36', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   h2: { fontFamily: fonts.bold, color: authColors.text },
@@ -253,12 +266,15 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
   },
   suggestion: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
-  list: { marginTop: 2 },
-  row: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
-  badgeCol: { width: 40, alignItems: 'center', justifyContent: 'center' },
-  badge: { width: 40, height: 40, borderRadius: 20, backgroundColor: BADGE_BG, alignItems: 'center', justifyContent: 'center' },
+  list: { flex: 1 },
+  listContent: { flexGrow: 1, justifyContent: 'center' },
+  item: { flexGrow: 1, flexShrink: 1, maxHeight: 96 },
+  row: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+  badgeCol: { width: 52, alignItems: 'center', justifyContent: 'center' },
+  badge: { backgroundColor: BADGE_BG, alignItems: 'center', justifyContent: 'center' },
+  sep: { width: 52, height: 14, alignItems: 'center' },
+  sepLine: { flex: 1, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
   badgeText: { fontFamily: fonts.bold, fontSize: 18, color: authColors.text },
-  connector: { position: 'absolute', top: '100%', borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
   dest: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: FIELD_BG, paddingHorizontal: 14 },
   destText: { flex: 1 },
   city: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 21, color: '#111' },
@@ -272,8 +288,8 @@ const s = StyleSheet.create({
   bannerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   bannerTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 21, color: '#111' },
   bannerText: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
-  footer: { marginTop: 'auto', paddingTop: 6, paddingBottom: 10, gap: 4 },
-  count: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
+  footer: { paddingTop: 8, paddingBottom: 10, gap: 6 },
+  count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle, textAlign: 'center' },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },
 });

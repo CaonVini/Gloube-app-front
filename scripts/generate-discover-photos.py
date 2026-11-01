@@ -474,6 +474,107 @@ def scene_snow_lake(w, h, seed=11):
     return img
 
 
+
+def dog(d, x, y, size, color):
+    s_ = size
+    d.ellipse([x - s_ * 0.5, y - s_ * 0.55, x + s_ * 0.35, y - s_ * 0.1], fill=color)            # corpo
+    d.ellipse([x + s_ * 0.2, y - s_ * 0.78, x + s_ * 0.62, y - s_ * 0.38], fill=color)            # cabeça
+    d.polygon([(x + s_ * 0.52, y - s_ * 0.5), (x + s_ * 0.78, y - s_ * 0.44), (x + s_ * 0.56, y - s_ * 0.36)], fill=color)  # focinho
+    d.polygon([(x + s_ * 0.26, y - s_ * 0.72), (x + s_ * 0.32, y - s_ * 0.98), (x + s_ * 0.42, y - s_ * 0.72)], fill=color)  # orelha
+    d.polygon([(x - s_ * 0.46, y - s_ * 0.45), (x - s_ * 0.78, y - s_ * 0.78), (x - s_ * 0.62, y - s_ * 0.38)], fill=color)  # rabo
+    for lx in (-0.38, -0.12, 0.12, 0.3):
+        d.rectangle([x + s_ * lx, y - s_ * 0.2, x + s_ * (lx + 0.09), y], fill=color)
+
+
+def scene_care_kids(w, h, seed=61):
+    img = gradient(w, h, [(0, "#79C3F0"), (0.5, "#DDF1FA"), (0.62, "#FFF3CC")])
+    img = glow(img, 0.78, 0.2, 0.4, "#FFFFFF", 0.7)
+    img = clouds(img, seed, "#FFFFFF", 0.05, 0.5, 0.5, 0.9)
+    img = paint_ridge(img, ridge_line(w, h * 0.66, h * 0.1, seed + 1, rough=0.4, octaves=4), "#8CCB7E", "#6DB567", seed + 1)
+    img = paint_ridge(img, ridge_line(w, h * 0.82, h * 0.06, seed + 2, rough=0.4, octaves=3), "#58A653", "#2F7E3F", seed + 2, tex=0.18)
+    L = layer(w, h)
+    d = ImageDraw.Draw(L)
+    kx, ky = int(w * 0.64), int(h * 0.26)
+    d.polygon([(kx, ky - 46), (kx + 32, ky), (kx, ky + 62), (kx - 32, ky)], fill=(255, 92, 92, 255))
+    d.polygon([(kx, ky - 46), (kx + 32, ky), (kx, ky)], fill=(255, 205, 80, 255))
+    d.polygon([(kx, ky + 62), (kx - 32, ky), (kx, ky)], fill=(80, 160, 255, 255))
+    pts = [(kx, ky + 62)]
+    for i in range(1, 30):
+        t = i / 30
+        pts.append((kx - t * w * 0.2 + math.sin(t * 9) * 14, ky + 62 + t * (h * 0.56 - 62)))
+    d.line(pts, fill=(255, 255, 255, 230), width=2)
+    person(d, int(w * 0.44), int(h * 0.9), h * 0.22, (40, 34, 60, 255))
+    person(d, int(w * 0.34), int(h * 0.92), h * 0.14, (255, 120, 80, 255))
+    for bx, by, c in ((0.16, 0.28, (255, 110, 150)), (0.24, 0.2, (255, 205, 80)), (0.1, 0.18, (110, 190, 255))):
+        d.ellipse([w * bx - 22, h * by - 28, w * bx + 22, h * by + 28], fill=c + (255,))
+        d.line([(w * bx, h * by + 28), (w * 0.3, h * 0.84)], fill=(255, 255, 255, 190), width=2)
+    img = composite_pil(img, L, blur=0.7)
+    return finish(img, seed=seed, warm="#FFE6A8")
+
+
+def scene_care_seniors(w, h, seed=62):
+    img = gradient(w, h, [(0, "#5A7FC0"), (0.35, "#EBB6A0"), (0.58, "#FFDCA8")])
+    img = glow(img, 0.5, 0.55, 0.5, "#FFE0A0", 1.1)
+    img = clouds(img, seed, "#FFE3CC", 0.08, 0.5, 0.52, 0.85)
+    img = paint_ridge(img, ridge_line(w, h * 0.66, h * 0.1, seed + 1, rough=0.4, octaves=4), "#9DB38C", "#B9C69A", seed + 1, haze="#FFE3B8")
+    img = paint_ridge(img, ridge_line(w, h * 0.80, h * 0.07, seed + 2, rough=0.4, octaves=3), "#5E8A55", "#3B6A3F", seed + 2, tex=0.16)
+    L = layer(w, h)
+    d = ImageDraw.Draw(L)
+    round_tree(d, int(w * 0.8), int(h * 0.82), h * 0.3, (36, 94, 58, 255), (96, 152, 84, 255))
+    bx, by = int(w * 0.34), int(h * 0.9)
+    d.rectangle([bx - 70, by - 44, bx + 70, by - 34], fill=(92, 62, 44, 255))
+    d.rectangle([bx - 70, by - 92, bx + 70, by - 80], fill=(92, 62, 44, 255))
+    for lx in (-62, 56):
+        d.rectangle([bx + lx, by - 92, bx + lx + 8, by], fill=(60, 40, 30, 255))
+    sc = (36, 30, 40, 255)
+    person(d, bx - 22, by - 46, h * 0.17, sc)
+    person(d, bx + 26, by - 46, h * 0.16, sc)
+    d.line([(bx + 56, by - 40), (bx + 56, by + 4)], fill=sc, width=4)
+    img = composite_pil(img, L, blur=0.8)
+    return finish(img, seed=seed, warm="#FFD9A0")
+
+
+def scene_care_access(w, h, seed=63):
+    img = gradient(w, h, [(0, "#6AAEE8"), (0.5, "#D6EDF8"), (0.6, "#FFF1D6")])
+    img = glow(img, 0.7, 0.3, 0.4, "#FFFFFF", 0.7)
+    img = clouds(img, seed, "#FFFFFF", 0.05, 0.45, 0.55, 0.85)
+    img = sea_band(img, int(h * 0.52), "#6FE0D6", "#1C86A8", seed, sun_x=0.7, sun_color="#FFFFFF")
+    L = layer(w, h)
+    d = ImageDraw.Draw(L)
+    d.polygon([(w * 0.4, h * 0.6), (w * 0.62, h * 0.6), (w * 1.0, h), (w * 0.0, h)], fill=(226, 206, 170, 255))
+    for i in range(1, 9):
+        t = i / 9
+        y = h * (0.6 + 0.4 * t * t)
+        d.line([(w * (0.4 - 0.4 * t * t), y), (w * (0.62 + 0.38 * t * t), y)], fill=(196, 170, 130, 200), width=2)
+    for side in (0.4, 0.62):
+        d.line([(w * side, h * 0.6), (w * (1.0 if side > 0.5 else 0.0), h)], fill=(250, 250, 250, 255), width=5)
+    sc = (30, 26, 44, 255)
+    cx, cy = int(w * 0.5), int(h * 0.88)
+    d.ellipse([cx - 40, cy - 56, cx + 40, cy + 24], outline=sc, width=6)   # roda
+    d.ellipse([cx - 16, cy - 124, cx + 12, cy - 96], fill=sc)               # cabeça
+    d.rounded_rectangle([cx - 20, cy - 96, cx + 12, cy - 38], radius=10, fill=sc)  # tronco
+    d.rectangle([cx - 20, cy - 40, cx + 40, cy - 28], fill=sc)              # assento/pernas
+    d.line([(cx + 40, cy - 34), (cx + 52, cy - 4)], fill=sc, width=7)
+    img = composite_pil(img, L, blur=0.9)
+    return finish(img, seed=seed)
+
+
+def scene_care_pets(w, h, seed=64):
+    img = gradient(w, h, [(0, "#6FB5EA"), (0.45, "#E6F2D8"), (0.6, "#FFF0C4")])
+    img = glow(img, 0.25, 0.3, 0.4, "#FFF6C8", 1.0)
+    img = clouds(img, seed, "#FFFFFF", 0.05, 0.45, 0.55, 0.8)
+    img = paint_ridge(img, ridge_line(w, h * 0.62, h * 0.12, seed + 1, rough=0.4, octaves=4), "#8FB98A", "#B3CF98", seed + 1, haze="#F4F6D8")
+    img = paint_ridge(img, ridge_line(w, h * 0.78, h * 0.07, seed + 2, rough=0.4, octaves=3), "#5FA05A", "#3A7A45", seed + 2, tex=0.18)
+    L = layer(w, h)
+    d = ImageDraw.Draw(L)
+    sc = (46, 34, 30, 255)
+    person(d, int(w * 0.32), int(h * 0.93), h * 0.26, (30, 36, 60, 255))
+    dog(d, int(w * 0.6), int(h * 0.93), h * 0.2, sc)
+    d.line([(w * 0.35, h * 0.78), (w * 0.62, h * 0.82)], fill=(220, 60, 60, 255), width=3)
+    img = composite_pil(img, L, blur=0.8)
+    return finish(img, seed=seed, warm="#FFE6A8")
+
+
 # ---------- catálogo de saída ----------
 QUIZ = {
     "clima-frio": lambda: scene_mountain(QW, QH, 21, snow=True, dusk=True, cabin=True),
@@ -491,6 +592,10 @@ QUIZ = {
     "comp-amigos": lambda: scene_campfire(QW, QH, 33),
     "comp-familia": lambda: scene_family(QW, QH, 34),
     "comp-solo": lambda: scene_solo(QW, QH, 35),
+    "care-criancas": lambda: scene_care_kids(QW, QH),
+    "care-idosos": lambda: scene_care_seniors(QW, QH),
+    "care-acessibilidade": lambda: scene_care_access(QW, QH),
+    "care-pets": lambda: scene_care_pets(QW, QH),
 }
 DEST = {
     "maldivas": lambda: scene_beach(DW, DH, 41, "lagoon", True),

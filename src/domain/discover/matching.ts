@@ -110,7 +110,7 @@ export function buildWhy(d: Destination, a: Answers, total: number, month: numbe
   parts.push(choices.length > 0 ? `Você escolheu ${joinPt(choices)}.` : 'Cabe no que você informou sobre origem, duração e orçamento.');
   const budget = findBudget(a.budget);
   const fit = budget && budget.id !== 'flexivel' && total <= budget.max ? ' Isso cabe no seu orçamento.' : '';
-  parts.push(`${originLabel ? `Saindo de ${originLabel}, ` : ''}a estimativa é de cerca de ${formatBRL(total)} por pessoa para ${a.days} ${a.days === 1 ? 'dia' : 'dias'}.${fit}`);
+  parts.push(`${originLabel ? (a.originAssumed ? `Sem origem informada, estimamos a partir de ${originLabel}: ` : `Saindo de ${originLabel}, `) : ''}a estimativa é de cerca de ${formatBRL(total)} por pessoa para ${a.days} ${a.days === 1 ? 'dia' : 'dias'}.${fit}`);
   if (month !== null && d.bestMonths.includes(month)) parts.push(`${capitalize(MONTH_NAMES[month - 1] ?? '')} é uma boa época para ir.`);
   return parts.join(' ');
 }

@@ -1,8 +1,9 @@
 import { parseBrDate } from './dates';
+import { resolveOrigin } from './geo';
 import type { Answers, Need, Experience } from './types';
 
 export type StepId =
-  | 'clima' | 'experiencias' | 'alcance' | 'origem' | 'companhia'
+  | 'clima' | 'experiencias' | 'alcance' | 'companhia'
   | 'cuidados' | 'periodo' | 'dias' | 'orcamento';
 
 export interface StepDef {
@@ -17,7 +18,6 @@ export const STEPS: readonly StepDef[] = [
   { id: 'clima', title: 'Qual clima você procura?', subtitle: 'Escolha o que mais combina com a sua viagem.', optional: false },
   { id: 'experiencias', title: 'Que tipo de lugar te atrai?', subtitle: 'Você pode escolher mais de uma opção.', optional: true },
   { id: 'alcance', title: 'Até onde você quer ir?', optional: false },
-  { id: 'origem', title: 'De onde você sai?', subtitle: 'Usamos isso para estimar passagem e tempo de deslocamento.', optional: false },
   { id: 'companhia', title: 'Com quem você vai viajar?', optional: false },
   { id: 'cuidados', title: 'Algum cuidado especial?', subtitle: 'Marque o que se aplica ou pule.', optional: true },
   { id: 'periodo', title: 'Quando você pretende viajar?', optional: false },
@@ -29,9 +29,10 @@ export const MIN_DAYS = 1;
 export const MAX_DAYS = 30;
 export const DEFAULT_DAYS = 7;
 
-export function emptyAnswers(): Answers {
+export function emptyAnswers(originText?: string | null): Answers {
+  const o = resolveOrigin(originText);
   return {
-    climate: null, experiences: [], reach: null, origin: null, companion: null,
+    climate: null, experiences: [], reach: null, origin: o.id, originAssumed: o.assumed, companion: null,
     needs: [], period: { mode: null }, days: DEFAULT_DAYS, budget: null,
   };
 }
@@ -59,7 +60,6 @@ export function isStepComplete(id: StepId, a: Answers, today: Date = new Date())
     case 'clima': return a.climate !== null;
     case 'experiencias': return true;
     case 'alcance': return a.reach !== null;
-    case 'origem': return a.origin !== null;
     case 'companhia': return a.companion !== null;
     case 'cuidados': return true;
     case 'periodo':

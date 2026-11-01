@@ -22,6 +22,10 @@ export const quizPhotos = {
   'comp-amigos': require('../../../assets/images/discover/photos/q-comp-amigos.jpg'),
   'comp-familia': require('../../../assets/images/discover/photos/q-comp-familia.jpg'),
   'comp-solo': require('../../../assets/images/discover/photos/q-comp-solo.jpg'),
+  'care-criancas': require('../../../assets/images/discover/photos/q-care-criancas.jpg'),
+  'care-idosos': require('../../../assets/images/discover/photos/q-care-idosos.jpg'),
+  'care-acessibilidade': require('../../../assets/images/discover/photos/q-care-acessibilidade.jpg'),
+  'care-pets': require('../../../assets/images/discover/photos/q-care-pets.jpg'),
 } satisfies Record<string, ImageSourcePropType>;
 
 export type QuizPhotoKey = keyof typeof quizPhotos;
