@@ -1,11 +1,10 @@
 import { memo, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Experience } from '../../domain/discover/types';
 import { getInitials } from '../../domain/demo-user';
 import { GloubeLogo } from '../auth-ui/GloubeLogo';
 import { AvatarMenu } from '../home/AvatarMenu';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
-import { experienceImages } from './assets';
+import { avatarPhoto, type QuizPhotoKey, quizPhotos } from './assets';
 import { DIcon, type DiscoverIconName } from './icons';
 
 /** Paleta do fluxo (mesma do app: verde escuro, teal, creme e o amarelo-limão da navbar). */
@@ -33,7 +32,7 @@ export function DiscoverHeader({ fullName, onSignOut }: { fullName: string; onSi
   return (
     <View style={s.header}>
       <GloubeLogo width={150} tone="dark" />
-      <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
+      <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} photo={avatarPhoto} />
     </View>
   );
 }
@@ -113,24 +112,51 @@ export const Chip = memo(function Chip({ label, selected, onPress, icon }: { lab
   );
 });
 
-/** Cartão com ilustração (praia, montanha…) e check no canto. */
-export const ImageTile = memo(function ImageTile({ kind, label, selected, size, onPress }: {
-  kind: Experience; label: string; selected: boolean; size: number; onPress: () => void;
-}) {
-  const img = size - 16;
+const SHADE_BANDS = 28;
+
+/** Degradê escuro na base, feito com faixas translúcidas (sem dependência nativa extra). */
+function Shade({ height }: { height: string }) {
+  return (
+    <View pointerEvents="none" style={[s.shade, { height: height as `${number}%` }]}>
+      {Array.from({ length: SHADE_BANDS }, (_, i) => (
+        <View key={i} style={{ flex: 1, backgroundColor: `rgba(8,24,20,${(0.72 * Math.pow((i + 1) / SHADE_BANDS, 1.8)).toFixed(3)})` }} />
+      ))}
+    </View>
+  );
+}
+
+export function SelectDot({ on }: { on: boolean }) {
+  return <View style={[s.dot, on && s.dotOn]}>{on ? <DIcon name="check" size={16} color="#FFFFFF" /> : null}</View>;
+}
+
+interface PhotoCardProps {
+  photo: QuizPhotoKey;
+  title: string;
+  subtitle?: string;
+  selected: boolean;
+  multi?: boolean;
+  compact?: boolean;
+  onPress: () => void;
+}
+
+/** Cartão com foto de fundo, degradê escuro, título/subtítulo brancos e indicador de seleção no canto. Preenche o espaço do pai (flex). */
+export const PhotoCard = memo(function PhotoCard({ photo, title, subtitle, selected, multi, compact, onPress }: PhotoCardProps) {
   return (
     <Pressable
-      accessibilityRole="checkbox"
+      accessibilityRole={multi ? 'checkbox' : 'radio'}
       accessibilityState={{ checked: selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
       onPress={onPress}
-      style={({ pressed }) => [s.tile, cardShadow, { width: size }, selected && s.optionOn, pressed && s.pressed]}
+      style={({ pressed }) => [s.photoCard, cardShadow, pressed && s.pressed]}
     >
-      <View>
-        <Image source={experienceImages[kind]} style={{ width: img, height: Math.round(img * 0.78), borderRadius: 14 }} resizeMode="cover" />
-        <View style={s.tileCheck}><CheckBadge on={selected} /></View>
+      <Image source={quizPhotos[photo]} style={StyleSheet.absoluteFill} resizeMode="cover" />
+      <Shade height={compact ? '55%' : '50%'} />
+      <View style={s.photoSelect}><SelectDot on={selected} /></View>
+      <View style={[s.photoText, compact && { padding: 12 }]}>
+        <Text style={[s.photoTitle, compact && { fontSize: 19, lineHeight: 23 }]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={[s.photoSub, compact && { fontSize: 13, lineHeight: 17 }]} numberOfLines={2}>{subtitle}</Text> : null}
       </View>
-      <Text style={s.tileLabel}>{label}</Text>
+      {selected ? <View pointerEvents="none" style={s.photoRing} /> : null}
     </Pressable>
   );
 });
@@ -165,9 +191,9 @@ const s = StyleSheet.create({
   bars: { flex: 1, flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E1E3E0' },
   barOn: { backgroundColor: dc.dark },
-  titleBox: { marginTop: 26, gap: 4 },
-  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B' },
-  subtitle: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24, color: dc.teal },
+  titleBox: { marginTop: 16, gap: 4 },
+  title: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 33, letterSpacing: -0.6, color: '#0B0B0B' },
+  subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86' },
   option: {
     flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 72, paddingHorizontal: 14, paddingVertical: 12,
     borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card,
@@ -187,7 +213,7 @@ const s = StyleSheet.create({
   chipOn: { backgroundColor: dc.dark, borderColor: dc.dark },
   chipText: { fontFamily: fonts.medium, fontSize: 15, color: authColors.body },
   chipTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
-  tile: { padding: 8, gap: 10, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card },
+  tileUnused: { padding: 8, gap: 10, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card },
   tileCheck: { position: 'absolute', top: 8, right: 8 },
   tileLabel: { fontFamily: fonts.bold, fontSize: 17, color: dc.dark, paddingHorizontal: 4, paddingBottom: 4 },
   tag: { backgroundColor: dc.mint, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
@@ -196,5 +222,14 @@ const s = StyleSheet.create({
     width: 56, height: 56, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center', ...cardShadow,
   },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.85 },
+  photoCard: { flex: 1, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1F3D36' },
+  shade: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  photoSelect: { position: 'absolute', top: 12, right: 12 },
+  photoText: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 2 },
+  photoTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 29, letterSpacing: -0.3, color: '#FFFFFF' },
+  photoSub: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 19, color: 'rgba(255,255,255,0.92)' },
+  photoRing: { ...StyleSheet.absoluteFill, borderRadius: 24, borderWidth: 3, borderColor: dc.lime },
+  dot: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  dotOn: { backgroundColor: dc.dark },
 });

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, Pressable, StyleSheet, Text, View, type ImageSourcePropType } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { ChevronDownIcon } from '../auth-ui/icons';
@@ -8,10 +8,12 @@ interface Props {
   initials: string;
   fullName: string;
   onSignOut: () => void;
+  /** Foto opcional exibida ao lado das iniciais (como no mockup). */
+  photo?: ImageSourcePropType;
 }
 
 /** Avatar com iniciais + chevron; ao tocar abre um menu simples com a opção "Sair". */
-export function AvatarMenu({ initials, fullName, onSignOut }: Props) {
+export function AvatarMenu({ initials, fullName, onSignOut, photo }: Props) {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -25,6 +27,7 @@ export function AvatarMenu({ initials, fullName, onSignOut }: Props) {
         hitSlop={8}
         style={({ pressed }) => [s.trigger, pressed && s.pressed]}
       >
+        {photo ? <Image source={photo} style={s.photo} accessible={false} /> : null}
         <View style={s.avatar}>
           <Text style={s.initials}>{initials}</Text>
         </View>
@@ -54,6 +57,7 @@ const s = StyleSheet.create({
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: homeColors.avatarBg, alignItems: 'center', justifyContent: 'center',
   },
+  photo: { width: 42, height: 42, borderRadius: 21, marginRight: -2 },
   initials: { fontFamily: fonts.medium, fontSize: 18, color: authColors.text },
   pressed: { opacity: 0.7 },
   backdrop: { flex: 1 },

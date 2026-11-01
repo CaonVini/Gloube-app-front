@@ -1,6 +1,6 @@
 import type React from 'react';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   SIMULATED_ORIGIN, addDestination, canAdvance, destinationsLabel, moveDestination, removeDestination,
@@ -10,6 +10,7 @@ import { getInitials } from '../../domain/demo-user';
 import { PrimaryButton } from '../auth-ui/Button';
 import { GloubeLogo } from '../auth-ui/GloubeLogo';
 import { AvatarMenu } from '../home/AvatarMenu';
+import { avatarPhoto } from '../discover/assets';
 import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
@@ -18,6 +19,7 @@ const MAX_COLUMN = 480;
 const H_PADDING = 16;
 const FIELD_BG = '#F3F1EC';
 const BANNER_BG = '#E4EDE6';
+const BADGE_BG = '#D3E4D8';
 const INITIAL_DESTINATIONS: readonly Destination[] = [
   { id: 'paris', city: 'Paris', country: 'França' },
   { id: 'roma', city: 'Roma', country: 'Itália' },
@@ -33,7 +35,9 @@ interface Props {
 /** Passo 1 de 3 de "Nova viagem". Tudo local/fictício: origem simulada, busca em catálogo local, sem rede. */
 export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props) {
   const insets = useSafeAreaInsets();
+  const { width, height } = useWindowDimensions();
   const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
+  const originRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const [origin, setOrigin] = useState('');
   const [query, setQuery] = useState('');
   const [destinations, setDestinations] = useState<readonly Destination[]>(INITIAL_DESTINATIONS);
@@ -41,28 +45,31 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   const suggestions = useMemo(() => searchDestinations(query, destinations), [query, destinations]);
   const ready = canAdvance(origin, destinations);
 
+  // Tudo cabe em UMA tela (sem rolagem): medidas escalam com a altura (referência 844) e o título com a largura.
+  const k = Math.min(1.1, Math.max(0.78, height / 844));
+  const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
+  const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 13.4)));
+  const m = useMemo(() => ({
+    field: Math.round(38 * k), row: Math.round(44 * k), gap: Math.round(6 * k), h2: Math.round(19 * k), pad: Math.round(12 * k),
+  }), [k]);
+
   const add = useCallback((d: Destination) => {
     setDestinations((list) => addDestination(list, d));
     setQuery('');
   }, []);
   const remove = useCallback((id: string) => setDestinations((list) => removeDestination(list, id)), []);
-  // O ícone de arrastar sobe o item; o primeiro desce (sem biblioteca de gestos, acessível por toque).
+  // O ícone de menu sobe o item; o primeiro desce (sem biblioteca de gestos, acessível por toque).
   const shift = useCallback((index: number) => {
     setDestinations((list) => moveDestination(list, index, index === 0 ? 1 : index - 1));
   }, []);
 
   return (
     <View style={s.root}>
-      <ScrollView
-        style={s.flex}
-        contentContainerStyle={[s.content, { paddingTop: Math.max(insets.top, 47) + 6 }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={[s.content, { paddingTop: Math.max(insets.top, 12) + 2 }]}>
         <View style={s.column}>
           <View style={s.header}>
-            <GloubeLogo width={150} tone="dark" />
-            <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
+            <GloubeLogo width={Math.round(150 * Math.min(1, k + 0.1))} tone="dark" />
+            <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} photo={avatarPhoto} />
           </View>
 
           <View style={s.progressRow} accessible accessibilityLabel="Nova viagem, etapa 1 de 3">
@@ -73,15 +80,18 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
             <Text style={s.kicker}>1 de 3</Text>
           </View>
 
-          <Text style={s.title} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>Vamos desenhar sua viagem</Text>
+          <Text style={[s.title, { fontSize: titleSize, lineHeight: titleSize + 6 }]} accessibilityRole="header" numberOfLines={1} adjustsFontSizeToFit>Vamos desenhar sua viagem</Text>
           <Text style={s.subtitle}>Defina a origem e escolha seus destinos.</Text>
+        </View>
 
-          <View style={s.card}>
-            <Text style={s.h2} accessibilityRole="header">Onde estamos?</Text>
+        <View style={[s.column, s.flex]}>
+          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad }]}>
+            <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
             <Text style={s.hint}>De qual cidade você vai sair?</Text>
-            <View style={s.field}>
-              <TripIcon name="crosshair" size={22} color={authColors.text} />
+            <View style={[s.field, { minHeight: m.field }]}>
+              <TripIcon name="crosshair" size={20} color={authColors.text} />
               <TextInput
+                ref={originRef}
                 accessibilityLabel="Cidade de partida"
                 placeholder="Informe sua cidade de partida"
                 placeholderTextColor={authColors.placeholder}
@@ -98,76 +108,73 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               hitSlop={6}
               style={({ pressed }) => [s.linkRow, pressed && s.pressed]}
             >
-              <TripIcon name="pin" size={20} color={authColors.link} />
+              <TripIcon name="pin" size={18} color={authColors.link} />
               <Text style={s.link}>Usar minha localização</Text>
             </Pressable>
 
             <View style={s.divider} />
 
-            <Text style={s.h2} accessibilityRole="header">Para onde vamos?</Text>
-            <View style={s.field}>
-              <TripIcon name="search" size={22} color={authColors.text} />
-              <TextInput
-                ref={searchRef}
-                accessibilityLabel="Buscar cidade ou país"
-                placeholder="Busque uma cidade ou país"
-                placeholderTextColor={authColors.placeholder}
-                value={query}
-                onChangeText={setQuery}
-                maxLength={60}
-                style={s.input}
-              />
-            </View>
-            {suggestions.length > 0 ? (
-              <View style={s.suggestions}>
-                {suggestions.map((d) => (
-                  <Pressable
-                    key={d.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Adicionar ${d.city}, ${d.country}`}
-                    onPress={() => add(d)}
-                    style={({ pressed }) => [s.suggestion, pressed && s.pressed]}
-                  >
-                    <Text style={s.city}>{d.city}</Text>
-                    <Text style={s.country}>{d.country}</Text>
-                  </Pressable>
-                ))}
+            <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Para onde vamos?</Text>
+            <View style={{ zIndex: 5 }}>
+              <View style={[s.field, { minHeight: m.field }]}>
+                <TripIcon name="search" size={20} color={authColors.text} />
+                <TextInput
+                  ref={searchRef}
+                  accessibilityLabel="Buscar cidade ou país"
+                  placeholder="Busque uma cidade ou país"
+                  placeholderTextColor={authColors.placeholder}
+                  value={query}
+                  onChangeText={setQuery}
+                  maxLength={60}
+                  style={s.input}
+                />
               </View>
-            ) : null}
+              {suggestions.length > 0 ? (
+                <View style={s.suggestions}>
+                  {suggestions.map((d) => (
+                    <Pressable
+                      key={d.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Adicionar ${d.city}, ${d.country}`}
+                      onPress={() => add(d)}
+                      style={({ pressed }) => [s.suggestion, pressed && s.pressed]}
+                    >
+                      <Text style={s.city}>{d.city}</Text>
+                      <Text style={s.country}>{d.country}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              ) : null}
+            </View>
 
             <View style={s.list}>
               {destinations.map((d, i) => (
-                <View key={d.id} style={s.row}>
+                <View key={d.id} style={[s.row, { height: m.row, marginBottom: m.gap }]}>
                   <View style={s.badgeCol}>
                     <View style={s.badge}><Text style={s.badgeText}>{i + 1}</Text></View>
-                    {i < destinations.length - 1 ? <View style={s.connector} /> : null}
+                    {i < destinations.length - 1 ? <View style={[s.connector, { height: m.gap + 4 }]} /> : null}
                   </View>
-                  <View style={s.dest}>
-                    <TripIcon name="pin" size={24} color={authColors.text} />
+                  <Pressable
+                    accessibilityLabel={`${d.city}, ${d.country}. Toque e segure para remover.`}
+                    onLongPress={() => remove(d.id)}
+                    style={s.dest}
+                  >
+                    <TripIcon name="pin" size={22} color={authColors.text} />
                     <View style={s.destText}>
                       <Text style={s.city} numberOfLines={1}>{d.city}</Text>
                       <Text style={s.country} numberOfLines={1}>{d.country}</Text>
                     </View>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={`Remover ${d.city}`}
-                      onPress={() => remove(d.id)}
-                      hitSlop={8}
-                      style={({ pressed }) => pressed && s.pressed}
-                    >
-                      <TripIcon name="close" size={18} color={authColors.muted} />
-                    </Pressable>
-                    <Pressable
-                      accessibilityRole="button"
                       accessibilityLabel={i === 0 ? `Mover ${d.city} para baixo` : `Mover ${d.city} para cima`}
                       disabled={destinations.length < 2}
                       onPress={() => shift(i)}
-                      hitSlop={8}
+                      hitSlop={10}
                       style={({ pressed }) => [pressed && s.pressed, destinations.length < 2 && s.off]}
                     >
-                      <TripIcon name="grip" size={24} color={authColors.placeholder} />
+                      <TripIcon name="grip" size={22} color={authColors.placeholder} />
                     </Pressable>
-                  </View>
+                  </Pressable>
                 </View>
               ))}
             </View>
@@ -178,7 +185,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               onPress={() => searchRef.current?.focus()}
               style={({ pressed }) => [s.linkRow, pressed && s.pressed]}
             >
-              <View style={s.plus}><TripIcon name="plus" size={18} color="#FFFFFF" /></View>
+              <View style={s.plus}><TripIcon name="plus" size={16} color="#FFFFFF" /></View>
               <Text style={s.link}>Adicionar outro destino</Text>
             </Pressable>
             <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>
@@ -190,20 +197,20 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
             onPress={onDiscover}
             style={({ pressed }) => [s.banner, pressed && s.pressed]}
           >
-            <View style={s.bannerIcon}><TripIcon name="compass" size={34} color={authColors.text} /></View>
+            <View style={s.bannerIcon}><TripIcon name="compass" size={28} color={authColors.text} /></View>
             <View style={s.flex}>
-              <Text style={s.bannerTitle}>Ainda não sabe para onde ir?</Text>
-              <Text style={s.bannerText}>Descubra um destino com a sua cara.</Text>
+              <Text style={s.bannerTitle} numberOfLines={1}>Ainda não sabe para onde ir?</Text>
+              <Text style={s.bannerText} numberOfLines={1}>Descubra um destino com a sua cara.</Text>
             </View>
-            <TripIcon name="chevronRight" size={22} color={authColors.text} />
+            <TripIcon name="chevronRight" size={20} color={authColors.text} />
           </Pressable>
 
           <View style={s.footer}>
             <Text style={s.count} accessibilityLiveRegion="polite">{destinationsLabel(destinations.length)}</Text>
-            <PrimaryButton title="Próximo" onPress={() => onNext?.()} disabled={!ready} size="hero" />
+            <PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="hero" />
           </View>
         </View>
-      </ScrollView>
+      </View>
       {/* Navegação fictícia: "Descubra" fixo como aba ativa desta tela. */}
       <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={noop} />
     </View>
@@ -215,56 +222,57 @@ function noop() {}
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: homeColors.background },
   flex: { flex: 1 },
-  content: { paddingHorizontal: H_PADDING, paddingBottom: 24 },
-  column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', gap: 0 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
+  content: { flex: 1, paddingHorizontal: H_PADDING },
+  column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
   progressRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  kicker: { fontFamily: fonts.regular, fontSize: 13, letterSpacing: 0.3, color: homeColors.subtitle },
+  kicker: { fontFamily: fonts.regular, fontSize: 12, letterSpacing: 0.3, color: homeColors.subtitle },
   bars: { flex: 1, flexDirection: 'row', gap: 6 },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E1E3E0' },
   barOn: { backgroundColor: authColors.primary },
-  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B', marginTop: 16 },
-  subtitle: { fontFamily: fonts.regular, fontSize: 18, lineHeight: 24, color: homeColors.subtitle, marginTop: 2 },
+  title: { fontFamily: fonts.bold, letterSpacing: -0.6, color: '#0B0B0B', marginTop: 8 },
+  subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86', marginTop: 0 },
   card: {
-    marginTop: 20, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3',
-    paddingHorizontal: 16, paddingVertical: 18, gap: 10,
+    marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
+    shadowColor: '#1F3D36', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
-  h2: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 28, color: authColors.text },
-  hint: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle, marginTop: -6 },
+  h2: { fontFamily: fonts.bold, color: authColors.text },
+  hint: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle, marginTop: -6 },
   field: {
-    flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46, borderRadius: 14, borderWidth: 1,
+    flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 14, borderWidth: 1,
     borderColor: authColors.border, backgroundColor: FIELD_BG, paddingHorizontal: 14,
   },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 16, color: authColors.body, paddingVertical: 8 },
-  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 36 },
-  link: { fontFamily: fonts.medium, fontSize: 16, color: authColors.link },
-  divider: { height: 1, backgroundColor: authColors.border, marginVertical: 8 },
-  suggestions: { borderRadius: 14, borderWidth: 1, borderColor: authColors.border, overflow: 'hidden' },
-  suggestion: { minHeight: 48, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
-  list: { marginTop: 4 },
-  row: { flexDirection: 'row', alignItems: 'stretch', gap: 12, marginBottom: 6 },
-  badgeCol: { width: 44, alignItems: 'center' },
-  badge: { width: 44, height: 44, borderRadius: 22, backgroundColor: BANNER_BG, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { fontFamily: fonts.bold, fontSize: 20, color: authColors.text },
-  connector: { position: 'absolute', top: 46, height: 12, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
-  dest: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 54, borderRadius: 16,
-    backgroundColor: FIELD_BG, paddingHorizontal: 14,
+  input: { flex: 1, fontFamily: fonts.regular, fontSize: 15, color: authColors.body, paddingVertical: 6 },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 28 },
+  link: { fontFamily: fonts.medium, fontSize: 15, color: authColors.link },
+  divider: { height: 1, backgroundColor: authColors.border, marginVertical: 2 },
+  suggestions: {
+    position: 'absolute', top: '100%', left: 0, right: 0, marginTop: 4, borderRadius: 14, borderWidth: 1, borderColor: authColors.border,
+    overflow: 'hidden', backgroundColor: '#FFFFFF', zIndex: 10, elevation: 8,
+    shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
   },
+  suggestion: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
+  list: { marginTop: 2 },
+  row: { flexDirection: 'row', alignItems: 'stretch', gap: 10 },
+  badgeCol: { width: 40, alignItems: 'center', justifyContent: 'center' },
+  badge: { width: 40, height: 40, borderRadius: 20, backgroundColor: BADGE_BG, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontFamily: fonts.bold, fontSize: 18, color: authColors.text },
+  connector: { position: 'absolute', top: '100%', borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
+  dest: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: FIELD_BG, paddingHorizontal: 14 },
   destText: { flex: 1 },
-  city: { fontFamily: fonts.semibold, fontSize: 18, lineHeight: 22, color: '#111' },
-  country: { fontFamily: fonts.regular, fontSize: 15, color: authColors.link },
-  plus: { width: 32, height: 32, borderRadius: 16, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
-  note: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
+  city: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 21, color: '#111' },
+  country: { fontFamily: fonts.regular, fontSize: 14, color: authColors.link },
+  plus: { width: 28, height: 28, borderRadius: 14, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
+  note: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
   banner: {
-    marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: BANNER_BG, borderRadius: 18,
-    paddingHorizontal: 12, paddingVertical: 14,
+    marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: BANNER_BG, borderRadius: 18,
+    paddingHorizontal: 12, paddingVertical: 8,
   },
-  bannerIcon: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
-  bannerTitle: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22, color: '#111' },
-  bannerText: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle },
-  footer: { marginTop: 18, gap: 8 },
-  count: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle },
+  bannerIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
+  bannerTitle: { fontFamily: fonts.bold, fontSize: 17, lineHeight: 21, color: '#111' },
+  bannerText: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
+  footer: { marginTop: 'auto', paddingTop: 8, paddingBottom: 14, gap: 4 },
+  count: { fontFamily: fonts.regular, fontSize: 14, color: homeColors.subtitle },
   pressed: { opacity: 0.7 },
   off: { opacity: 0.4 },
 });

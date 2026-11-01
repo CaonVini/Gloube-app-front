@@ -55,5 +55,5 @@ Rota `/discover` (aba **Descubra** do planejador → botão "Descubra um destino
 
 - Lógica pura e testada em `src/domain/discover/` (`matching.ts` filtra o inviável e ranqueia; `compare.ts` monta a comparação).
 - Catálogo local fictício em `catalog.ts`. Pets/acessibilidade só aparecem como adequados quando `verified: true`; caso contrário a UI mostra "Confirme antes de reservar".
-- Ilustrações PNG locais geradas por `scripts/generate-discover-images.py` (≈80 KB no total). Troque por fotos otimizadas quando houver licença.
-- Ícones por opção (PNG branco 96px, tingidos via `tintColor`) gerados por `scripts/generate-discover-icons.py`. O questionário só abre pelo banner "Ainda não sabe para onde ir?" da tela Nova viagem.
+- Imagens (JPG, ~1,5 MB no total) geradas proceduralmente por `scripts/generate-discover-photos.py` — **não são fotos reais**. Para trocar, substitua os arquivos em `assets/images/discover/photos/` ou edite `src/presentation/discover/assets.ts` (único mapeamento).
+- Ícones (PNG branco 96px, tingidos via `tintColor`) gerados por `scripts/generate-discover-icons.py`. O questionário só abre pelo banner "Ainda não sabe para onde ir?" da tela Nova viagem.
