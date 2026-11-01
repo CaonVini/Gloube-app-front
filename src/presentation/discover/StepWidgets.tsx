@@ -183,10 +183,10 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
   };
   return (
     <View style={s.centered}>
-      <View style={[s.tierRow, compact && { height: 104 }]}>{TIERS.slice(0, 2).map(tier)}</View>
-      <View style={[s.tierRow, compact && { height: 104 }]}>{TIERS.slice(2).map(tier)}</View>
+      <View style={s.tierRow}>{TIERS.slice(0, 2).map(tier)}</View>
+      <View style={s.tierRow}>{TIERS.slice(2).map(tier)}</View>
 
-      <Pressable accessibilityRole="radio" accessibilityState={{ checked: custom }} accessibilityLabel="Definir outro valor" onPress={() => onChange({ budget: 'custom' })} style={[s.opt, s.customCard, compact && { minHeight: 48 }, custom && s.optOn]}>
+      <Pressable accessibilityRole="radio" accessibilityState={{ checked: custom }} accessibilityLabel="Definir outro valor" onPress={() => onChange({ budget: 'custom' })} style={[s.opt, s.customCard, compact ? { minHeight: 60 } : { minHeight: 72 }, custom && s.optOn]}>
         <View style={s.customHead}>
           <DIcon name="edit" size={22} color={dc.dark} />
           <View style={{ flex: 1 }}>
@@ -208,7 +208,7 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
           />
         ) : null}
       </Pressable>
-
+      <Text style={s.budgetNote}>Você pode ajustar o orçamento depois.</Text>
     </View>
   );
 }
@@ -248,13 +248,14 @@ const s = StyleSheet.create({
   dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
   calNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 
-  centered: { flex: 1, justifyContent: 'center', gap: 10 },
-  tierRow: { flexDirection: 'row', gap: 10, height: 128 },
+  centered: { flex: 1, gap: 12, paddingTop: 8 },
+  tierRow: { flex: 1, flexDirection: 'row', gap: 12, maxHeight: 210 },
+  budgetNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted, textAlign: 'center', paddingTop: 2 },
   tier: { flex: 1, justifyContent: 'center', gap: 2, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
   tierOn: { borderColor: dc.dark, borderWidth: 1.5, backgroundColor: '#EEF3EF' },
   tierRadio: { position: 'absolute', top: 10, right: 10 },
   tierKicker: { fontFamily: fonts.medium, fontSize: 11, letterSpacing: 1.4, color: dc.muted },
-  tierValue: { fontFamily: fonts.bold, fontSize: 25, letterSpacing: -0.4, color: dc.dark },
+  tierValue: { fontFamily: fonts.bold, fontSize: 26, letterSpacing: -0.4, color: dc.dark },
   tierHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
   customCard: { flexDirection: 'column', alignItems: 'stretch', justifyContent: 'center', gap: 8, paddingVertical: 10 },
   customHead: { flexDirection: 'row', alignItems: 'center', gap: 14 },
