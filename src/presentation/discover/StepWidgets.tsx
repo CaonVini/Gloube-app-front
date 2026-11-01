@@ -1,6 +1,8 @@
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { BUDGETS, findBudget } from '../../domain/discover/budget';
-import { MONTH_NAMES, maskDate, parseBrDate } from '../../domain/discover/dates';
+import { MONTH_NAMES, monthGrid, nightsBetween, parseBrParts, pickRangeDate, shortLabel, toBr } from '../../domain/discover/dates';
+import { clampDays } from '../../domain/discover/quiz';
 import type { Answers, BudgetId } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
 import { DIcon } from './icons';
@@ -10,77 +12,112 @@ type Patch = (patch: Partial<Answers>) => void;
 
 /* ───────────────────────── Período ───────────────────────── */
 
+const WEEKDAYS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'] as const;
+
 const OPTIONS = [
-  { mode: 'definidas', label: 'Datas exatas', hint: 'Já sei o dia da ida', icon: 'calendar' },
-  { mode: 'mes', label: 'Só o mês', hint: 'Tenho um mês aproximado', icon: 'calendarMonth' },
-  { mode: 'indefinido', label: 'Ainda não sei', hint: 'Sem data, tudo bem', icon: 'help' },
+  { mode: 'definidas', label: 'Datas exatas', hint: 'Já tenho os dias definidos', icon: 'calendar' },
+  { mode: 'indefinido', label: 'Ainda não sei', hint: 'Quero explorar as possibilidades', icon: 'help' },
 ] as const;
 
-/** Três opções sempre visíveis. A escolhida se expande e mostra o campo/grade dentro do próprio cartão. Sem abas nem painel vazio. */
+/** Duas opções + calendário de ida e volta dentro do painel (só quando "Datas exatas"). Sem rolagem: a grade ocupa o espaço restante. */
 export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; onChange: Patch; today: Date }) {
+  const { height } = useWindowDimensions();
+  const compact = height < 800;
   const mode = a.period.mode;
-  const startDate = a.period.mode === 'definidas' ? a.period.startDate : '';
-  const month = a.period.mode === 'mes' ? a.period.month : null;
-  const dateError = startDate.length === 10 && !parseBrDate(startDate, today) ? 'Informe uma data válida a partir de hoje.' : undefined;
+  const start = a.period.mode === 'definidas' ? a.period.startDate : '';
+  const end = a.period.mode === 'definidas' ? a.period.endDate ?? '' : '';
+  const startParts = parseBrParts(start);
+  const [view, setView] = useState({ year: (startParts ?? { year: today.getFullYear() }).year, month: (startParts ?? { month: today.getMonth() + 1 }).month });
+  const grid = useMemo(() => monthGrid(view.year, view.month), [view]);
+  const nights = nightsBetween(start, end);
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const atMinMonth = view.year === today.getFullYear() && view.month === today.getMonth() + 1;
 
   const pick = (m: (typeof OPTIONS)[number]['mode']) => {
-    if (m === 'definidas') onChange({ period: { mode: 'definidas', startDate } });
-    else if (m === 'mes') onChange({ period: { mode: 'mes', month } });
+    if (m === 'definidas') onChange({ period: { mode: 'definidas', startDate: start, endDate: end } });
     else onChange({ period: { mode: 'indefinido' } });
+  };
+  const shiftMonth = (delta: number) => setView((v) => {
+    const d = new Date(v.year, v.month - 1 + delta, 1);
+    return { year: d.getFullYear(), month: d.getMonth() + 1 };
+  });
+  const tapDay = (day: number) => {
+    const next = pickRangeDate(start, end, toBr(view.year, view.month, day));
+    const n = nightsBetween(next.start, next.end);
+    onChange({ period: { mode: 'definidas', startDate: next.start, endDate: next.end }, ...(n ? { days: clampDays(n) } : {}) });
   };
 
   return (
     <View style={s.fill} accessibilityRole="radiogroup">
       {OPTIONS.map((o) => {
         const on = mode === o.mode;
-        const grows = on && o.mode !== 'indefinido';
         return (
-          <View key={o.mode} style={[s.opt, cardShadow, on && s.optOn, grows ? { flex: 1, minHeight: 150 } : { flexGrow: 1, flexBasis: 0, maxHeight: 96, minHeight: 72 }]}>
-            <Pressable accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${o.label}. ${o.hint}`} onPress={() => pick(o.mode)} style={({ pressed }) => [s.optHead, !grows && { flex: 1 }, pressed && { opacity: 0.85 }]}>
-              <View style={s.optIcon}><DIcon name={o.icon} size={26} color={dc.dark} /></View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.optTitle}>{o.label}</Text>
-                <Text style={s.optHint}>{o.hint}</Text>
-              </View>
-              <View style={[s.radio, on && s.radioOn]}>{on ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
-            </Pressable>
-
-            {on && o.mode === 'definidas' ? (
-              <View style={s.optBody}>
-                <TextInput
-                  accessibilityLabel="Data de ida (DD/MM/AAAA)"
-                  keyboardType="number-pad"
-                  maxLength={10}
-                  placeholder="DD/MM/AAAA"
-                  placeholderTextColor="#B8BDBB"
-                  value={startDate}
-                  onChangeText={(t) => onChange({ period: { mode: 'definidas', startDate: maskDate(t) } })}
-                  style={[s.dateInput, !!dateError && { color: '#B3261E' }]}
-                />
-                <Text style={[s.optHint, !!dateError && { color: '#B3261E' }]} accessibilityLiveRegion="polite">{dateError ?? 'Data de ida, ex.: 15/01/2027'}</Text>
-              </View>
-            ) : null}
-
-            {on && o.mode === 'mes' ? (
-              <View style={s.months}>
-                {[0, 1].map((r) => (
-                  <View key={r} style={s.monthRow}>
-                    {[0, 1, 2, 3, 4, 5].map((c) => {
-                      const i = r * 6 + c;
-                      const sel = month === i + 1;
-                      return (
-                        <Pressable key={i} accessibilityRole="radio" accessibilityState={{ checked: sel }} accessibilityLabel={MONTH_NAMES[i]} onPress={() => onChange({ period: { mode: 'mes', month: i + 1 } })} style={({ pressed }) => [s.month, sel && s.monthOn, pressed && { opacity: 0.85 }]}>
-                          <Text style={[s.monthText, sel && s.monthTextOn]} numberOfLines={1}>{(MONTH_NAMES[i] ?? '').slice(0, 3).replace(/^./, (x) => x.toUpperCase())}</Text>
-                        </Pressable>
-                      );
-                    })}
-                  </View>
-                ))}
-              </View>
-            ) : null}
-          </View>
+          <Pressable key={o.mode} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${o.label}. ${o.hint}`} onPress={() => pick(o.mode)} style={({ pressed }) => [s.opt, compact && { minHeight: 48 }, on && s.optOn, pressed && { opacity: 0.9 }]}>
+            <DIcon name={o.icon} size={26} color={dc.dark} />
+            <View style={{ flex: 1 }}>
+              <Text style={s.optTitle}>{o.label}</Text>
+              {compact ? null : <Text style={s.optHint}>{o.hint}</Text>}
+            </View>
+            <View style={[s.radio, on && s.radioOn]}>{on ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
+          </Pressable>
         );
       })}
+
+      {mode === 'definidas' ? (
+        <View style={[s.cal, compact && { padding: 8, gap: 4 }]}>
+          <View style={s.fieldsRow}>
+            <View style={[s.dateField, compact && s.dateFieldRow, !end && !!start && s.dateFieldActive]}>
+              <Text style={s.fieldKicker}>IDA</Text>
+              <Text style={s.fieldValue}>{shortLabel(start) || 'Escolha'}</Text>
+            </View>
+            <View style={[s.dateField, compact && s.dateFieldRow, !!start && !end && s.dateFieldActive]}>
+              <Text style={s.fieldKicker}>VOLTA</Text>
+              <Text style={s.fieldValue}>{shortLabel(end) || 'Escolha'}</Text>
+            </View>
+          </View>
+
+          <View style={s.monthHead}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" disabled={atMinMonth} onPress={() => shiftMonth(-1)} hitSlop={10} style={[s.navBtn, atMinMonth && { opacity: 0.3 }]}>
+              <DIcon name="chevronLeft" size={20} color={dc.dark} />
+            </Pressable>
+            <Text style={s.monthTitle} accessibilityLiveRegion="polite">{(MONTH_NAMES[view.month - 1] ?? '').replace(/^./, (c) => c.toUpperCase())} {view.year}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Próximo mês" onPress={() => shiftMonth(1)} hitSlop={10} style={s.navBtn}>
+              <DIcon name="chevronRight" size={20} color={dc.dark} />
+            </Pressable>
+          </View>
+
+          <View style={s.weekRow}>{WEEKDAYS.map((w, i) => <Text key={i} style={s.weekday}>{w}</Text>)}</View>
+          <View style={s.grid}>
+            {[0, 1, 2, 3, 4, 5].map((r) => (
+              <View key={r} style={s.weekLine}>
+                {[0, 1, 2, 3, 4, 5, 6].map((c) => {
+                  const day = grid[r * 7 + c] ?? null;
+                  if (day === null) return <View key={c} style={s.cell} />;
+                  const label = toBr(view.year, view.month, day);
+                  const time = new Date(view.year, view.month - 1, day).getTime();
+                  const past = time < startOfToday;
+                  const isStart = label === start;
+                  const isEnd = label === end;
+                  const sMs = startParts ? new Date(startParts.year, startParts.month - 1, startParts.day).getTime() : null;
+                  const eP = parseBrParts(end);
+                  const eMs = eP ? new Date(eP.year, eP.month - 1, eP.day).getTime() : null;
+                  const inRange = sMs !== null && eMs !== null && time > sMs && time < eMs;
+                  return (
+                    <Pressable key={c} disabled={past} accessibilityRole="button" accessibilityLabel={label} accessibilityState={{ selected: isStart || isEnd, disabled: past }} onPress={() => tapDay(day)} style={[s.cell, inRange && s.cellRange, isStart && eMs !== null && s.cellRangeStart, isEnd && s.cellRangeEnd]}>
+                      <View style={[s.dayDot, compact && { width: 24, height: 24, borderRadius: 12 }, (isStart || isEnd) && s.dayDotOn]}>
+                        <Text style={[s.dayText, past && { color: '#C4C9C6' }, (isStart || isEnd) && s.dayTextOn]}>{day}</Text>
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+          <Text style={[s.calNote, compact && { fontSize: 11 }]} accessibilityLiveRegion="polite">
+            {nights ? `${nights} ${nights === 1 ? 'noite' : 'noites'} para aproveitar no seu ritmo.` : start ? 'Agora toque na data de volta.' : 'Toque na data de ida.'}
+          </Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -138,20 +175,33 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
 
 const s = StyleSheet.create({
   fill: { flex: 1, gap: 12 },
-  opt: { borderRadius: 24, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', overflow: 'hidden' },
-  optOn: { borderWidth: 2, borderColor: dc.dark },
-  optHead: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, minHeight: 70, flexGrow: 0 },
-  optIcon: { width: 48, height: 48, borderRadius: 24, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
-  optTitle: { fontFamily: fonts.bold, fontSize: 19, color: dc.dark },
-  optHint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18, color: dc.muted },
-  optBody: { flex: 1, justifyContent: 'center', paddingHorizontal: 16, paddingBottom: 12, gap: 4 },
-  dateInput: { fontFamily: fonts.bold, fontSize: 32, color: dc.dark, width: '100%', paddingVertical: 6, borderBottomWidth: 2, borderBottomColor: dc.lime, outlineStyle: 'none' } as never,
-  months: { flex: 1, paddingHorizontal: 12, paddingBottom: 12, gap: 8 },
-  monthRow: { flex: 1, flexDirection: 'row', gap: 6 },
-  month: { flex: 1, minHeight: 40, borderRadius: 14, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'center' },
-  monthOn: { backgroundColor: dc.lime, borderWidth: 2, borderColor: dc.dark },
-  monthText: { fontFamily: fonts.semibold, fontSize: 14, color: dc.dark },
-  monthTextOn: { fontFamily: fonts.bold },
+  opt: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
+  optOn: { borderColor: dc.dark, backgroundColor: '#EEF3EF' },
+  optTitle: { fontFamily: fonts.semibold, fontSize: 17, color: dc.dark },
+  optHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
+  cal: { flex: 1, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', padding: 12, gap: 6 },
+  fieldsRow: { flexDirection: 'row', gap: 10 },
+  dateField: { flex: 1, borderRadius: 14, borderWidth: 1, borderColor: '#D9DDDA', paddingHorizontal: 12, paddingVertical: 6 },
+  dateFieldActive: { borderColor: dc.dark, borderWidth: 1.5 },
+  dateFieldRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  fieldKicker: { fontFamily: fonts.medium, fontSize: 10, letterSpacing: 1.2, color: dc.muted },
+  fieldValue: { fontFamily: fonts.semibold, fontSize: 17, color: dc.dark },
+  monthHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  navBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
+  monthTitle: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },
+  weekRow: { flexDirection: 'row' },
+  weekday: { flex: 1, textAlign: 'center', fontFamily: fonts.medium, fontSize: 12, color: dc.muted },
+  grid: { flex: 1, gap: 2 },
+  weekLine: { flex: 1, flexDirection: 'row' },
+  cell: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  cellRange: { backgroundColor: '#E4EDE6' },
+  cellRangeStart: { backgroundColor: '#E4EDE6', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 },
+  cellRangeEnd: { backgroundColor: '#E4EDE6', borderTopRightRadius: 16, borderBottomRightRadius: 16 },
+  dayDot: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  dayDotOn: { backgroundColor: dc.dark },
+  dayText: { fontFamily: fonts.regular, fontSize: 14, color: dc.dark },
+  dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
+  calNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 
   hero: { paddingVertical: 4, gap: 4 },
   heroRule: { width: 28, height: 2, borderRadius: 1, backgroundColor: dc.lime, marginBottom: 6 },

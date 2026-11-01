@@ -20,7 +20,7 @@ export const STEPS: readonly StepDef[] = [
   { id: 'alcance', title: 'Até onde você quer ir?', optional: false },
   { id: 'companhia', title: 'Com quem você vai viajar?', optional: false },
   { id: 'cuidados', title: 'Algum cuidado especial?', subtitle: 'Marque o que se aplica ou pule.', optional: true },
-  { id: 'periodo', title: 'Quando você pretende viajar?', optional: false },
+  { id: 'periodo', title: 'Quando começa sua próxima viagem?', subtitle: 'Escolha o que você já sabe sobre as datas.', optional: false },
   { id: 'dias', title: 'Quantos dias de viagem?', subtitle: 'Considere o tempo no destino.', optional: false },
   { id: 'orcamento', title: 'Qual o orçamento por pessoa?', subtitle: 'Valores aproximados, com passagem (ida e volta) e hospedagem.', optional: false },
 ];

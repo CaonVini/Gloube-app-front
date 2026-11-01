@@ -66,3 +66,30 @@ describe('origem vinda da tela Nova viagem', () => {
     expect(emptyAnswers().originAssumed).toBe(true);
   });
 });
+
+import { monthGrid, nightsBetween, pickRangeDate, shortLabel, toBr } from '../src/domain/discover/dates';
+
+describe('calendário de ida e volta', () => {
+  it('formata e conta noites', () => {
+    expect(toBr(2026, 12, 5)).toBe('05/12/2026');
+    expect(shortLabel('12/12/2026')).toBe('12 dez');
+    expect(shortLabel('31/02/2026')).toBe('');
+    expect(nightsBetween('12/12/2026', '17/12/2026')).toBe(5);
+    expect(nightsBetween('28/12/2026', '02/01/2027')).toBe(5);
+    expect(nightsBetween('17/12/2026', '12/12/2026')).toBeNull();
+    expect(nightsBetween('12/12/2026', undefined)).toBeNull();
+  });
+  it('monta a grade de 6 semanas começando na segunda', () => {
+    const g = monthGrid(2026, 12); // 1º/12/2026 é terça
+    expect(g).toHaveLength(42);
+    expect(g[0]).toBeNull();
+    expect(g[1]).toBe(1);
+    expect(g.filter((d) => d !== null)).toHaveLength(31);
+  });
+  it('seleciona o intervalo em dois toques e recomeça no terceiro', () => {
+    expect(pickRangeDate('', '', '12/12/2026')).toEqual({ start: '12/12/2026', end: '' });
+    expect(pickRangeDate('12/12/2026', '', '17/12/2026')).toEqual({ start: '12/12/2026', end: '17/12/2026' });
+    expect(pickRangeDate('12/12/2026', '', '10/12/2026')).toEqual({ start: '10/12/2026', end: '' });
+    expect(pickRangeDate('12/12/2026', '17/12/2026', '20/12/2026')).toEqual({ start: '20/12/2026', end: '' });
+  });
+});

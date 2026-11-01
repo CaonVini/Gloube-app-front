@@ -20,7 +20,7 @@ export type Period =
   | { mode: null }
   | { mode: 'indefinido' }
   | { mode: 'mes'; month: number | null }
-  | { mode: 'definidas'; startDate: string };
+  | { mode: 'definidas'; startDate: string; endDate?: string };
 
 export interface Answers {
   climate: Climate | null;

@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useRef } from 'react';
+import { PanResponder, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { MAX_DAYS, MIN_DAYS, clampDays, toggleExperience, toggleNeed, type StepId } from '../../domain/discover/quiz';
 import type { Answers, Climate, Companion, Experience, Need, Reach } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
@@ -36,7 +37,6 @@ const NEEDS: { id: Need; label: string; hint: string; photo: QuizPhotoKey }[] = 
   { id: 'acessibilidade', label: 'Acessibilidade', hint: 'Informação verificada', photo: 'care-acessibilidade' },
   { id: 'pets', label: 'Pets', hint: 'Informação verificada', photo: 'care-pets' },
 ];
-const DAY_PRESETS = [3, 5, 7, 10, 14];
 
 interface Props {
   step: StepId;
@@ -95,7 +95,6 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
     case 'periodo':
       return <PeriodStep answers={a} onChange={onChange} today={today} />;
     case 'dias': {
-      const pct = ((a.days - MIN_DAYS) / (MAX_DAYS - MIN_DAYS)) * 100;
       return (
         <View style={s.daysCard}>
           <Text style={s.daysKicker}>DURAÇÃO DA VIAGEM</Text>
@@ -107,27 +106,59 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
             </View>
             <StepButton label="+" a11y="Aumentar um dia" onPress={() => onChange({ days: clampDays(a.days + 1) })} />
           </View>
-          <View style={s.trackBox}>
-            <View style={s.track}><View style={[s.trackFill, { width: `${pct}%` }]} /><View style={[s.knob, { left: `${pct}%` }]} /></View>
-            <View style={s.trackLabels}><Text style={s.range}>{MIN_DAYS} dia</Text><Text style={s.range}>{MAX_DAYS} dias</Text></View>
-          </View>
-          <View style={s.presets}>
-            {DAY_PRESETS.map((d) => {
-              const on = a.days === d;
-              return (
-                <Pressable key={d} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${d} dias`} onPress={() => onChange({ days: d })} style={({ pressed }) => [s.preset, on && s.presetOn, pressed && { opacity: 0.85 }]}>
-                  <Text style={[s.presetText, on && s.presetTextOn]}>{d}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          
+          <DaysSlider days={a.days} onChange={(d) => onChange({ days: d })} />
         </View>
       );
     }
     case 'orcamento':
       return <BudgetStep answers={a} onChange={onChange} />;
   }
+}
+
+/** Régua fina arrastável (ou toque) de MIN_DAYS a MAX_DAYS. Área de toque alta; a linha visual é fina. */
+function DaysSlider({ days, onChange }: { days: number; onChange: (d: number) => void }) {
+  const box = useRef<React.ComponentRef<typeof View>>(null);
+  const geo = useRef({ left: 0, width: 1 });
+  const latest = useRef({ days, onChange });
+  latest.current = { days, onChange };
+  const set = (pageX: number) => {
+    const ratio = Math.min(1, Math.max(0, (pageX - geo.current.left) / geo.current.width));
+    const d = clampDays(Math.round(MIN_DAYS + ratio * (MAX_DAYS - MIN_DAYS)));
+    if (d !== latest.current.days) latest.current.onChange(d);
+  };
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => {
+        const x = e.nativeEvent.pageX;
+        box.current?.measureInWindow((left, _y, width) => { geo.current = { left, width: Math.max(1, width) }; set(x); });
+      },
+      onPanResponderMove: (_e, g) => set(g.moveX),
+    }),
+  ).current;
+  const onLayout = (_e: LayoutChangeEvent) => box.current?.measureInWindow((left, _y, width) => { geo.current = { left, width: Math.max(1, width) }; });
+  const pct = ((days - MIN_DAYS) / (MAX_DAYS - MIN_DAYS)) * 100;
+  return (
+    <View style={s.trackBox}>
+      <View
+        ref={box}
+        onLayout={onLayout}
+        {...pan.panHandlers}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Duração da viagem em dias"
+        accessibilityValue={{ min: MIN_DAYS, max: MAX_DAYS, now: days }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(ev) => onChange(clampDays(days + (ev.nativeEvent.actionName === 'increment' ? 1 : -1)))}
+        style={s.trackHit}
+      >
+        <View style={s.track}><View style={[s.trackFill, { width: `${pct}%` }]} /><View style={[s.knob, { left: `${pct}%` }]} /></View>
+      </View>
+      <View style={s.trackLabels}><Text style={s.range}>{MIN_DAYS} dia</Text><Text style={s.range}>{MAX_DAYS} dias</Text></View>
+    </View>
+  );
 }
 
 function StepButton({ label, onPress, a11y }: { label: string; onPress: () => void; a11y: string }) {
@@ -150,14 +181,10 @@ const s = StyleSheet.create({
   daysNumber: { fontFamily: fonts.bold, fontSize: 96, lineHeight: 104, letterSpacing: -3, color: dc.dark },
   daysLabel: { fontFamily: fonts.regular, fontSize: 16, letterSpacing: 1, color: dc.muted },
   trackBox: { alignSelf: 'stretch', gap: 10, paddingHorizontal: 8 },
+  trackHit: { height: 40, justifyContent: 'center' },
   track: { height: 2, borderRadius: 1, backgroundColor: '#D9DDDA', justifyContent: 'center' },
   trackFill: { position: 'absolute', left: 0, height: 2, backgroundColor: dc.dark },
-  knob: { position: 'absolute', width: 14, height: 14, borderRadius: 7, marginLeft: -7, backgroundColor: dc.lime, borderWidth: 1.5, borderColor: dc.dark },
+  knob: { position: 'absolute', width: 22, height: 22, borderRadius: 11, marginLeft: -11, top: -10, backgroundColor: dc.lime, borderWidth: 1.5, borderColor: dc.dark },
   trackLabels: { flexDirection: 'row', justifyContent: 'space-between' },
-  presets: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', justifyContent: 'center' },
-  preset: { flex: 1, maxWidth: 62, height: 44, borderRadius: 22, borderWidth: 1, borderColor: '#D9DDDA', alignItems: 'center', justifyContent: 'center' },
-  presetOn: { backgroundColor: dc.dark, borderColor: dc.dark },
-  presetText: { fontFamily: fonts.medium, fontSize: 16, color: dc.dark },
-  presetTextOn: { color: '#FFFFFF', fontFamily: fonts.semibold },
   range: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 });
