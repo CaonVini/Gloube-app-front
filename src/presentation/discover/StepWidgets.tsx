@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import { findBudget, formatBRL, parseMoneyInput } from '../../domain/discover/budget';
-import { MONTH_NAMES, defaultRange, monthGrid, nightsBetween, parseBrParts, pickRangeDate, shortLabel, toBr } from '../../domain/discover/dates';
+import { MONTH_NAMES, defaultRange, isMonthYearValid, monthGrid, nightsBetween, parseBrParts, pickRangeDate, shortLabel, toBr } from '../../domain/discover/dates';
 import { clampDays } from '../../domain/discover/quiz';
 import type { Answers, BudgetId } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
@@ -16,10 +16,11 @@ const WEEKDAYS = ['S', 'T', 'Q', 'Q', 'S', 'S', 'D'] as const;
 
 const OPTIONS = [
   { mode: 'definidas', label: 'Datas exatas', hint: 'Já tenho os dias definidos', icon: 'calendar' },
-  { mode: 'indefinido', label: 'Ainda não sei', hint: 'Quero explorar as possibilidades', icon: 'help' },
+  { mode: 'mes', label: 'Mês/ano', hint: 'Sei só quando pretendo ir', icon: 'calendarMonth' },
+  { mode: 'indefinido', label: 'Ainda não defini', hint: 'Quero explorar as possibilidades', icon: 'help' },
 ] as const;
 
-/** Duas opções + calendário de ida e volta dentro do painel (só quando "Datas exatas"). Sem rolagem: a grade ocupa o espaço restante. */
+/** Três opções: datas exatas (calendário de ida e volta), mês/ano (grade de meses) ou ainda não definido. Sem rolagem: o painel ocupa o espaço restante. */
 export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; onChange: Patch; today: Date }) {
   const { height } = useWindowDimensions();
   const compact = height < 800;
@@ -53,8 +54,19 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
       if (p) setView({ year: p.year, month: p.month });
       onChange({ period: { mode: 'definidas', startDate: s0, endDate: e0 } });
     }
+    else if (m === 'mes') {
+      // Sugere o mês/ano da ida já marcada (ou do mês que vem) e deixa trocar.
+      const p0 = start ? startParts : null;
+      const d0 = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+      const month = a.period.mode === 'mes' && a.period.month ? a.period.month : p0?.month ?? d0.getMonth() + 1;
+      const year = a.period.mode === 'mes' && a.period.year ? a.period.year : p0?.year ?? d0.getFullYear();
+      onChange({ period: { mode: 'mes', month, year } });
+    }
     else onChange({ period: { mode: 'indefinido' } });
   };
+  const mesYear = a.period.mode === 'mes' && a.period.year ? a.period.year : today.getFullYear();
+  const mesMonth = a.period.mode === 'mes' ? a.period.month : null;
+  const setMes = (month: number | null, year: number) => onChange({ period: { mode: 'mes', month, year } });
   const shiftMonth = (delta: number) => setView((v) => {
     const d = new Date(v.year, v.month - 1 + delta, 1);
     return { year: d.getFullYear(), month: d.getMonth() + 1 };
@@ -85,6 +97,39 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
           </Pressable>
         );
       })}
+
+      {mode === 'mes' ? (
+        <View style={[s.cal, { gap: 10 }]}>
+          <View style={s.monthHead}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Ano anterior" disabled={mesYear <= today.getFullYear()} onPress={() => setMes(mesMonth, mesYear - 1)} hitSlop={10} style={[s.navBtn, mesYear <= today.getFullYear() && { opacity: 0.3 }]}>
+              <DIcon name="chevronLeft" size={20} color={dc.dark} />
+            </Pressable>
+            <Text style={s.monthTitle} accessibilityLiveRegion="polite" accessibilityLabel={`Ano ${mesYear}`}>{mesYear}</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Próximo ano" onPress={() => setMes(mesMonth, mesYear + 1)} hitSlop={10} style={s.navBtn}>
+              <DIcon name="chevronRight" size={20} color={dc.dark} />
+            </Pressable>
+          </View>
+          <View style={s.monthGrid}>
+            {[0, 1, 2, 3].map((r) => (
+              <View key={r} style={s.monthRow}>
+                {[0, 1, 2].map((c) => {
+                  const m = r * 3 + c + 1;
+                  const disabled = !isMonthYearValid(m, mesYear, today);
+                  const on = mesMonth === m && a.period.mode === 'mes' && a.period.year === mesYear;
+                  return (
+                    <Pressable key={m} disabled={disabled} accessibilityRole="radio" accessibilityState={{ checked: on, disabled }} accessibilityLabel={`${MONTH_NAMES[m - 1]} de ${mesYear}`} onPress={() => setMes(m, mesYear)} style={[s.monthCell, on && s.monthCellOn, disabled && { opacity: 0.35 }]}>
+                      <Text style={[s.monthCellText, on && s.dayTextOn]}>{(MONTH_NAMES[m - 1] ?? '').replace(/^./, (ch) => ch.toUpperCase()).slice(0, 3)}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+          <Text style={s.calNote} accessibilityLiveRegion="polite">
+            {mesMonth && isMonthYearValid(mesMonth, mesYear, today) ? `${(MONTH_NAMES[mesMonth - 1] ?? '').replace(/^./, (ch) => ch.toUpperCase())} de ${mesYear}. Os dias você escolhe na próxima etapa.` : 'Escolha o mês da viagem.'}
+          </Text>
+        </View>
+      ) : null}
 
       {mode === 'definidas' ? (
         <View style={[s.cal, compact && { padding: 8, gap: 4 }]}>
@@ -170,6 +215,7 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
   const { height } = useWindowDimensions();
   const compact = height < 800;
   const custom = a.budget === 'custom';
+  const undef = a.budget === 'indefinido';
   const tier = (t: (typeof TIERS)[number]) => {
     const on = a.budget === t.id;
     return (
@@ -207,6 +253,15 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
             style={s.moneyInput}
           />
         ) : null}
+      </Pressable>
+
+      <Pressable accessibilityRole="radio" accessibilityState={{ checked: undef }} accessibilityLabel="Ainda não defini o orçamento" onPress={() => onChange({ budget: 'indefinido', customBudget: null })} style={[s.opt, compact ? { minHeight: 52 } : { minHeight: 60 }, undef && s.optOn]}>
+        <DIcon name="help" size={22} color={dc.dark} />
+        <View style={{ flex: 1 }}>
+          <Text style={s.optTitle}>Ainda não defini</Text>
+          {compact ? null : <Text style={s.optHint}>Sem limite por enquanto</Text>}
+        </View>
+        <View style={[s.radio, undef && s.radioOn]}>{undef ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
       </Pressable>
       <Text style={s.budgetNote}>Você pode ajustar o orçamento depois.</Text>
     </View>
@@ -246,6 +301,11 @@ const s = StyleSheet.create({
   dayDotOn: { backgroundColor: dc.dark },
   dayText: { fontFamily: fonts.regular, fontSize: 14, color: dc.dark },
   dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
+  monthGrid: { flex: 1, gap: 8 },
+  monthRow: { flex: 1, minHeight: 44, maxHeight: 60, flexDirection: 'row', gap: 8 },
+  monthCell: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  monthCellOn: { backgroundColor: dc.dark, borderColor: dc.dark },
+  monthCellText: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },
   calNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 
   centered: { flex: 1, gap: 12, paddingTop: 8 },

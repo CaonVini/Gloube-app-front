@@ -5,7 +5,7 @@ export type Experience = 'praia' | 'montanha' | 'cidade' | 'natureza' | 'neve';
 export type Reach = 'perto' | 'brasil' | 'internacional';
 export type Companion = 'casal' | 'amigos' | 'familia' | 'solo';
 export type Need = 'criancas' | 'idosos' | 'acessibilidade' | 'pets';
-export type BudgetId = 'ate-2k' | '2k-5k' | '5k-10k' | '10k-15k' | 'custom';
+export type BudgetId = 'ate-2k' | '2k-5k' | '5k-10k' | '10k-15k' | 'custom' | 'indefinido';
 
 export type MacroRegion = 'sudeste' | 'sul' | 'nordeste' | 'centro-oeste' | 'norte';
 export type DestinationZone = MacroRegion | 'america-sul' | 'america-central' | 'europa' | 'asia';
@@ -19,7 +19,7 @@ export interface Origin {
 export type Period =
   | { mode: null }
   | { mode: 'indefinido' }
-  | { mode: 'mes'; month: number | null }
+  | { mode: 'mes'; month: number | null; year: number | null }
   | { mode: 'definidas'; startDate: string; endDate?: string };
 
 export interface Answers {

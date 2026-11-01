@@ -1,5 +1,6 @@
 import { FALLBACK_EXPERIENCE, distributePlaces, suggestedDays, type Place } from './places';
-import type { Answers, Experience, Recommendation } from './types';
+import { MONTH_NAMES } from './dates';
+import type { Answers, Experience, Period, Recommendation } from './types';
 
 /** Todas as sugestões na ordem da tela final: favoritos primeiro (mantendo o ranking), depois as demais. */
 export function orderForChoice(recs: readonly Recommendation[], favorites: ReadonlySet<string>): Recommendation[] {
@@ -58,6 +59,15 @@ export function buildDays(total: number, exps: readonly Experience[], places: re
   });
 }
 
+/** Aviso sobre datas: sem datas exatas, a prévia é só uma estimativa. null quando as datas são exatas. */
+export function periodNote(period: Period): string | null {
+  if (period.mode === 'definidas') return null;
+  if (period.mode === 'mes' && period.month !== null && period.year !== null) {
+    return `Sem datas exatas: considerei ${MONTH_NAMES[period.month - 1]} de ${period.year}. A duração e os valores podem mudar quando você definir os dias.`;
+  }
+  return 'Sem datas definidas: a duração é a que você informou e os valores podem mudar quando você escolher as datas.';
+}
+
 function baseNotes(needs: readonly string[], hadPlaces: boolean): string[] {
   const notes: string[] = [hadPlaces
     ? 'Prévia ilustrativa montada com os locais que você escolheu: horários, reservas e valores serão refinados nas próximas etapas.'
@@ -78,7 +88,7 @@ export function buildItineraryPreview(rec: Recommendation, a: Answers, places: r
     title: `${total} ${total === 1 ? 'dia' : 'dias'} em ${d.name}`,
     summary: rec.why,
     days: buildDays(total, d.experiences, places),
-    notes: baseNotes(a.needs, places.length > 0),
+    notes: [...baseNotes(a.needs, places.length > 0), ...(periodNote(a.period) ? [periodNote(a.period)!] : [])],
   };
 }
 

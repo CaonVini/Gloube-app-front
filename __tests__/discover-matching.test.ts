@@ -100,8 +100,8 @@ describe('recommend', () => {
 
   it('melhor época dá bônus quando o mês escolhido está nos meses ideais', () => {
     const base = answers({ reach: 'brasil', climate: 'frio', experiences: ['montanha'], budget: 'custom', customBudget: 1_000_000, days: 4 });
-    const inSeason = recommend({ ...base, period: { mode: 'mes', month: 7 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
-    const offSeason = recommend({ ...base, period: { mode: 'mes', month: 3 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
+    const inSeason = recommend({ ...base, period: { mode: 'mes', month: 7, year: 2027 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
+    const offSeason = recommend({ ...base, period: { mode: 'mes', month: 3, year: 2027 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
     expect(inSeason.score).toBeGreaterThan(offSeason.score);
     expect(inSeason.why).toContain('Julho é uma boa época');
   });
@@ -192,5 +192,15 @@ describe('comparisonHighlights', () => {
     expect(h.cheapestId).toBe('chapada');
     expect(h.shortestId).toBe('chapada');
     expect(comparisonHighlights(two.slice(0, 1))).toEqual({ cheapestId: null, shortestId: null });
+  });
+});
+
+describe('orçamento "Ainda não defini"', () => {
+  it('não elimina por preço e não afirma que cabe no orçamento', () => {
+    const open = recommend(answers({ budget: 'indefinido', customBudget: null }), DESTINATIONS, TODAY);
+    const tight = recommend(answers({ budget: 'ate-2k', customBudget: null }), DESTINATIONS, TODAY);
+    expect(open.length).toBeGreaterThanOrEqual(tight.length);
+    expect(open.length).toBeGreaterThan(0);
+    expect(open.every((r) => !r.why.includes('cabe no seu orçamento'))).toBe(true);
   });
 });

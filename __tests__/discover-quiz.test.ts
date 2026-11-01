@@ -29,8 +29,10 @@ describe('quiz', () => {
     const a = emptyAnswers();
     expect(isStepComplete('periodo', a, TODAY)).toBe(false);
     expect(isStepComplete('periodo', { ...a, period: { mode: 'indefinido' } }, TODAY)).toBe(true);
-    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: null } }, TODAY)).toBe(false);
-    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: 7 } }, TODAY)).toBe(true);
+    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: null, year: null } }, TODAY)).toBe(false);
+    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: 7, year: 2027 } }, TODAY)).toBe(true);
+    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: 7, year: null } }, TODAY)).toBe(false);
+    expect(isStepComplete('periodo', { ...a, period: { mode: 'mes', month: 1, year: 2020 } }, TODAY)).toBe(false);
     expect(isStepComplete('periodo', { ...a, period: { mode: 'definidas', startDate: '10/01/2027' } }, TODAY)).toBe(true);
     expect(isStepComplete('periodo', { ...a, period: { mode: 'definidas', startDate: '10/01/2020' } }, TODAY)).toBe(false);
     expect(monthOfPeriod({ ...a, period: { mode: 'definidas', startDate: '10/01/2027' } }, TODAY)).toBe(1);

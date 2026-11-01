@@ -31,6 +31,12 @@ export function parseBrDate(value: string, today: Date): ParsedDate | null {
   return { day, month, year };
 }
 
+/** Mês/ano válidos e não anteriores ao mês atual. */
+export function isMonthYearValid(month: number | null, year: number | null, today: Date): boolean {
+  if (month === null || year === null || !Number.isInteger(month) || !Number.isInteger(year) || month < 1 || month > 12) return false;
+  return year * 12 + month >= today.getFullYear() * 12 + today.getMonth() + 1;
+}
+
 const SHORT_MONTHS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const;
 
 /** Formata DD/MM/AAAA. */

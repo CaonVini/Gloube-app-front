@@ -69,3 +69,34 @@ describe('reação aos cards (gostei / não gostei)', () => {
     expect(nextCardIndex(0, 1)).toBeNull();
   });
 });
+
+import { periodNote } from '../src/domain/discover/choice';
+import { findBudget, NO_LIMIT_BAND } from '../src/domain/discover/budget';
+import { isMonthYearValid } from '../src/domain/discover/dates';
+import { emptyAnswers as _emptyAnswers, isStepComplete as _isStepComplete, visibleSteps as _visibleSteps } from '../src/domain/discover/quiz';
+
+describe('datas e orçamento indefinidos', () => {
+  const T = new Date(2026, 10, 1);
+  it('mês/ano: válido só a partir do mês atual', () => {
+    expect(isMonthYearValid(11, 2026, T)).toBe(true);
+    expect(isMonthYearValid(10, 2026, T)).toBe(false);
+    expect(isMonthYearValid(1, 2027, T)).toBe(true);
+    expect(isMonthYearValid(13, 2027, T)).toBe(false);
+    expect(isMonthYearValid(null, 2027, T)).toBe(false);
+  });
+  it('"Ainda não defini" orçamento é válido e sem teto', () => {
+    expect(findBudget('indefinido')).toBe(NO_LIMIT_BAND);
+    expect(_isStepComplete('orcamento', { ..._emptyAnswers(), budget: 'indefinido' }, T)).toBe(true);
+  });
+  it('passo de dias aparece para mês/ano e indefinido, não para datas exatas', () => {
+    const a = _emptyAnswers();
+    expect(_visibleSteps({ ...a, period: { mode: 'mes', month: 7, year: 2027 } }).some((s) => s.id === 'dias')).toBe(true);
+    expect(_visibleSteps({ ...a, period: { mode: 'indefinido' } }).some((s) => s.id === 'dias')).toBe(true);
+    expect(_visibleSteps({ ...a, period: { mode: 'definidas', startDate: '01/12/2026', endDate: '08/12/2026' } }).some((s) => s.id === 'dias')).toBe(false);
+  });
+  it('roteiro avisa quando não há datas exatas', () => {
+    expect(periodNote({ mode: 'definidas', startDate: '01/12/2026', endDate: '08/12/2026' })).toBeNull();
+    expect(periodNote({ mode: 'mes', month: 7, year: 2027 })).toContain('julho de 2027');
+    expect(periodNote({ mode: 'indefinido' })).toContain('Sem datas definidas');
+  });
+});

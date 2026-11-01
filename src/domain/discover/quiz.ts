@@ -1,5 +1,5 @@
 import { findBudget } from './budget';
-import { nightsBetween, parseBrDate } from './dates';
+import { isMonthYearValid, nightsBetween, parseBrDate } from './dates';
 import { resolveOrigin } from './geo';
 import type { Answers, Need, Experience } from './types';
 
@@ -21,7 +21,7 @@ export const STEPS: readonly StepDef[] = [
   { id: 'alcance', title: 'Até onde você quer ir?', optional: false },
   { id: 'companhia', title: 'Com quem você vai viajar?', optional: false },
   { id: 'cuidados', title: 'Algum cuidado especial?', subtitle: 'Marque o que se aplica ou pule.', optional: true },
-  { id: 'periodo', title: 'Quando começa sua próxima viagem?', subtitle: 'Escolha o que você já sabe sobre as datas.', optional: false },
+  { id: 'periodo', title: 'Quando começa sua próxima viagem?', subtitle: 'Escolha o que você já sabe: datas exatas, só o mês ou ainda nada.', optional: false },
   { id: 'dias', title: 'Quantos dias de viagem?', subtitle: 'Considere o tempo no destino.', optional: false },
   { id: 'orcamento', title: 'Qual é seu orçamento por pessoa?', subtitle: 'Para toda a viagem, incluindo passagem de ida e volta e hospedagem.', optional: false },
 ];
@@ -83,7 +83,7 @@ export function isStepComplete(id: StepId, a: Answers, today: Date = new Date())
     case 'cuidados': return true;
     case 'periodo':
       if (a.period.mode === 'indefinido') return true;
-      if (a.period.mode === 'mes') return a.period.month !== null;
+      if (a.period.mode === 'mes') return isMonthYearValid(a.period.month, a.period.year, today);
       if (a.period.mode === 'definidas') return parseBrDate(a.period.startDate, today) !== null;
       return false;
     case 'dias': return a.days >= MIN_DAYS && a.days <= MAX_DAYS;

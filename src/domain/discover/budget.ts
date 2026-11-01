@@ -15,6 +15,9 @@ export const BUDGETS: readonly BudgetBand[] = [
   { id: '10k-15k', label: 'R$ 10.000 a R$ 15.000', min: 10000, max: 15000 },
 ];
 
+/** "Ainda não defini": sem teto, então o orçamento não elimina nem favorece nenhum destino. */
+export const NO_LIMIT_BAND: BudgetBand = { id: 'indefinido', label: 'Sem limite definido', min: 0, max: Infinity };
+
 /** Tolerância acima do teto da faixa antes de considerar a viagem inviável. */
 export const BUDGET_TOLERANCE = 1.1;
 
@@ -22,6 +25,7 @@ export const MAX_CUSTOM_BUDGET = 1_000_000;
 
 /** Faixa escolhida. Para 'custom' usa o valor digitado como teto (sem valor válido, não há faixa). */
 export function findBudget(id: BudgetId | null, customBudget: number | null = null): BudgetBand | undefined {
+  if (id === 'indefinido') return NO_LIMIT_BAND;
   if (id === 'custom') {
     return customBudget !== null && customBudget > 0
       ? { id: 'custom', label: formatBRL(customBudget), min: 0, max: customBudget }
