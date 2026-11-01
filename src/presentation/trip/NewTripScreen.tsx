@@ -11,7 +11,7 @@ import { PrimaryButton } from '../auth-ui/Button';
 import { GloubeLogo } from '../auth-ui/GloubeLogo';
 import { AvatarMenu } from '../home/AvatarMenu';
 import { avatarPhoto } from '../discover/assets';
-import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
+import { BottomNavBar, DEFAULT_NAV_ITEMS, NAV_FAB_CLEARANCE } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
 
@@ -52,8 +52,8 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
   const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
-    field: Math.round(40 * k), row: Math.round(46 * k), badge: Math.round(48 * k), h2: Math.round(20 * k), pad: Math.round(14 * k),
-  }), [k]);
+    field: Math.round((compact ? 36 : 40) * k), row: Math.round((compact ? 40 : 46) * k), badge: Math.round((compact ? 40 : 48) * k), h2: Math.round(20 * k), pad: Math.round((compact ? 12 : 14) * k),
+  }), [k, compact]);
 
   const add = useCallback((d: Destination) => {
     setDestinations((list) => addDestination(list, d));
@@ -87,7 +87,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
         </View>
 
         <View style={[s.column, s.flex]}>
-          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 6 : 8 }]}>
+          <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 3 : 8 }]}>
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
             {compact ? null : <Text style={s.hint}>De qual cidade você vai sair?</Text>}
             <View style={[s.field, { minHeight: m.field }]}>
@@ -202,7 +202,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               <View style={s.plus}><TripIcon name="plus" size={16} color="#FFFFFF" /></View>
               <Text style={s.link}>Adicionar outro destino</Text>
             </Pressable>
-            {compact ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
+            {compact || height < 880 ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
           </View>
 
           <Pressable
@@ -219,7 +219,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
             <TripIcon name="chevronRight" size={20} color={authColors.text} />
           </Pressable>
 
-          <View style={s.footer}>
+          <View style={[s.footer, { paddingBottom: (compact ? 2 : 6) + NAV_FAB_CLEARANCE }]}>
             <Text style={s.count} accessibilityLiveRegion="polite">{destinationsLabel(destinations.length)}</Text>
             <PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="hero" />
           </View>

@@ -16,6 +16,8 @@ const COLORS = {
 const FAB = 64; // diâmetro do botão central
 const RING = 6; // anel na cor do fundo que "recorta" a barra
 const LIFT = 26; // quanto o botão sobe acima da barra
+/** Espaço que o conteúdo acima da barra deve reservar para a bola central, que se projeta para cima. */
+export const NAV_FAB_CLEARANCE = LIFT + RING + 6;
 
 interface Props {
   items: readonly NavItem[];

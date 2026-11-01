@@ -5,6 +5,7 @@ import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { DestinationCard } from './DestinationCard';
+import { NAV_FAB_CLEARANCE } from '../navigation';
 import { RoundButton, dc } from './ui';
 
 interface Props {
@@ -67,7 +68,7 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
           <DestinationCard rec={item} width={width} saved={favorites.has(item.destination.id)} position={`${i + 1} de ${recs.length}`} onToggleSave={onToggleSave} />
         )}
       />
-      <View style={s.footer}>
+      <View style={[s.footer, { paddingBottom: 8 + NAV_FAB_CLEARANCE }]}>
         <View style={s.countBar}>
           <Text style={s.count} accessibilityLiveRegion="polite">
             {favCount === 0 ? 'Toque no coração para salvar' : favCount === 1 ? '1 destino salvo' : `${favCount} destinos salvos`}

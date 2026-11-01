@@ -94,10 +94,13 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
     }
     case 'periodo':
       return <PeriodStep answers={a} onChange={onChange} today={today} />;
-    case 'dias':
+    case 'dias': {
+      const pct = ((a.days - MIN_DAYS) / (MAX_DAYS - MIN_DAYS)) * 100;
       return (
         <View style={s.daysCard}>
-          <Text style={s.cardLabel}>Duração da viagem</Text>
+          <View pointerEvents="none" style={s.ringA} />
+          <View pointerEvents="none" style={s.ringB} />
+          <Text style={s.daysKicker}>DURAÇÃO DA VIAGEM</Text>
           <View style={s.stepper}>
             <StepButton label="−" a11y="Diminuir um dia" onPress={() => onChange({ days: clampDays(a.days - 1) })} />
             <View accessibilityLiveRegion="polite" style={s.daysBox}>
@@ -106,12 +109,24 @@ export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
             </View>
             <StepButton label="+" a11y="Aumentar um dia" onPress={() => onChange({ days: clampDays(a.days + 1) })} />
           </View>
-          <View style={s.chips}>
-            {DAY_PRESETS.map((d) => <Chip key={d} label={`${d} dias`} selected={a.days === d} onPress={() => onChange({ days: d })} />)}
+          <View style={s.trackBox}>
+            <View style={s.track}><View style={[s.trackFill, { width: `${pct}%` }]} /><View style={[s.knob, { left: `${pct}%` }]} /></View>
+            <View style={s.trackLabels}><Text style={s.range}>{MIN_DAYS} dia</Text><Text style={s.range}>{MAX_DAYS} dias</Text></View>
           </View>
-          <Text style={s.range}>De {MIN_DAYS} a {MAX_DAYS} dias</Text>
+          <View style={s.presets}>
+            {DAY_PRESETS.map((d) => {
+              const on = a.days === d;
+              return (
+                <Pressable key={d} accessibilityRole="radio" accessibilityState={{ checked: on }} accessibilityLabel={`${d} dias`} onPress={() => onChange({ days: d })} style={({ pressed }) => [s.preset, on && s.presetOn, pressed && { opacity: 0.85 }]}>
+                  <Text style={[s.presetText, on && s.presetTextOn]}>{d}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <Text style={s.range}>Atalhos em dias</Text>
         </View>
       );
+    }
     case 'orcamento':
       return <BudgetStep answers={a} onChange={onChange} />;
   }
@@ -128,16 +143,25 @@ function StepButton({ label, onPress, a11y }: { label: string; onPress: () => vo
 const s = StyleSheet.create({
   fill: { flex: 1, gap: 12 },
   row: { flex: 1, flexDirection: 'row', gap: 12 },
-  list: { gap: 10 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  months: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  daysCard: { flex: 1, justifyContent: 'center', backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: dc.border, padding: 18, gap: 16, alignItems: 'center', ...cardShadow },
-  cardLabel: { fontFamily: fonts.bold, fontSize: 18, color: dc.dark, alignSelf: 'flex-start' },
-  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 28, paddingVertical: 8 },
-  stepBtn: { width: 60, height: 60, borderRadius: 30, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
-  stepBtnText: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 34, color: dc.dark },
-  daysBox: { minWidth: 100, alignItems: 'center' },
-  daysNumber: { fontFamily: fonts.bold, fontSize: 68, lineHeight: 74, color: dc.dark },
-  daysLabel: { fontFamily: fonts.medium, fontSize: 16, color: dc.muted },
-  range: { fontFamily: fonts.regular, fontSize: 13, color: '#6F7773' },
+  daysCard: { flex: 1, justifyContent: 'space-between', alignItems: 'center', backgroundColor: dc.dark, borderRadius: 28, paddingVertical: 22, paddingHorizontal: 18, overflow: 'hidden', borderWidth: 1, borderColor: 'rgba(241,239,113,0.35)', ...cardShadow },
+  ringA: { position: 'absolute', right: -60, top: -60, width: 220, height: 220, borderRadius: 110, borderWidth: 1, borderColor: 'rgba(241,239,113,0.22)' },
+  ringB: { position: 'absolute', left: -50, bottom: -70, width: 200, height: 200, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(241,239,113,0.16)' },
+  daysKicker: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 2, color: 'rgba(255,255,255,0.7)' },
+  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch' },
+  stepBtn: { width: 56, height: 56, borderRadius: 28, borderWidth: 1.5, borderColor: 'rgba(241,239,113,0.7)', backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center' },
+  stepBtnText: { fontFamily: fonts.medium, fontSize: 30, lineHeight: 34, color: dc.lime },
+  daysBox: { alignItems: 'center' },
+  daysNumber: { fontFamily: fonts.bold, fontSize: 104, lineHeight: 112, letterSpacing: -3, color: dc.lime },
+  daysLabel: { fontFamily: fonts.medium, fontSize: 18, letterSpacing: 1, color: 'rgba(255,255,255,0.85)' },
+  trackBox: { alignSelf: 'stretch', gap: 8, paddingHorizontal: 6 },
+  track: { height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)', justifyContent: 'center' },
+  trackFill: { position: 'absolute', left: 0, height: 4, borderRadius: 2, backgroundColor: dc.lime },
+  knob: { position: 'absolute', width: 16, height: 16, borderRadius: 8, marginLeft: -8, backgroundColor: dc.lime, borderWidth: 3, borderColor: dc.dark },
+  trackLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  presets: { flexDirection: 'row', gap: 10, alignSelf: 'stretch', justifyContent: 'center' },
+  preset: { flex: 1, maxWidth: 62, height: 48, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)', alignItems: 'center', justifyContent: 'center' },
+  presetOn: { backgroundColor: dc.lime, borderColor: dc.lime },
+  presetText: { fontFamily: fonts.semibold, fontSize: 17, color: '#FFFFFF' },
+  presetTextOn: { color: dc.dark, fontFamily: fonts.bold },
+  range: { fontFamily: fonts.regular, fontSize: 12, color: 'rgba(255,255,255,0.6)' },
 });
