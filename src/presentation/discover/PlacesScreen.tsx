@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { KIND_LABEL, addPlace, placesFor, type Place } from '../../domain/discover/places';
+import { ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { addPlace, placesFor, type Place } from '../../domain/discover/places';
 import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
-import { PlaceBackCard, PlaceCard } from './PlaceCard';
+import { PlaceBackCard, PlaceCard, PlaceTile } from './PlaceCard';
 import { SwipeDeck } from './SwipeDeck';
 import { RoundButton, SegmentedProgress, StepTitle, dc } from './ui';
 
@@ -37,6 +37,8 @@ export function PlacesScreen({ targets, selection, onChange, onBack, onContinue 
   const [phase, setPhase] = useState<'deck' | 'summary'>(items.length === 0 ? 'summary' : 'deck');
   const [round, setRound] = useState(0);
   const multi = targets.length > 1;
+  const { height: winH } = useWindowDimensions();
+  const tileH = winH < 800 ? 132 : 164;
   const likedIds = new Set(Object.values(selection).flat());
   const total = likedIds.size;
 
@@ -86,16 +88,13 @@ export function PlacesScreen({ targets, selection, onChange, onBack, onContinue 
         />
       </View>
       <ScrollView style={s.flex} contentContainerStyle={s.list} showsVerticalScrollIndicator={false}>
-        {liked.map((it) => (
-          <View key={it.place.id} style={s.row}>
-            <View style={s.rowText}>
-              <Text style={s.kind}>{KIND_LABEL[it.place.kind]}{multi ? ` · ${it.destinationName.toUpperCase()}` : ''}</Text>
-              <Text style={s.name} numberOfLines={2}>{it.place.name}</Text>
-            </View>
-            <Pressable accessibilityRole="button" accessibilityLabel={`Remover ${it.place.name} do roteiro`} onPress={() => remove(it)} hitSlop={8} style={s.removeBtn}>
-              <View style={[s.x, { transform: [{ rotate: '45deg' }] }]} />
-              <View style={[s.x, { transform: [{ rotate: '-45deg' }] }]} />
-            </Pressable>
+        {Array.from({ length: Math.ceil(liked.length / 2) }, (_, r) => (
+          <View key={r} style={s.gridRow}>
+            {[0, 1].map((c) => {
+              const it = liked[r * 2 + c];
+              if (!it) return <View key={c} style={s.flex} />;
+              return <PlaceTile key={it.place.id} place={it.place} destinationId={it.destinationId} destinationName={multi ? it.destinationName : undefined} height={tileH} onRemove={() => remove(it)} />;
+            })}
           </View>
         ))}
         {items.length > 0 ? <SecondaryTextButton title={total === 0 ? 'Ver os locais' : 'Ver os locais de novo'} onPress={() => { setRound((r) => r + 1); setPhase('deck'); }} /> : null}
@@ -115,13 +114,8 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   head: { paddingBottom: 8 },
   skip: { fontFamily: fonts.bold, fontSize: 14, color: dc.teal, paddingVertical: 2, paddingHorizontal: 4 },
-  list: { gap: 8, paddingBottom: 8 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
-  rowText: { flex: 1, gap: 2 },
-  kind: { fontFamily: fonts.medium, fontSize: 10, letterSpacing: 1.4, color: dc.muted },
-  name: { fontFamily: fonts.bold, fontSize: 16, color: dc.dark },
-  removeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1F3F0', alignItems: 'center', justifyContent: 'center' },
-  x: { position: 'absolute', width: 14, height: 2, borderRadius: 1, backgroundColor: dc.dark },
+  list: { gap: 12, paddingBottom: 8 },
+  gridRow: { flexDirection: 'row', gap: 12 },
   foot: { paddingTop: 8, paddingBottom: 8 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });
