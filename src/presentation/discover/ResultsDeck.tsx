@@ -3,8 +3,9 @@ import { FlatList, StyleSheet, Text, View, useWindowDimensions, type NativeScrol
 import type { Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
-import { authColors, fonts, homeColors } from '../theme/auth-theme';
+import { fonts } from '../theme/auth-theme';
 import { DestinationCard } from './DestinationCard';
+import { RoundButton, dc } from './ui';
 
 interface Props {
   recs: readonly Recommendation[];
@@ -15,7 +16,7 @@ interface Props {
   onEditAnswers: () => void;
 }
 
-/** Deck horizontal paginado: um destino por vez (arrastar ou usar Anterior/Próximo). */
+/** Deck horizontal paginado: um destino por vez (arrastar ou usar os botões). */
 export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestart, onEditAnswers }: Props) {
   const { width } = useWindowDimensions();
   const listRef = useRef<FlatList<Recommendation>>(null);
@@ -38,13 +39,14 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
         <Text style={s.emptyText}>
           Combinamos origem, duração, orçamento e clima, e nada ficou viável. Tente aumentar os dias, ampliar o alcance ou ajustar o orçamento.
         </Text>
-        <PrimaryButton title="Ajustar minhas respostas" onPress={onEditAnswers} />
+        <PrimaryButton title="Ajustar minhas respostas" onPress={onEditAnswers} size="hero" />
         <SecondaryTextButton title="Recomeçar" onPress={onRestart} />
       </View>
     );
   }
 
   const favCount = favorites.size;
+  const last = index >= recs.length - 1;
   return (
     <View style={s.root}>
       <FlatList
@@ -66,14 +68,20 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
         )}
       />
       <View style={s.footer}>
-        <View style={s.navRow}>
-          <View style={s.navBtn}><SecondaryTextButton title="Anterior" onPress={() => goTo(index - 1)} /></View>
-          <View style={s.navBtn}><SecondaryTextButton title="Próximo" onPress={() => goTo(index + 1)} /></View>
+        <View style={s.countBar}>
+          <Text style={s.count} accessibilityLiveRegion="polite">
+            {favCount === 0 ? 'Toque no coração para salvar' : favCount === 1 ? '1 destino salvo' : `${favCount} destinos salvos`}
+          </Text>
+          {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
         </View>
-        {favCount >= 2
-          ? <PrimaryButton title={`Comparar favoritos (${favCount})`} onPress={onCompare} />
-          : <Text style={s.hint}>Salve pelo menos 2 destinos para compará-los lado a lado.</Text>}
-        <SecondaryTextButton title="Refazer perguntas" onPress={onRestart} />
+        <View style={s.navRow}>
+          <RoundButton icon="chevronLeft" label="Destino anterior" onPress={() => goTo(index - 1)} disabled={index === 0} />
+          <View style={s.flex}>
+            {last
+              ? <PrimaryButton title={favCount >= 2 ? 'Comparar favoritos' : 'Refazer perguntas'} onPress={favCount >= 2 ? onCompare : onRestart} size="hero" />
+              : <PrimaryButton title="Próximo" onPress={() => goTo(index + 1)} size="hero" />}
+          </View>
+        </View>
       </View>
     </View>
   );
@@ -81,11 +89,13 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
 
 const s = StyleSheet.create({
   root: { flex: 1 },
-  footer: { paddingHorizontal: 22, paddingTop: 8, gap: 10, width: '100%', maxWidth: 524, alignSelf: 'center' },
-  navRow: { flexDirection: 'row', gap: 10 },
-  navBtn: { flex: 1 },
-  hint: { fontFamily: fonts.regular, fontSize: 13, textAlign: 'center', color: authColors.muted },
+  flex: { flex: 1 },
+  footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, gap: 10, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  countBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: dc.mint, borderRadius: 16, paddingHorizontal: 16, minHeight: 44 },
+  count: { fontFamily: fonts.medium, fontSize: 15, color: dc.muted },
+  countLink: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 10 },
+  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   empty: { flex: 1, justifyContent: 'center', padding: 22, gap: 14 },
-  emptyTitle: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, color: authColors.text },
-  emptyText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: homeColors.subtitle },
+  emptyTitle: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, color: dc.dark },
+  emptyText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: dc.muted },
 });
