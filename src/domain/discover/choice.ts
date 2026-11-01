@@ -60,3 +60,16 @@ export function buildItineraryPreview(rec: Recommendation, a: Answers): Itinerar
     notes,
   };
 }
+
+/** "Gostei" favorita (idempotente); "não gostei" não altera os favoritos. Não muta o conjunto original. */
+export function applyReaction(favorites: ReadonlySet<string>, id: string, liked: boolean): ReadonlySet<string> {
+  if (!liked || favorites.has(id)) return favorites;
+  const next = new Set(favorites);
+  next.add(id);
+  return next;
+}
+
+/** Índice do próximo card após reagir ao atual, ou `null` quando era o último (hora de comparar). */
+export function nextCardIndex(index: number, total: number): number | null {
+  return index + 1 < total ? index + 1 : null;
+}

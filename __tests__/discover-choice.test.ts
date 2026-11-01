@@ -47,3 +47,25 @@ describe('buildItineraryPreview', () => {
     expect(text).not.toMatch(/aceita pets|totalmente acessível/i);
   });
 });
+
+import { applyReaction, nextCardIndex } from '../src/domain/discover/choice';
+
+describe('reação aos cards (gostei / não gostei)', () => {
+  it('gostei favorita sem mutar o original e é idempotente', () => {
+    const base: ReadonlySet<string> = new Set(['a']);
+    const withB = applyReaction(base, 'b', true);
+    expect([...withB]).toEqual(['a', 'b']);
+    expect([...base]).toEqual(['a']);
+    expect(applyReaction(withB, 'b', true)).toBe(withB);
+  });
+  it('não gostei só avança: favoritos ficam iguais', () => {
+    const base: ReadonlySet<string> = new Set(['a']);
+    expect(applyReaction(base, 'b', false)).toBe(base);
+  });
+  it('avança até o último; depois sinaliza comparação', () => {
+    expect(nextCardIndex(0, 3)).toBe(1);
+    expect(nextCardIndex(1, 3)).toBe(2);
+    expect(nextCardIndex(2, 3)).toBeNull();
+    expect(nextCardIndex(0, 1)).toBeNull();
+  });
+});

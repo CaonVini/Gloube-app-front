@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { orderForChoice } from '../../domain/discover/choice';
+import { applyReaction, orderForChoice } from '../../domain/discover/choice';
 import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
 import type { Answers, Recommendation } from '../../domain/discover/types';
@@ -62,13 +62,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
     if (stepIndex === 0) onExit(); else setStepIndex(stepIndex - 1);
   }, [stepIndex, onExit]);
 
-  const toggleSave = useCallback((id: string) => {
-    setFavorites((prev) => {
-      const n = new Set(prev);
-      if (n.has(id)) n.delete(id); else n.add(id);
-      return n;
-    });
-  }, []);
+  const react = useCallback((id: string, liked: boolean) => setFavorites((prev) => applyReaction(prev, id, liked)), []);
 
   const restart = useCallback(() => { setAnswers(emptyAnswers(originText)); setStepIndex(0); setPhase('quiz'); }, []);
   const editAnswers = useCallback(() => { setStepIndex(steps.length - 1); setPhase('quiz'); }, [steps]);
@@ -91,7 +85,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
           <Text style={s.resultsTitle} accessibilityRole="header">Seus destinos</Text>
           <Text style={s.compareLink} accessibilityRole="button" accessibilityLabel="Comparar destinos" onPress={() => setPhase('choose')}>Comparar destinos</Text>
         </View>
-        <ResultsDeck recs={recs} favorites={favorites} onToggleSave={toggleSave} onCompare={() => setPhase('choose')} onRestart={restart} onEditAnswers={editAnswers} />
+        <ResultsDeck recs={recs} favorites={favorites} onReact={react} onCompare={() => setPhase('choose')} onRestart={restart} onEditAnswers={editAnswers} />
       </View>,
     );
   }
