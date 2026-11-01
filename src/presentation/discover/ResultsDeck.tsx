@@ -68,19 +68,23 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
           <DestinationCard rec={item} width={width} saved={favorites.has(item.destination.id)} position={`${i + 1} de ${recs.length}`} onToggleSave={onToggleSave} />
         )}
       />
-      <View style={[s.footer, { paddingBottom: 8 + NAV_FAB_CLEARANCE }]}>
-        <View style={s.countBar}>
-          <Text style={s.count} accessibilityLiveRegion="polite">
-            {favCount === 0 ? 'Toque no coração para salvar' : favCount === 1 ? '1 destino salvo' : `${favCount} destinos salvos`}
-          </Text>
-          {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
-        </View>
+      <View style={s.footer}>
         <View style={s.navRow}>
           <RoundButton icon="chevronLeft" label="Destino anterior" onPress={() => goTo(index - 1)} disabled={index === 0} />
           <View style={s.flex}>
             {last
               ? <PrimaryButton title={favCount >= 2 ? 'Comparar favoritos' : 'Refazer perguntas'} onPress={favCount >= 2 ? onCompare : onRestart} size="hero" />
               : <PrimaryButton title="Próximo" onPress={() => goTo(index + 1)} size="hero" />}
+          </View>
+        </View>
+        {/* Faixa ao lado da bola central da navbar: altura mínima para ela não encostar no botão. */}
+        <View style={[s.countBar, { height: NAV_FAB_CLEARANCE }]}>
+          <Text style={[s.count, s.flex]} accessibilityLiveRegion="polite" numberOfLines={1}>
+            {favCount === 0 ? 'Salve com ♡' : favCount === 1 ? '1 destino salvo' : `${favCount} destinos salvos`}
+          </Text>
+          <View style={s.fabGap} />
+          <View style={[s.flex, { alignItems: 'flex-end' }]}>
+            {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
           </View>
         </View>
       </View>
@@ -91,7 +95,8 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
 const s = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  footer: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 8, gap: 6, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  footer: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 0, gap: 0, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  fabGap: { width: 92 },
   countBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 },
   count: { fontFamily: fonts.medium, fontSize: 14, color: dc.muted },
   countLink: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },

@@ -25,8 +25,9 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
   const d = rec.destination;
   const inner = Math.min(width, MAX_COLUMN + H_PAD * 2) - H_PAD * 2;
   const { height } = useWindowDimensions();
-  const photoH = Math.round(Math.min(280, Math.max(124, height * 0.23)));
+  const photoH = Math.round(Math.min(240, Math.max(104, height * (height < 800 ? 0.16 : 0.18))));
   const roomy = height >= 800;
+  const showDesc = height >= 830;
   return (
     <View style={{ width, alignItems: 'center' }}>
       <ScrollView style={{ width: inner + H_PAD * 2 }} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
@@ -63,12 +64,12 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
         {roomy ? (
         <View style={s.tags}>
           <Tag>{CLIMATE_LABEL[d.climate]}</Tag>
-          {d.experiences.map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
+          {d.experiences.slice(0, 2).map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
           <Tag tone="lime">Mín. {d.minDays} dias</Tag>
         </View>
         ) : null}
 
-        {roomy ? <Text style={s.desc} numberOfLines={2}>{d.description}</Text> : null}
+        {showDesc ? <Text style={s.desc} numberOfLines={2}>{d.description}</Text> : null}
 
         <View style={s.why}>
           <View style={s.whyHead}>
@@ -86,12 +87,12 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
 
         <View style={s.priceCard}>
           <View style={s.priceCol}>
-            <Text style={s.priceLabel}>Estimativa fictícia por pessoa</Text>
+            <Text style={s.priceLabel} numberOfLines={1}>Por pessoa · fictícia</Text>
             <Text style={s.price}>~{formatBRL(rec.estimatedCost)}</Text>
           </View>
           <View style={s.priceDivider} />
           <View style={s.priceCol}>
-            <Text style={s.priceLabel}>Passagem estimada</Text>
+            <Text style={s.priceLabel} numberOfLines={1}>Passagem</Text>
             <Text style={s.priceSmall}>{formatBRL(rec.transportCost)}</Text>
           </View>
         </View>
@@ -101,7 +102,7 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
 });
 
 const s = StyleSheet.create({
-  content: { paddingHorizontal: H_PAD, paddingTop: 2, paddingBottom: 8, gap: 10 },
+  content: { paddingHorizontal: H_PAD, paddingTop: 2, paddingBottom: 8, gap: 8 },
   photoWrap: { borderRadius: 26, overflow: 'hidden', backgroundColor: dc.dark },
   shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' },
   overlayText: { position: 'absolute', left: 18, right: 18, bottom: 16, gap: 2 },
@@ -113,25 +114,26 @@ const s = StyleSheet.create({
   },
   heartOn: { backgroundColor: dc.dark },
   titleBlock: { gap: 2 },
-  name: { fontFamily: fonts.bold, fontSize: 32, lineHeight: 38, letterSpacing: -0.8, color: '#FFFFFF' },
+  name: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 34, letterSpacing: -0.8, color: '#FFFFFF' },
   countryRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   country: { fontFamily: fonts.semibold, fontSize: 16, color: '#FFFFFF' },
   tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   desc: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: dc.muted },
-  why: { backgroundColor: dc.mint, borderRadius: 20, padding: 12, gap: 6, borderLeftWidth: 5, borderLeftColor: dc.dark },
+  why: { backgroundColor: dc.mint, borderRadius: 20, padding: 12, gap: 4, borderLeftWidth: 5, borderLeftColor: dc.dark },
   whyHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  whyIcon: { width: 34, height: 34, borderRadius: 17, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
-  whyTitle: { fontFamily: fonts.bold, fontSize: 18, color: dc.dark },
-  whyText: { fontFamily: fonts.regular, fontSize: 15, lineHeight: 22, color: '#2B2F2E' },
-  care: { borderRadius: 16, padding: 14, borderWidth: 1 },
+  whyIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
+  whyTitle: { fontFamily: fonts.bold, fontSize: 17, color: dc.dark },
+  whyText: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
+  care: { borderRadius: 14, padding: 10, borderWidth: 1 },
   careOk: { backgroundColor: '#EAF4EC', borderColor: '#B9D8BF' },
   careWarn: { backgroundColor: '#FFF6E0', borderColor: '#F0D58C' },
-  careText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
-  priceCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: dc.border, padding: 14, ...cardShadow },
+  careText: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: '#2B2F2E' },
+  priceCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: dc.border, padding: 10, ...cardShadow },
   priceCol: { flex: 1, gap: 2 },
   priceDivider: { width: 1, backgroundColor: dc.border, marginHorizontal: 14 },
   priceLabel: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
-  price: { fontFamily: fonts.bold, fontSize: 24, color: dc.dark },
-  priceSmall: { fontFamily: fonts.bold, fontSize: 20, color: dc.dark, marginTop: 3 },
+  price: { fontFamily: fonts.bold, fontSize: 22, color: dc.dark },
+  priceUnit: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
+  priceSmall: { fontFamily: fonts.bold, fontSize: 18, color: dc.dark, marginTop: 2 },
   disclaimer: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: '#6F7773' },
 });
