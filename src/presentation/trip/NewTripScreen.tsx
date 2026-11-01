@@ -48,7 +48,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   // Tudo cabe em UMA tela (sem rolagem): medidas escalam com a altura (referência 844) e o título com a largura.
   const k = Math.min(1.1, Math.max(0.78, height / 844));
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
-  const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 13.4)));
+  const titleSize = Math.max(20, Math.min(32, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
     field: Math.round(38 * k), row: Math.round(44 * k), gap: Math.round(6 * k), h2: Math.round(19 * k), pad: Math.round(12 * k),
   }), [k]);
