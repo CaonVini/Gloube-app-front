@@ -1,12 +1,13 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { buildDirectPreview } from '../../domain/discover/choice';
-import { selectedPlaces } from '../../domain/discover/places';
+import { buildTripPreview } from '../../domain/discover/choice';
+import { selectedPlaces, suggestedDays } from '../../domain/discover/places';
 import type { Destination } from '../../domain/trip-plan';
 import { AppHeader } from '../home/AppHeader';
 import { ItineraryScreen } from '../discover/ItineraryScreen';
 import { PlacesScreen } from '../discover/PlacesScreen';
+import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
 import { homeColors } from '../theme/auth-theme';
 
 interface Props {
@@ -23,22 +24,23 @@ export function DirectTripFlow({ fullName, onSignOut, onExit, destinations }: Pr
   const [phase, setPhase] = useState<'places' | 'itinerary'>('places');
   const [selection, setSelection] = useState<Readonly<Record<string, readonly string[]>>>({});
   const targets = useMemo(() => destinations.map((d) => ({ id: d.id, name: d.city })), [destinations]);
-  const sections = useMemo(() => destinations.map((d) => ({
-    id: d.id,
-    name: d.city,
-    preview: buildDirectPreview(d.city, selectedPlaces(d.id, selection[d.id] ?? [])),
-  })), [destinations, selection]);
+  const previews = useMemo(() => destinations.map((d) => {
+    const places = selectedPlaces(d.id, selection[d.id] ?? []);
+    return buildTripPreview({ id: d.id, name: d.city, country: d.country, days: suggestedDays(places.length), places, suggestedDuration: true });
+  }), [destinations, selection]);
 
   return (
     <View style={s.root}>
       <View style={s.column}><AppHeader fullName={fullName} onSignOut={onSignOut} /></View>
       {phase === 'places'
         ? <PlacesScreen targets={targets} selection={selection} onChange={setSelection} onBack={onExit} onContinue={() => setPhase('itinerary')} />
-        : <ItineraryScreen sections={sections} onEditPlaces={() => setPhase('places')} onDone={onExit} />}
-      <View style={{ height: Math.max(insets.bottom, 12) }} />
+        : <ItineraryScreen previews={previews} onEditPlaces={() => setPhase('places')} onDone={onExit} />}
+      {phase === 'itinerary' ? <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="plan" onChange={noop} /> : <View style={{ height: Math.max(insets.bottom, 12) }} />}
     </View>
   );
 }
+
+function noop() {}
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: homeColors.background },

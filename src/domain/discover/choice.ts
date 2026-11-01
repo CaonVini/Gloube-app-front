@@ -1,6 +1,6 @@
 import { FALLBACK_EXPERIENCE, distributePlaces, suggestedDays, type Place } from './places';
-import { MONTH_NAMES } from './dates';
-import type { Answers, Experience, Period, Recommendation } from './types';
+import { MONTH_NAMES, parseBrParts } from './dates';
+import type { Answers, Companion, Experience, Period, Recommendation } from './types';
 
 /** Todas as sugestões na ordem da tela final: favoritos primeiro (mantendo o ranking), depois as demais. */
 export function orderForChoice(recs: readonly Recommendation[], favorites: ReadonlySet<string>): Recommendation[] {
@@ -114,4 +114,88 @@ export function applyReaction(favorites: ReadonlySet<string>, id: string, liked:
 /** Índice do próximo card após reagir ao atual, ou `null` quando era o último (hora de comparar). */
 export function nextCardIndex(index: number, total: number): number | null {
   return index + 1 < total ? index + 1 : null;
+}
+
+const MONTH_ABBR = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'] as const;
+const SLOT_TIMES = ['10:00', '12:00', '15:00'] as const;
+const COMPANION_CHIP: Record<Companion, string> = { casal: 'Casal', amigos: 'Amigos', familia: 'Família', solo: 'Solo' };
+const TRAVELERS: Record<Companion, string> = { casal: '2 viajantes', solo: '1 viajante', amigos: 'Com amigos', familia: 'Em família' };
+
+/** "12–16 dez", "28 dez – 3 jan", "julho de 2027" ou "Datas a definir". */
+export function periodLabel(period: Period | undefined): string {
+  if (!period) return 'Datas a definir';
+  if (period.mode === 'mes' && period.month !== null && period.year !== null) {
+    const m = MONTH_NAMES[period.month - 1] ?? '';
+    return `${m.charAt(0).toUpperCase()}${m.slice(1)} de ${period.year}`;
+  }
+  if (period.mode === 'definidas') {
+    const s = parseBrParts(period.startDate);
+    if (!s) return 'Datas a definir';
+    const e = parseBrParts(period.endDate);
+    if (!e) return `${s.day} ${MONTH_ABBR[s.month - 1]}`;
+    if (e.month === s.month && e.year === s.year) return `${s.day}–${e.day} ${MONTH_ABBR[s.month - 1]}`;
+    return `${s.day} ${MONTH_ABBR[s.month - 1]} – ${e.day} ${MONTH_ABBR[e.month - 1]}`;
+  }
+  return 'Datas a definir';
+}
+
+export interface TripPreview {
+  id: string;
+  destination: string;
+  country: string;
+  title: string;
+  subtitle: string;
+  dateLabel: string;
+  /** null quando a companhia não é conhecida (ex.: atalho com destino definido). */
+  travelersLabel: string | null;
+  chips: string[];
+  /** Pré-visualização do dia 1: horários SUGERIDOS e os locais escolhidos. */
+  dayOne: { time: string; label: string }[];
+  /** Nomes dos locais que viram pinos no mapa ilustrativo. */
+  pins: string[];
+  /** "Dias 2–5 bloqueados"; null quando a viagem tem 1 dia. */
+  lockedLabel: string | null;
+  notes: string[];
+}
+
+/** Prévia "Sua viagem já tem forma." com dados reais do fluxo. Determinística e local; nada é inventado além dos horários sugeridos. */
+export function buildTripPreview(a: {
+  id: string;
+  name: string;
+  country: string;
+  days: number;
+  places: readonly Place[];
+  period?: Period;
+  companion?: Companion | null;
+  needs?: readonly string[];
+  /** Dias não vieram de datas exatas nem das respostas (atalho): acrescenta o aviso de duração sugerida. */
+  suggestedDuration?: boolean;
+}): TripPreview {
+  const days = Math.max(1, Math.round(a.days));
+  const perDay = a.places.length / Math.max(1, days - 1);
+  const chips = [`${days} ${days === 1 ? 'dia' : 'dias'}`];
+  if (a.companion) chips.push(COMPANION_CHIP[a.companion]);
+  chips.push(a.places.length === 0 ? 'Ritmo livre' : perDay <= 2 ? 'Ritmo tranquilo' : 'Ritmo animado');
+
+  const names = a.places.slice(0, SLOT_TIMES.length).map((p) => p.name);
+  const generic = buildDays(days, [], []).at(0)?.items ?? [];
+  const labels = [...names, ...generic].slice(0, SLOT_TIMES.length);
+  const notes = [...baseNotes(a.needs ?? [], a.places.length > 0)];
+  const pn = a.period ? periodNote(a.period) : 'Sem datas definidas: os valores podem mudar quando você escolher as datas.';
+  if (pn) notes.push(pn);
+  if (a.suggestedDuration) notes.push('Duração sugerida pela quantidade de locais; as datas ficam para a próxima etapa.');
+  return {
+    id: a.id,
+    destination: a.name,
+    country: a.country,
+    title: 'Sua viagem já tem forma.',
+    subtitle: `${days} ${days === 1 ? 'dia' : 'dias'} em ${a.name}, do seu jeito.`,
+    dateLabel: periodLabel(a.period),
+    travelersLabel: a.companion ? TRAVELERS[a.companion] : null,
+    chips,
+    dayOne: labels.map((label, i) => ({ time: SLOT_TIMES[i]!, label })),
+    pins: names,
+    lockedLabel: days > 1 ? `${days > 2 ? `Dias 2–${days}` : 'Dia 2'} ${days > 2 ? 'bloqueados' : 'bloqueado'}` : null,
+    notes,
+  };
 }

@@ -111,3 +111,36 @@ describe('curtir local (pilha)', () => {
     expect(addPlace(full, 'novo')).toEqual(full);
   });
 });
+
+import { buildTripPreview, periodLabel } from '../src/domain/discover/choice';
+describe('prévia "Sua viagem já tem forma."', () => {
+  const ps = placesFor('paris').slice(0, 3);
+  it('usa destino, dias, locais, datas e companhia reais', () => {
+    const t = buildTripPreview({ id: 'paris', name: 'Paris', country: 'França', days: 5, places: ps, period: { mode: 'definidas', startDate: '12/12/2026', endDate: '16/12/2026' }, companion: 'casal' });
+    expect(t.title).toBe('Sua viagem já tem forma.');
+    expect(t.subtitle).toBe('5 dias em Paris, do seu jeito.');
+    expect(t.dateLabel).toBe('12–16 dez');
+    expect(t.travelersLabel).toBe('2 viajantes');
+    expect(t.chips).toEqual(['5 dias', 'Casal', 'Ritmo tranquilo']);
+    expect(t.dayOne.map((d) => d.label)).toEqual(ps.map((p) => p.name));
+    expect(t.dayOne.map((d) => d.time)).toEqual(['10:00', '12:00', '15:00']);
+    expect(t.lockedLabel).toBe('Dias 2–5 bloqueados');
+  });
+  it('sem locais completa o dia 1 com sugestões gerais; sem companhia não inventa viajantes', () => {
+    const t = buildTripPreview({ id: 'paris', name: 'Paris', country: 'França', days: 3, places: [] });
+    expect(t.dayOne.length).toBeGreaterThan(0);
+    expect(t.travelersLabel).toBeNull();
+    expect(t.chips).toEqual(['3 dias', 'Ritmo livre']);
+    expect(t.dateLabel).toBe('Datas a definir');
+  });
+  it('avisa quando não há datas exatas e quando a duração é sugerida', () => {
+    const t = buildTripPreview({ id: 'paris', name: 'Paris', country: 'França', days: 4, places: ps, period: { mode: 'mes', month: 7, year: 2027 }, suggestedDuration: true });
+    expect(t.dateLabel).toBe('Julho de 2027');
+    expect(t.notes.join(' ')).toContain('julho de 2027');
+    expect(t.notes.join(' ')).toContain('Duração sugerida');
+  });
+  it('periodLabel cobre virada de mês e 1 dia sem bloqueio', () => {
+    expect(periodLabel({ mode: 'definidas', startDate: '28/12/2026', endDate: '03/01/2027' })).toBe('28 dez – 3 jan');
+    expect(buildTripPreview({ id: 'x', name: 'X', country: 'Y', days: 1, places: [] }).lockedLabel).toBeNull();
+  });
+});

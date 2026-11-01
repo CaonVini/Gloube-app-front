@@ -1,8 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { applyReaction, buildItineraryPreview, orderForChoice } from '../../domain/discover/choice';
-import { formatBRL } from '../../domain/discover/budget';
+import { applyReaction, buildTripPreview, orderForChoice } from '../../domain/discover/choice';
 import { selectedPlaces } from '../../domain/discover/places';
 import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
@@ -119,15 +118,11 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   }
   if (phase === 'itinerary' && chosen) {
     const d = chosen.destination;
-    const places = selectedPlaces(d.id, placeSel[d.id] ?? []);
+    const fin = finalizeAnswers(answers);
+    const preview = buildTripPreview({ id: d.id, name: d.name, country: d.country, days: fin.days, places: selectedPlaces(d.id, placeSel[d.id] ?? []), period: fin.period, companion: fin.companion, needs: fin.needs });
     return shell(
-      <ItineraryScreen
-        sections={[{ id: d.id, name: d.name, preview: buildItineraryPreview(chosen, finalizeAnswers(answers), places), costText: `~${formatBRL(chosen.estimatedCost)} por pessoa (estimativa)` }]}
-        onEditPlaces={() => setPhase('places')}
-        onBackToChoice={() => setPhase('choose')}
-        onDone={onExit}
-      />,
-      false,
+      <ItineraryScreen previews={[preview]} onEditPlaces={() => setPhase('places')} onBackToChoice={() => setPhase('choose')} onDone={onExit} />,
+      true,
     );
   }
   const last = stepIndex === steps.length - 1;
