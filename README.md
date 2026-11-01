@@ -48,3 +48,11 @@ src/config/              leitura de env / resolução da URL da API
 - Google: crie OAuth Client IDs (web/iOS/Android) e preencha `EXPO_PUBLIC_GOOGLE_*`; o mesmo ID web deve estar em `GOOGLE_CLIENT_IDS` no backend.
 - Facebook: `EXPO_PUBLIC_FACEBOOK_APP_ID` (o *secret* fica **somente** no backend).
 - No Expo Go o redirecionamento OAuth é limitado; para fluxo completo use um *development build* (`expo-dev-client`).
+
+## Fluxo "Descubra um destino" (fictício, só front)
+
+Rota `/discover` (aba **Descubra** do planejador → botão "Descubra um destino"). Questionário em 9 etapas → até 10 destinos (um card por vez) → favoritos → comparação lado a lado.
+
+- Lógica pura e testada em `src/domain/discover/` (`matching.ts` filtra o inviável e ranqueia; `compare.ts` monta a comparação).
+- Catálogo local fictício em `catalog.ts`. Pets/acessibilidade só aparecem como adequados quando `verified: true`; caso contrário a UI mostra "Confirme antes de reservar".
+- Ilustrações PNG locais geradas por `scripts/generate-discover-images.py` (≈80 KB no total). Troque por fotos otimizadas quando houver licença.

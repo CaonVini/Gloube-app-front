@@ -3,5 +3,5 @@ import { PlannerPlaceholderScreen } from '../../src/presentation/home/PlannerPla
 
 export default function Planner() {
   const router = useRouter();
-  return <PlannerPlaceholderScreen onBack={() => router.back()} />;
+  return <PlannerPlaceholderScreen onBack={() => router.back()} onDiscover={() => router.push('/discover')} />;
 }
