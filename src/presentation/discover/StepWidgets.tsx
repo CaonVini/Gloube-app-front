@@ -165,12 +165,11 @@ const TIERS: { id: BudgetId; kicker: string; value: string }[] = [
   { id: '10k-15k', kicker: 'R$ 10 MIL A', value: 'R$ 15 mil' },
 ];
 
-/** 4 faixas em 2x2, valor exato opcional e "Ainda não defini". Sem rolagem: as faixas ocupam o espaço restante. */
+/** 4 faixas em 2x2 e valor exato, centralizados na altura disponível. Sem rolagem. */
 export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChange: Patch }) {
   const { height } = useWindowDimensions();
   const compact = height < 800;
   const custom = a.budget === 'custom';
-  const flex = a.budget === 'flexivel';
   const tier = (t: (typeof TIERS)[number]) => {
     const on = a.budget === t.id;
     return (
@@ -183,9 +182,9 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
     );
   };
   return (
-    <View style={s.fill}>
-      <View style={s.tierRow}>{TIERS.slice(0, 2).map(tier)}</View>
-      <View style={s.tierRow}>{TIERS.slice(2).map(tier)}</View>
+    <View style={s.centered}>
+      <View style={[s.tierRow, compact && { height: 104 }]}>{TIERS.slice(0, 2).map(tier)}</View>
+      <View style={[s.tierRow, compact && { height: 104 }]}>{TIERS.slice(2).map(tier)}</View>
 
       <Pressable accessibilityRole="radio" accessibilityState={{ checked: custom }} accessibilityLabel="Definir outro valor" onPress={() => onChange({ budget: 'custom' })} style={[s.opt, s.customCard, compact && { minHeight: 48 }, custom && s.optOn]}>
         <View style={s.customHead}>
@@ -210,14 +209,6 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
         ) : null}
       </Pressable>
 
-      <Pressable accessibilityRole="radio" accessibilityState={{ checked: flex }} accessibilityLabel="Ainda não defini" onPress={() => onChange({ budget: 'flexivel' })} style={[s.opt, compact && { minHeight: 48 }, flex && s.optOn]}>
-        <DIcon name="infinity" size={26} color={dc.dark} />
-        <View style={{ flex: 1 }}>
-          <Text style={s.optTitle}>Ainda não defini</Text>
-          {compact ? null : <Text style={s.optHint}>Quero explorar sem limitar o valor</Text>}
-        </View>
-        <View style={[s.radio, flex && s.radioOn]}>{flex ? <DIcon name="check" size={14} color="#FFFFFF" /> : null}</View>
-      </Pressable>
     </View>
   );
 }
@@ -257,7 +248,8 @@ const s = StyleSheet.create({
   dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
   calNote: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 
-  tierRow: { flex: 1, flexDirection: 'row', gap: 10, maxHeight: 150 },
+  centered: { flex: 1, justifyContent: 'center', gap: 10 },
+  tierRow: { flexDirection: 'row', gap: 10, height: 128 },
   tier: { flex: 1, justifyContent: 'center', gap: 2, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
   tierOn: { borderColor: dc.dark, borderWidth: 1.5, backgroundColor: '#EEF3EF' },
   tierRadio: { position: 'absolute', top: 10, right: 10 },

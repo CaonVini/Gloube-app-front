@@ -5,7 +5,7 @@ import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { DestinationCard } from './DestinationCard';
-import { NAV_FAB_CLEARANCE } from '../navigation';
+import { NAV_FAB_WIDTH } from '../navigation';
 import { RoundButton, dc } from './ui';
 
 interface Props {
@@ -68,23 +68,23 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
           <DestinationCard rec={item} width={width} saved={favorites.has(item.destination.id)} position={`${i + 1} de ${recs.length}`} onToggleSave={onToggleSave} />
         )}
       />
+      {/* Rodapé dividido ao redor da bola central da navbar: voltar + contagem à esquerda, ação à direita. */}
       <View style={s.footer}>
-        <View style={s.navRow}>
+        <View style={s.footSide}>
           <RoundButton icon="chevronLeft" label="Destino anterior" onPress={() => goTo(index - 1)} disabled={index === 0} />
           <View style={s.flex}>
-            {last
-              ? <PrimaryButton title={favCount >= 2 ? 'Comparar favoritos' : 'Refazer perguntas'} onPress={favCount >= 2 ? onCompare : onRestart} size="hero" />
-              : <PrimaryButton title="Próximo" onPress={() => goTo(index + 1)} size="hero" />}
+            <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>
+              {favCount === 0 ? '♡ salvar' : favCount === 1 ? '1 salvo' : `${favCount} salvos`}
+            </Text>
+            {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
           </View>
         </View>
-        {/* Faixa ao lado da bola central da navbar: altura mínima para ela não encostar no botão. */}
-        <View style={[s.countBar, { height: NAV_FAB_CLEARANCE }]}>
-          <Text style={[s.count, s.flex]} accessibilityLiveRegion="polite" numberOfLines={1}>
-            {favCount === 0 ? 'Salve com ♡' : favCount === 1 ? '1 destino salvo' : `${favCount} destinos salvos`}
-          </Text>
-          <View style={s.fabGap} />
-          <View style={[s.flex, { alignItems: 'flex-end' }]}>
-            {favCount >= 2 ? <Text style={s.countLink} accessibilityRole="button" onPress={onCompare}>Comparar</Text> : null}
+        <View style={{ width: NAV_FAB_WIDTH }} />
+        <View style={s.footSide}>
+          <View style={s.flex}>
+            {last
+              ? <PrimaryButton title={favCount >= 2 ? 'Comparar' : 'Refazer'} onPress={favCount >= 2 ? onCompare : onRestart} size="half" />
+              : <PrimaryButton title="Próximo" onPress={() => goTo(index + 1)} size="half" />}
           </View>
         </View>
       </View>
@@ -95,12 +95,10 @@ export function ResultsDeck({ recs, favorites, onToggleSave, onCompare, onRestar
 const s = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
-  footer: { paddingHorizontal: 16, paddingTop: 4, paddingBottom: 0, gap: 0, width: '100%', maxWidth: 512, alignSelf: 'center' },
-  fabGap: { width: 92 },
-  countBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 22 },
-  count: { fontFamily: fonts.medium, fontSize: 14, color: dc.muted },
-  countLink: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },
-  navRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  footer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 6, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  footSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  count: { fontFamily: fonts.medium, fontSize: 13, color: dc.muted },
+  countLink: { fontFamily: fonts.bold, fontSize: 14, color: dc.teal, paddingVertical: 2 },
   empty: { flex: 1, justifyContent: 'center', padding: 22, gap: 14 },
   emptyTitle: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, color: dc.dark },
   emptyText: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, color: dc.muted },

@@ -65,8 +65,7 @@ function scoreOf(d: Destination, a: Answers, total: number, month: number | null
   if (a.needs.includes('idosos')) score += d.seniorFriendly ? 5 : -10;
 
   const band = findBudget(a.budget, a.customBudget) ?? BUDGETS[BUDGETS.length - 1]!;
-  if (band.id === 'flexivel') score += 5;
-  else if (total >= band.min && total <= band.max) score += 10;
+  if (total >= band.min && total <= band.max) score += 10;
   else if (total < band.min) score += 6;
   else score += 2;
 
@@ -109,7 +108,7 @@ export function buildWhy(d: Destination, a: Answers, total: number, month: numbe
   const parts: string[] = [];
   parts.push(choices.length > 0 ? `Você escolheu ${joinPt(choices)}.` : 'Cabe no que você informou sobre origem, duração e orçamento.');
   const budget = findBudget(a.budget, a.customBudget);
-  const fit = budget && budget.id !== 'flexivel' && total <= budget.max ? ' Isso cabe no seu orçamento.' : '';
+  const fit = budget && total <= budget.max ? ' Isso cabe no seu orçamento.' : '';
   parts.push(`${originLabel ? (a.originAssumed ? `Sem origem informada, estimamos a partir de ${originLabel}: ` : `Saindo de ${originLabel}, `) : ''}a estimativa é de cerca de ${formatBRL(total)} por pessoa para ${a.days} ${a.days === 1 ? 'dia' : 'dias'}.${fit}`);
   if (month !== null && d.bestMonths.includes(month)) parts.push(`${capitalize(MONTH_NAMES[month - 1] ?? '')} é uma boa época para ir.`);
   return parts.join(' ');

@@ -13,7 +13,7 @@ function answers(over: Partial<Answers> = {}): Answers {
   return {
     ...emptyAnswers(),
     climate: 'calor', experiences: ['praia'], reach: 'internacional', origin: 'sao-paulo',
-    companion: 'casal', originAssumed: false, period: { mode: 'indefinido' }, days: 10, budget: 'flexivel',
+    companion: 'casal', originAssumed: false, period: { mode: 'indefinido' }, days: 10, budget: 'custom', customBudget: 1_000_000,
     ...over,
   };
 }
@@ -55,16 +55,16 @@ describe('recommend', () => {
   });
 
   it('"perto de casa" só traz destinos nacionais a até 1000 km da origem', () => {
-    const r = recommend(answers({ reach: 'perto', climate: 'tanto-faz', experiences: [], days: 5, budget: 'flexivel' }), DESTINATIONS, TODAY);
+    const r = recommend(answers({ reach: 'perto', climate: 'tanto-faz', experiences: [], days: 5, budget: 'custom', customBudget: 1_000_000 }), DESTINATIONS, TODAY);
     expect(r.length).toBeGreaterThan(0);
     for (const x of r) expect(distanceKm('sudeste', x.destination.zone)).toBeLessThanOrEqual(1000);
     expect(r.map((x) => x.destination.id)).not.toContain('noronha');
   });
 
   it('duração curta elimina destinos que exigem mais dias', () => {
-    const a = answers({ reach: 'internacional', days: 3, budget: 'flexivel', climate: 'tanto-faz' });
+    const a = answers({ reach: 'internacional', days: 3, budget: 'custom', customBudget: 1_000_000, climate: 'tanto-faz' });
     expect(ids(a)).toEqual([]);
-    const b = answers({ reach: 'brasil', days: 2, budget: 'flexivel', climate: 'tanto-faz', experiences: ['montanha'] });
+    const b = answers({ reach: 'brasil', days: 2, budget: 'custom', customBudget: 1_000_000, climate: 'tanto-faz', experiences: ['montanha'] });
     expect(ids(b)).toEqual(['campos']);
   });
 
@@ -75,23 +75,23 @@ describe('recommend', () => {
   });
 
   it('a origem muda o custo: Gramado fica mais barato saindo de Porto Alegre do que de Manaus', () => {
-    const g = (origin: string) => recommend(answers({ reach: 'brasil', origin, climate: 'frio', experiences: ['montanha'], days: 4, budget: 'flexivel' }), DESTINATIONS, TODAY)
+    const g = (origin: string) => recommend(answers({ reach: 'brasil', origin, climate: 'frio', experiences: ['montanha'], days: 4, budget: 'custom', customBudget: 1_000_000 }), DESTINATIONS, TODAY)
       .find((r) => r.destination.id === 'gramado')!.estimatedCost;
     expect(g('porto-alegre')).toBeLessThan(g('manaus'));
   });
 
   it('clima oposto é eliminado: frio não recebe destinos de calor, calor não recebe frio', () => {
-    expect(recommend(answers({ climate: 'frio', reach: 'brasil', budget: 'flexivel', days: 7 }), DESTINATIONS, TODAY).every((r) => r.destination.climate !== 'calor')).toBe(true);
+    expect(recommend(answers({ climate: 'frio', reach: 'brasil', budget: 'custom', customBudget: 1_000_000, days: 7 }), DESTINATIONS, TODAY).every((r) => r.destination.climate !== 'calor')).toBe(true);
     expect(recommend(answers({ climate: 'calor', reach: 'internacional' }), DESTINATIONS, TODAY).every((r) => r.destination.climate !== 'frio')).toBe(true);
   });
 
   it('multi-seleção: mais experiências em comum sobem no ranking', () => {
-    const r = recommend(answers({ reach: 'brasil', climate: 'calor', experiences: ['praia', 'natureza'], budget: 'flexivel', days: 7 }), DESTINATIONS, TODAY);
+    const r = recommend(answers({ reach: 'brasil', climate: 'calor', experiences: ['praia', 'natureza'], budget: 'custom', customBudget: 1_000_000, days: 7 }), DESTINATIONS, TODAY);
     expect(r[0]?.destination.experiences).toEqual(expect.arrayContaining(['praia', 'natureza']));
   });
 
   it('devolve no máximo 10 resultados, em ordem determinística', () => {
-    const a = answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'flexivel', days: 10 });
+    const a = answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'custom', customBudget: 1_000_000, days: 10 });
     const first = ids(a);
     expect(first.length).toBeLessThanOrEqual(10);
     expect(ids(a)).toEqual(first);
@@ -99,7 +99,7 @@ describe('recommend', () => {
   });
 
   it('melhor época dá bônus quando o mês escolhido está nos meses ideais', () => {
-    const base = answers({ reach: 'brasil', climate: 'frio', experiences: ['montanha'], budget: 'flexivel', days: 4 });
+    const base = answers({ reach: 'brasil', climate: 'frio', experiences: ['montanha'], budget: 'custom', customBudget: 1_000_000, days: 4 });
     const inSeason = recommend({ ...base, period: { mode: 'mes', month: 7 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
     const offSeason = recommend({ ...base, period: { mode: 'mes', month: 3 } }, DESTINATIONS, TODAY).find((r) => r.destination.id === 'gramado')!;
     expect(inSeason.score).toBeGreaterThan(offSeason.score);
@@ -108,7 +108,7 @@ describe('recommend', () => {
 });
 
 describe('pets e acessibilidade (somente informação verificada)', () => {
-  const base = answers({ reach: 'brasil', climate: 'frio', experiences: ['montanha'], budget: 'flexivel', days: 4 });
+  const base = answers({ reach: 'brasil', climate: 'frio', experiences: ['montanha'], budget: 'custom', customBudget: 1_000_000, days: 4 });
 
   it('destino sem verificação aparece com "confirme antes de reservar", nunca como "ideal para pets"', () => {
     const notes = careNotes(dest('jericoacoara'), ['pets', 'acessibilidade']);
@@ -126,8 +126,8 @@ describe('pets e acessibilidade (somente informação verificada)', () => {
   });
 
   it('destino verificado como NÃO aceitando pets é eliminado quando a pessoa viaja com pet', () => {
-    expect(passesHardFilters(dest('noronha'), answers({ reach: 'brasil', needs: ['pets'], budget: 'flexivel' }))).toBe(false);
-    expect(passesHardFilters(dest('noronha'), answers({ reach: 'brasil', needs: [], budget: 'flexivel' }))).toBe(true);
+    expect(passesHardFilters(dest('noronha'), answers({ reach: 'brasil', needs: ['pets'], budget: 'custom', customBudget: 1_000_000 }))).toBe(false);
+    expect(passesHardFilters(dest('noronha'), answers({ reach: 'brasil', needs: [], budget: 'custom', customBudget: 1_000_000 }))).toBe(true);
   });
 
   it('sem a necessidade marcada, não mostra aviso nenhum', () => {
@@ -168,7 +168,7 @@ describe('geo/orçamento/datas', () => {
 });
 
 describe('comparação de favoritos', () => {
-  const recs = recommend(answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'flexivel', days: 7, needs: ['pets'] }), DESTINATIONS, TODAY);
+  const recs = recommend(answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'custom', customBudget: 1_000_000, days: 7, needs: ['pets'] }), DESTINATIONS, TODAY);
   it('pickFavorites mantém a ordem do ranking e ignora ids desconhecidos', () => {
     const picked = pickFavorites(recs, new Set([recs[2]!.destination.id, recs[0]!.destination.id, 'nao-existe']));
     expect(picked.map((r) => r.destination.id)).toEqual([recs[0]!.destination.id, recs[2]!.destination.id]);
@@ -186,7 +186,7 @@ describe('comparação de favoritos', () => {
 
 describe('comparisonHighlights', () => {
   it('marca o mais barato e o de menos dias; sem destaque com menos de 2 favoritos', () => {
-    const recs = recommend(answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'flexivel', days: 7 }), DESTINATIONS, TODAY);
+    const recs = recommend(answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'custom', customBudget: 1_000_000, days: 7 }), DESTINATIONS, TODAY);
     const two = [recs.find((r) => r.destination.id === 'noronha')!, recs.find((r) => r.destination.id === 'chapada')!];
     const h = comparisonHighlights(two);
     expect(h.cheapestId).toBe('chapada');

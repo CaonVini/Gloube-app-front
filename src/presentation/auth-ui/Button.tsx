@@ -11,7 +11,7 @@ interface PrimaryButtonProps {
   /** Ícone opcional à esquerda (o lado direito sempre leva a seta). */
   leftIcon?: ReactNode;
   /** 'hero': versão alta e mais arredondada, usada em chamadas principais da Home. */
-  size?: 'default' | 'hero';
+  size?: 'default' | 'hero' | 'half';
 }
 
 /** Botão principal (verde escuro) com seta à direita. */
@@ -24,11 +24,11 @@ export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, siz
       accessibilityState={{ disabled: !!off, busy: !!loading }}
       disabled={off}
       onPress={onPress}
-      style={({ pressed }) => [s.primary, size === 'hero' && s.hero, off && s.off, pressed && s.pressed]}
+      style={({ pressed }) => [s.primary, size === 'hero' && s.hero, size === 'half' && s.half, off && s.off, pressed && s.pressed]}
     >
-      <View style={s.side}>{loading ? null : leftIcon}</View>
-      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={s.primaryText}>{title}</Text>}
-      <View style={[s.side, s.arrow]}>{loading ? null : <ArrowRightIcon />}</View>
+      {size === 'half' ? null : <View style={s.side}>{loading ? null : leftIcon}</View>}
+      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' && s.primaryTextHalf]} numberOfLines={1}>{title}</Text>}
+      <View style={[s.side, s.arrow, size === 'half' && s.sideHalf]}>{loading ? null : <ArrowRightIcon />}</View>
     </Pressable>
   );
 }
@@ -65,7 +65,10 @@ const s = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20,
   },
   hero: { minHeight: 58, borderRadius: 22 },
+  primaryTextHalf: { fontSize: 15, textAlign: 'left', paddingLeft: 6 },
+  half: { minHeight: 54, borderRadius: 20, paddingHorizontal: 12 },
   side: { width: 34 },
+  sideHalf: { width: 18 },
   arrow: { alignItems: 'flex-end' },
   primaryText: { flex: 1, textAlign: 'center', color: authColors.primaryText, fontFamily: fonts.semibold, fontSize: 16 },
   social: {

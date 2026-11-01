@@ -119,3 +119,26 @@ describe('orçamento e datas padrão', () => {
     expect(isStepComplete('orcamento', { ...a, customBudget: 4000 }, TODAY)).toBe(true);
   });
 });
+
+import { daysFromDates, finalizeAnswers, visibleSteps } from '../src/domain/discover/quiz';
+
+describe('etapa de dias só quando as datas não definem a duração', () => {
+  const base = emptyAnswers();
+  it('com ida e volta válidas, pula a etapa de dias e usa as noites', () => {
+    const a = { ...base, period: { mode: 'definidas' as const, startDate: '12/12/2026', endDate: '17/12/2026' } };
+    expect(daysFromDates(a)).toBe(5);
+    expect(visibleSteps(a).map((s) => s.id)).not.toContain('dias');
+    expect(visibleSteps(a)).toHaveLength(7);
+    expect(finalizeAnswers({ ...a, days: 9 }).days).toBe(5);
+  });
+  it('limita a duração ao máximo permitido', () => {
+    const a = { ...base, period: { mode: 'definidas' as const, startDate: '01/12/2026', endDate: '15/03/2027' } };
+    expect(daysFromDates(a)).toBe(30);
+  });
+  it('sem volta, "Ainda não sei" ou sem período, a etapa de dias continua', () => {
+    expect(visibleSteps({ ...base, period: { mode: 'indefinido' } })).toHaveLength(8);
+    expect(visibleSteps({ ...base, period: { mode: 'definidas', startDate: '12/12/2026', endDate: '' } })).toHaveLength(8);
+    expect(visibleSteps(base)).toHaveLength(8);
+    expect(finalizeAnswers({ ...base, days: 9 }).days).toBe(9);
+  });
+});

@@ -13,7 +13,6 @@ export const BUDGETS: readonly BudgetBand[] = [
   { id: '2k-5k', label: 'R$ 2.000 a R$ 5.000', min: 2000, max: 5000 },
   { id: '5k-10k', label: 'R$ 5.000 a R$ 10.000', min: 5000, max: 10000 },
   { id: '10k-15k', label: 'R$ 10.000 a R$ 15.000', min: 10000, max: 15000 },
-  { id: 'flexivel', label: 'Ainda não defini', min: 0, max: Infinity },
 ];
 
 /** Tolerância acima do teto da faixa antes de considerar a viagem inviável. */

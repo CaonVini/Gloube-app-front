@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { pickFavorites } from '../../domain/discover/compare';
 import { recommend } from '../../domain/discover/matching';
-import { STEPS, emptyAnswers, isStepComplete } from '../../domain/discover/quiz';
+import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
 import type { Answers, Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
 import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
@@ -37,23 +37,24 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   const [chosenId, setChosenId] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  const step = STEPS[stepIndex]!;
+  const steps = useMemo(() => visibleSteps(answers), [answers]);
+  const step = steps[Math.min(stepIndex, steps.length - 1)]!;
   const complete = isStepComplete(step.id, answers, today);
   const patch = useCallback((p: Partial<Answers>) => { setShowHint(false); setAnswers((prev) => ({ ...prev, ...p })); }, []);
 
   const next = useCallback(() => {
     if (!complete) { setShowHint(true); return; }
     setShowHint(false);
-    if (stepIndex < STEPS.length - 1) { setStepIndex(stepIndex + 1); return; }
-    setRecs(recommend(answers, undefined, today));
+    if (stepIndex < steps.length - 1) { setStepIndex(stepIndex + 1); return; }
+    setRecs(recommend(finalizeAnswers(answers), undefined, today));
     setFavorites(new Set());
     setChosenId(null);
     setPhase('results');
-  }, [complete, stepIndex, answers, today]);
+  }, [complete, stepIndex, steps, answers, today]);
   const skip = useCallback(() => {
     setShowHint(false);
-    if (stepIndex < STEPS.length - 1) setStepIndex(stepIndex + 1);
-  }, [stepIndex]);
+    if (stepIndex < steps.length - 1) setStepIndex(stepIndex + 1);
+  }, [stepIndex, steps]);
 
   const back = useCallback(() => {
     setShowHint(false);
@@ -69,7 +70,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   }, []);
 
   const restart = useCallback(() => { setAnswers(emptyAnswers(originText)); setStepIndex(0); setPhase('quiz'); }, []);
-  const editAnswers = useCallback(() => { setStepIndex(STEPS.length - 1); setPhase('quiz'); }, []);
+  const editAnswers = useCallback(() => { setStepIndex(steps.length - 1); setPhase('quiz'); }, [steps]);
 
   const shell = (children: React.ReactNode, withNav = true) => (
     <View style={s.root}>
@@ -99,7 +100,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
     );
   }
 
-  const last = stepIndex === STEPS.length - 1;
+  const last = stepIndex === steps.length - 1;
   const selectedCount = step.id === 'experiencias' ? answers.experiences.length : step.id === 'cuidados' ? answers.needs.length : 0;
   const meta = selectedCount > 0
     ? `${selectedCount} ${selectedCount === 1 ? 'selecionado' : 'selecionados'}`
@@ -107,7 +108,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   return shell(
     <>
       <View style={[s.column, s.stepHead]}>
-        <SegmentedProgress kicker="DESCUBRA" current={stepIndex + 1} total={STEPS.length} />
+        <SegmentedProgress kicker="DESCUBRA" current={stepIndex + 1} total={steps.length} />
         <StepTitle title={step.title} subtitle={step.subtitle} />
       </View>
       <ScrollView

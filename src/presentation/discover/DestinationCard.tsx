@@ -64,7 +64,7 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, saved
         {roomy ? (
         <View style={s.tags}>
           <Tag>{CLIMATE_LABEL[d.climate]}</Tag>
-          {d.experiences.slice(0, 2).map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
+          {d.experiences.slice(0, 1).map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
           <Tag tone="lime">Mín. {d.minDays} dias</Tag>
         </View>
         ) : null}

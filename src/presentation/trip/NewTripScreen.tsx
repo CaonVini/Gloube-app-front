@@ -7,7 +7,7 @@ import {
 } from '../../domain/trip-plan';
 import { PrimaryButton } from '../auth-ui/Button';
 import { AppHeader } from '../home/AppHeader';
-import { BottomNavBar, DEFAULT_NAV_ITEMS, NAV_FAB_CLEARANCE } from '../navigation';
+import { BottomNavBar, DEFAULT_NAV_ITEMS, NAV_FAB_WIDTH } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
 
@@ -211,9 +211,16 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
             <TripIcon name="chevronRight" size={20} color={authColors.text} />
           </Pressable>
 
+          {/* Rodapé dividido ao redor da bola central da navbar: nada de faixa vazia acima dela. */}
           <View style={s.footer}>
-            <PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="hero" />
-            <View style={{ height: NAV_FAB_CLEARANCE }} />
+            <View style={s.footSide}>
+              <View style={s.countSeal}><Text style={s.countSealText}>{destinations.length}</Text></View>
+              <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>{destinations.length === 1 ? 'destino' : 'destinos'}</Text>
+            </View>
+            <View style={{ width: NAV_FAB_WIDTH }} />
+            <View style={s.footSide}>
+              <View style={s.flex}><PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.() : originRef.current?.focus())} size="half" /></View>
+            </View>
           </View>
         </View>
       </View>
@@ -280,12 +287,13 @@ const s = StyleSheet.create({
   bannerIcon: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   bannerTitle: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 19, color: '#111' },
   bannerText: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
-  footer: { paddingTop: 8 },
+  footer: { flexDirection: 'row', alignItems: 'center', paddingTop: 8, paddingBottom: 6 },
+  footSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  countSeal: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 6, backgroundColor: '#F1EF71', alignItems: 'center', justifyContent: 'center' },
+  countSealText: { fontFamily: fonts.bold, fontSize: 14, color: authColors.text },
   strip: { flexDirection: 'row', alignItems: 'center' },
   stripSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   stripGap: { width: 92 },
-  countSeal: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 6, backgroundColor: '#F1EF71', alignItems: 'center', justifyContent: 'center' },
-  countSealText: { fontFamily: fonts.bold, fontSize: 14, color: authColors.text },
   count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle },
   stripHint: { fontFamily: fonts.regular, fontSize: 12, color: homeColors.subtitle },
   pinCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },

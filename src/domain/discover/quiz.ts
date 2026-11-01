@@ -1,5 +1,5 @@
 import { findBudget } from './budget';
-import { parseBrDate } from './dates';
+import { nightsBetween, parseBrDate } from './dates';
 import { resolveOrigin } from './geo';
 import type { Answers, Need, Experience } from './types';
 
@@ -56,6 +56,24 @@ export function toggleNeed(list: readonly Need[], item: Need): Need[] {
 }
 
 /** Uma etapa está completa quando a resposta é válida. Opcionais sempre estão (podem ficar vazias). */
+/** Dias definidos pelas datas (ida e volta válidas), ou null se ainda precisamos perguntar. */
+export function daysFromDates(a: Answers): number | null {
+  if (a.period.mode !== 'definidas') return null;
+  const nights = nightsBetween(a.period.startDate, a.period.endDate);
+  return nights === null ? null : Math.min(MAX_DAYS, Math.max(MIN_DAYS, nights));
+}
+
+/** Etapas exibidas: a de duração só aparece quando as datas não definem os dias (ex.: "Ainda não sei"). */
+export function visibleSteps(a: Answers): readonly StepDef[] {
+  return daysFromDates(a) === null ? STEPS : STEPS.filter((s) => s.id !== 'dias');
+}
+
+/** Respostas finais: com datas exatas, os dias vêm do intervalo escolhido. */
+export function finalizeAnswers(a: Answers): Answers {
+  const d = daysFromDates(a);
+  return d === null ? a : { ...a, days: d };
+}
+
 export function isStepComplete(id: StepId, a: Answers, today: Date = new Date()): boolean {
   switch (id) {
     case 'clima': return a.climate !== null;
