@@ -8,7 +8,7 @@ interface Props {
   initials: string;
   fullName: string;
   onSignOut: () => void;
-  /** Foto opcional exibida ao lado das iniciais (como no mockup). */
+  /** Foto opcional: quando presente, é o único elemento do gatilho (sem iniciais nem seta). */
   photo?: ImageSourcePropType;
 }
 
@@ -27,11 +27,16 @@ export function AvatarMenu({ initials, fullName, onSignOut, photo }: Props) {
         hitSlop={8}
         style={({ pressed }) => [s.trigger, pressed && s.pressed]}
       >
-        {photo ? <Image source={photo} style={s.photo} accessible={false} /> : null}
-        <View style={s.avatar}>
-          <Text style={s.initials}>{initials}</Text>
-        </View>
-        <ChevronDownIcon />
+        {photo ? (
+          <Image source={photo} style={s.photo} accessible={false} />
+        ) : (
+          <>
+            <View style={s.avatar}>
+              <Text style={s.initials}>{initials}</Text>
+            </View>
+            <ChevronDownIcon />
+          </>
+        )}
       </Pressable>
 
       <Modal transparent visible={open} animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -57,7 +62,7 @@ const s = StyleSheet.create({
   avatar: {
     width: 44, height: 44, borderRadius: 22, backgroundColor: homeColors.avatarBg, alignItems: 'center', justifyContent: 'center',
   },
-  photo: { width: 42, height: 42, borderRadius: 21, marginRight: -2 },
+  photo: { width: 44, height: 44, borderRadius: 22 },
   initials: { fontFamily: fonts.medium, fontSize: 18, color: authColors.text },
   pressed: { opacity: 0.7 },
   backdrop: { flex: 1 },
