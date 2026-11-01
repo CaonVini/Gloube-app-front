@@ -13,10 +13,12 @@ const COLORS = {
   accentIcon: '#1F3D36',
 } as const;
 
-const FAB = 46; // diâmetro do destaque central (integrado à barra)
-const NOTCH = FAB + 14; // recorte curvo ao redor da bola
-const LIFT = 10; // quanto sobe acima dos demais ícones: só um pouco
-const NOTCH_TOP = -LIFT + FAB / 2 - NOTCH / 2; // centrado na bola
+const FAB = 44; // diâmetro do destaque central
+const GAP = 6; // folga uniforme entre a bola e o recorte
+const NOTCH = FAB + GAP * 2; // diâmetro do recorte curvo
+const BAR_PAD = 10; // padding superior da barra
+const CENTER_Y = 8; // centro da bola, medido a partir do topo da barra (só um pouco acima dos ícones)
+const BALL_TOP = CENTER_Y - FAB / 2 - BAR_PAD; // topo da bola relativo ao slot
 
 interface Props {
   items: readonly NavItem[];
@@ -34,9 +36,11 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   const a11y = tabAccessibility(item, active);
   if (item.highlight) {
     return (
-      <View style={s.slot}>
-        {/* Recorte curvo: círculo na cor do fundo atrás da bola, "morde" a borda da barra (sem SVG). */}
-        <View pointerEvents="none" style={s.notch} />
+      <View style={[s.slot, s.fabSlot]}>
+        {/* Recorte curvo: círculo (cor do fundo, mesma borda da barra) concêntrico à bola; só a parte abaixo do topo da barra aparece. */}
+        <View pointerEvents="none" style={s.notchClip}>
+          <View style={s.notch} />
+        </View>
         <Pressable
           {...a11y}
           onPress={() => onChange(item.key)}
@@ -82,34 +86,45 @@ const s = StyleSheet.create({
     borderTopRightRadius: 24,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border,
-    paddingTop: 10,
+    paddingTop: BAR_PAD,
     paddingHorizontal: 8,
   },
   slot: { flex: 1, alignItems: 'center' },
+  fabSlot: { alignSelf: 'stretch' }, // topo alinhado ao topo da barra: o recorte usa essa referência
   tab: { gap: 3, minHeight: 48, paddingVertical: 2 },
   icon: { width: 24, height: 24 },
   label: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: COLORS.inactive },
   labelActive: { fontFamily: fonts.bold, color: COLORS.active },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.active },
   dotHidden: { opacity: 0 },
-  notch: {
+  notchClip: {
     position: 'absolute',
-    top: NOTCH_TOP,
+    top: -BAR_PAD,
+    left: 0,
+    right: 0,
+    height: CENTER_Y + NOTCH / 2 + 1,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  notch: {
+    marginTop: CENTER_Y - NOTCH / 2,
     width: NOTCH,
     height: NOTCH,
     borderRadius: NOTCH / 2,
     backgroundColor: homeColors.background,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: COLORS.border,
   },
   fab: {
     width: FAB,
     height: FAB,
     borderRadius: FAB / 2,
-    marginTop: -LIFT,
+    marginTop: BALL_TOP,
     backgroundColor: COLORS.accent,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  fabLabel: { marginTop: 4, paddingBottom: 2 },
+  fabLabel: { marginTop: 9 },
   fabIcon: { width: 24, height: 24 },
   pressed: { opacity: 0.7 },
 });
