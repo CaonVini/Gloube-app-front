@@ -1,24 +1,24 @@
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts, homeColors } from '../theme/auth-theme';
+import { fonts } from '../theme/auth-theme';
 import { bottomPadding, isActive, tabAccessibility, type NavItem } from './nav-items';
 
 const COLORS = {
   bar: '#FFFFFF',
-  border: '#E7E4DD',
-  active: '#1F3D36',
-  inactive: '#4B5654',
-  accent: '#F1EF71', // amarelo-limão da ilustração da Home
-  accentIcon: '#1F3D36',
+  border: '#ECE9E3',
+  active: '#1F3D36', // verde escuro Gloube
+  inactive: '#8B9692', // cinza-esverdeado discreto
+  onDark: '#FFFFFF',
 } as const;
 
-const FAB = 44; // diâmetro do destaque central
-const GAP = 6; // folga uniforme entre a bola e o recorte
-const NOTCH = FAB + GAP * 2; // diâmetro do recorte curvo
-const BAR_PAD = 10; // padding superior da barra
-const CENTER_Y = 8; // centro da bola, medido a partir do topo da barra (só um pouco acima dos ícones)
-const BALL_TOP = CENTER_Y - FAB / 2 - BAR_PAD; // topo da bola relativo ao slot
+const FAB = 40; // diâmetro do destaque central (círculo verde escuro)
+const RING = 2; // anel na cor da barra: separa a bola do fundo sem halo colorido
+const ICON_AREA = 30; // altura fixa da faixa dos ícones: os rótulos de todas as abas ficam alinhados
+const LIFT = 6; // quanto a bola sobe em relação aos demais ícones: só um pouco
+const BALL = FAB + RING * 2;
+
+const BALL_MARGIN = (ICON_AREA - BALL) / 2 - LIFT;
 
 interface Props {
   items: readonly NavItem[];
@@ -36,18 +36,9 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   const a11y = tabAccessibility(item, active);
   if (item.highlight) {
     return (
-      <View style={[s.slot, s.fabSlot]}>
-        {/* Recorte curvo: círculo (cor do fundo, mesma borda da barra) concêntrico à bola; só a parte abaixo do topo da barra aparece. */}
-        <View pointerEvents="none" style={s.notchClip}>
-          <View style={s.notch} />
-        </View>
-        <Pressable
-          {...a11y}
-          onPress={() => onChange(item.key)}
-          style={({ pressed }) => [s.fab, pressed && s.pressed]}
-          hitSlop={6}
-        >
-          <Image source={item.icon} style={s.fabIcon} resizeMode="contain" tintColor={COLORS.accentIcon} />
+      <View style={s.slot}>
+        <Pressable {...a11y} onPress={() => onChange(item.key)} hitSlop={6} style={({ pressed }) => [s.fab, pressed && s.pressed]}>
+          <Image source={item.icon} style={s.fabIcon} resizeMode="contain" tintColor={COLORS.onDark} />
         </Pressable>
         <Text style={[s.label, s.fabLabel, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
       </View>
@@ -55,9 +46,10 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   }
   return (
     <Pressable {...a11y} onPress={() => onChange(item.key)} style={({ pressed }) => [s.slot, s.tab, pressed && s.pressed]}>
-      <Image source={active && item.activeIcon ? item.activeIcon : item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} />
+      {/* Indicador discreto: fio curto no topo da barra sobre a aba ativa. */}
+      {active ? <View style={s.indicator} /> : null}
+      <View style={s.iconArea}><Image source={active && item.activeIcon ? item.activeIcon : item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} /></View>
       <Text style={[s.label, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
-      <View style={[s.dot, !active && s.dotHidden]} />
     </Pressable>
   );
 });
@@ -66,10 +58,7 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
 export function BottomNavBar({ items, activeKey, onChange }: Props) {
   const insets = useSafeAreaInsets();
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[s.bar, { paddingBottom: bottomPadding(insets.bottom) }]}
-    >
+    <View accessibilityRole="tablist" style={[s.bar, { paddingBottom: bottomPadding(insets.bottom) }]}>
       {items.map((item) => (
         <Tab key={item.key} item={item} active={isActive(item, activeKey)} onChange={onChange} />
       ))}
@@ -80,51 +69,42 @@ export function BottomNavBar({ items, activeKey, onChange }: Props) {
 const s = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
     backgroundColor: COLORS.bar,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border,
-    paddingTop: BAR_PAD,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
+    shadowColor: '#1F3D36',
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
   },
-  slot: { flex: 1, alignItems: 'center' },
-  fabSlot: { alignSelf: 'stretch' }, // topo alinhado ao topo da barra: o recorte usa essa referência
-  tab: { gap: 3, minHeight: 48, paddingVertical: 2 },
-  icon: { width: 24, height: 24 },
-  label: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: COLORS.inactive },
-  labelActive: { fontFamily: fonts.bold, color: COLORS.active },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.active },
-  dotHidden: { opacity: 0 },
-  notchClip: {
-    position: 'absolute',
-    top: -BAR_PAD,
-    left: 0,
-    right: 0,
-    height: CENTER_Y + NOTCH / 2 + 1,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  notch: {
-    marginTop: CENTER_Y - NOTCH / 2,
-    width: NOTCH,
-    height: NOTCH,
-    borderRadius: NOTCH / 2,
-    backgroundColor: homeColors.background,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.border,
-  },
+  slot: { flex: 1, alignItems: 'center', paddingTop: 12 },
+  tab: { gap: 4, minHeight: 62, paddingBottom: 4 },
+  iconArea: { height: ICON_AREA, alignItems: 'center', justifyContent: 'center' },
+  indicator: { position: 'absolute', top: -StyleSheet.hairlineWidth, width: 18, height: 2, borderRadius: 1, backgroundColor: COLORS.active },
+  icon: { width: 22, height: 22 },
+  label: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14, letterSpacing: 0.3, color: COLORS.inactive },
+  labelActive: { fontFamily: fonts.semibold, color: COLORS.active },
   fab: {
-    width: FAB,
-    height: FAB,
-    borderRadius: FAB / 2,
-    marginTop: BALL_TOP,
-    backgroundColor: COLORS.accent,
+    width: BALL,
+    height: BALL,
+    borderRadius: BALL / 2,
+    marginTop: BALL_MARGIN,
+    backgroundColor: COLORS.active,
+    borderWidth: RING,
+    borderColor: COLORS.bar,
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#1F3D36',
+    shadowOpacity: 0.22,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 3 },
+    elevation: 5,
   },
-  fabLabel: { marginTop: 9 },
-  fabIcon: { width: 24, height: 24 },
+  fabLabel: { marginTop: ICON_AREA + 4 - BALL - BALL_MARGIN, paddingBottom: 4 }, // rótulo na mesma altura dos demais,
+  fabIcon: { width: 22, height: 22 },
   pressed: { opacity: 0.7 },
 });
