@@ -1,145 +1,95 @@
 import { memo } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { formatBRL } from '../../domain/discover/budget';
+import { firstSentence } from '../../domain/discover/choice';
 import type { Experience, Recommendation } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
 import { destinationImages } from './assets';
 import { DIcon } from './icons';
-import { Tag, cardShadow, dc } from './ui';
+import { cardShadow, dc } from './ui';
 
-const MAX_COLUMN = 480;
-const H_PAD = 16;
-const EXP_LABEL: Record<Experience, string> = { praia: 'Praia', montanha: 'Montanha', cidade: 'Cidade', natureza: 'Natureza', neve: 'Neve' };
-const CLIMATE_LABEL = { frio: 'Clima frio', calor: 'Clima quente', ameno: 'Clima ameno' } as const;
+const EXP_LABEL: Record<Experience, string> = { praia: 'PRAIA', montanha: 'MONTANHA', cidade: 'CIDADE', natureza: 'NATUREZA', neve: 'NEVE' };
 
 interface Props {
   rec: Recommendation;
   width: number;
+  height: number;
   saved: boolean;
-  position: string;
   onToggleSave: (id: string) => void;
   onDetails: (rec: Recommendation) => void;
 }
 
-/** Um card = uma "página" do deck. Memoizado: só re-renderiza se o próprio card (ou salvo/não) mudar. */
-export const DestinationCard = memo(function DestinationCard({ rec, width, saved, position, onToggleSave, onDetails }: Props) {
+/** Card principal da pilha: foto grande com tag, coração, nome e local; painel claro com motivo, estimativa e detalhes. */
+export const DestinationCard = memo(function DestinationCard({ rec, width, height, saved, onToggleSave, onDetails }: Props) {
   const d = rec.destination;
-  const inner = Math.min(width, MAX_COLUMN + H_PAD * 2) - H_PAD * 2;
-  const { height } = useWindowDimensions();
-  const photoH = Math.round(Math.min(240, Math.max(104, height * (height < 800 ? 0.16 : 0.18))));
-  const roomy = height >= 800;
-  const showDesc = height >= 830;
+  const tag = d.experiences[0] ? EXP_LABEL[d.experiences[0]] : 'DESTINO';
   return (
-    <View style={{ width, alignItems: 'center' }}>
-      <ScrollView style={{ width: inner + H_PAD * 2 }} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-        <View style={[s.photoWrap, cardShadow]}>
-          <Image
-            source={destinationImages[d.id]}
-            style={{ width: inner, height: photoH }}
-            resizeMode="cover"
-            accessibilityRole="image"
-            accessibilityLabel={`Imagem de ${d.name}`}
-          />
-          <View pointerEvents="none" style={s.shade}>
-            {Array.from({ length: 24 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: `rgba(8,24,20,${(0.74 * Math.pow((i + 1) / 24, 1.8)).toFixed(3)})` }} />)}
-          </View>
-          <View style={s.position}><Text style={s.positionText}>{position}</Text></View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={saved ? `Remover ${d.name} dos favoritos` : `Salvar ${d.name} nos favoritos`}
-            accessibilityState={{ selected: saved }}
-            onPress={() => onToggleSave(d.id)}
-            style={({ pressed }) => [s.heart, saved && s.heartOn, pressed && { opacity: 0.85 }]}
-          >
-            <DIcon name={saved ? 'heart' : 'heartOutline'} size={24} color={saved ? '#FFFFFF' : dc.dark} />
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Ver detalhes de ${d.name}`} onPress={() => onDetails(rec)} style={({ pressed }) => [s.detailsPill, pressed && { opacity: 0.85 }]}>
-            <Text style={s.detailsText}>Ver detalhes</Text>
-          </Pressable>
-          <View pointerEvents="none" style={s.overlayText}>
-            <Text style={s.name} accessibilityRole="header">{d.name}</Text>
-            <View style={s.countryRow}>
-              <DIcon name="pin" size={15} color="#FFFFFF" />
-              <Text style={s.country}>{d.country}</Text>
-            </View>
+    <View style={[s.card, cardShadow, { width, height }]}>
+      <View style={s.photo}>
+        <Image source={destinationImages[d.id]} style={s.img} resizeMode="cover" accessibilityRole="image" accessibilityLabel={`Imagem de ${d.name}`} />
+        <View pointerEvents="none" style={s.shade}>
+          {Array.from({ length: 20 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: `rgba(8,24,20,${(0.78 * Math.pow((i + 1) / 20, 1.9)).toFixed(3)})` }} />)}
+        </View>
+        <View pointerEvents="none" style={s.tag}><Text style={s.tagText}>{tag}</Text></View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={saved ? `Remover ${d.name} dos favoritos` : `Salvar ${d.name} nos favoritos`}
+          accessibilityState={{ selected: saved }}
+          onPress={() => onToggleSave(d.id)}
+          style={({ pressed }) => [s.heart, saved && s.heartOn, pressed && { opacity: 0.85 }]}
+        >
+          <DIcon name={saved ? 'heart' : 'heartOutline'} size={20} color={saved ? '#FFFFFF' : dc.dark} />
+        </Pressable>
+        <View pointerEvents="none" style={s.overlayText}>
+          <Text style={s.name} numberOfLines={2} accessibilityRole="header">{d.name}</Text>
+          <View style={s.countryRow}>
+            <DIcon name="pin" size={14} color="#FFFFFF" />
+            <Text style={s.country} numberOfLines={1}>{d.country}</Text>
           </View>
         </View>
-
-        {roomy ? (
-        <View style={s.tags}>
-          <Tag>{CLIMATE_LABEL[d.climate]}</Tag>
-          {d.experiences.slice(0, 1).map((e) => <Tag key={e}>{EXP_LABEL[e]}</Tag>)}
-          <Tag tone="lime">Mín. {d.minDays} dias</Tag>
+      </View>
+      <View style={s.panel}>
+        <Text style={s.reason} numberOfLines={2}>{firstSentence(rec.why)}</Text>
+        <View style={s.chips}>
+          <View style={s.chip}><Text style={s.chipText}>~{formatBRL(rec.estimatedCost)} por pessoa (estimativa)</Text></View>
+          <View style={s.chip}><Text style={s.chipText}>Mín. {d.minDays} dias</Text></View>
         </View>
-        ) : null}
+        <Pressable accessibilityRole="button" accessibilityLabel={`Ver detalhes de ${d.name}`} onPress={() => onDetails(rec)} hitSlop={8}>
+          <Text style={s.link}>Ver detalhes ↗</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+});
 
-        {showDesc ? <Text style={s.desc} numberOfLines={2}>{d.description}</Text> : null}
-
-        <View style={s.why}>
-          <View style={s.whyHead}>
-            <View style={s.whyIcon}><DIcon name="sparkle" size={20} color={dc.dark} /></View>
-            <Text style={s.whyTitle}>Por que combina com você</Text>
-          </View>
-          <Text style={s.whyText}>{rec.why}</Text>
-        </View>
-
-        {rec.care.map((c) => (
-          <View key={c.need} style={[s.care, c.tone === 'ok' ? s.careOk : s.careWarn]}>
-            <Text style={s.careText}>{c.text}</Text>
-          </View>
-        ))}
-
-        <View style={s.priceCard}>
-          <View style={s.priceCol}>
-            <Text style={s.priceLabel} numberOfLines={1}>Por pessoa · fictícia</Text>
-            <Text style={s.price}>~{formatBRL(rec.estimatedCost)}</Text>
-          </View>
-          <View style={s.priceDivider} />
-          <View style={s.priceCol}>
-            <Text style={s.priceLabel} numberOfLines={1}>Passagem</Text>
-            <Text style={s.priceSmall}>{formatBRL(rec.transportCost)}</Text>
-          </View>
-        </View>
-      </ScrollView>
+/** Cartão de trás da pilha: só a foto (aparece de lado, como no Tinder). */
+export const BackCard = memo(function BackCard({ rec, width, height }: { rec: Recommendation; width: number; height: number }) {
+  return (
+    <View style={[s.card, { width, height }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Image source={destinationImages[rec.destination.id]} style={s.img} resizeMode="cover" />
+      <View style={s.dim} />
     </View>
   );
 });
 
 const s = StyleSheet.create({
-  content: { paddingHorizontal: H_PAD, paddingTop: 2, paddingBottom: 8, gap: 8 },
-  photoWrap: { borderRadius: 26, overflow: 'hidden', backgroundColor: dc.dark },
-  shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '62%' },
-  overlayText: { position: 'absolute', left: 18, right: 18, bottom: 16, gap: 2 },
-  detailsPill: { position: 'absolute', right: 12, bottom: 14, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
-  detailsText: { fontFamily: fonts.semibold, fontSize: 13, color: dc.dark },
-  position: { position: 'absolute', left: 14, top: 14, backgroundColor: 'rgba(31,61,54,0.82)', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 5 },
-  positionText: { fontFamily: fonts.semibold, fontSize: 13, color: '#FFFFFF' },
-  heart: {
-    position: 'absolute', top: 10, right: 12, width: 48, height: 48, borderRadius: 24, backgroundColor: '#FFFFFF',
-    alignItems: 'center', justifyContent: 'center', ...cardShadow,
-  },
+  card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF' },
+  photo: { flex: 1, minHeight: 120, backgroundColor: dc.dark },
+  img: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
+  dim: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(248,245,240,0.35)' },
+  shade: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '55%' },
+  tag: { position: 'absolute', left: 14, top: 14, backgroundColor: 'rgba(255,255,255,0.92)', borderRadius: 14, paddingHorizontal: 11, paddingVertical: 5 },
+  tagText: { fontFamily: fonts.semibold, fontSize: 11, letterSpacing: 1.1, color: dc.dark },
+  heart: { position: 'absolute', top: 10, right: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   heartOn: { backgroundColor: dc.dark },
-  titleBlock: { gap: 2 },
-  name: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 34, letterSpacing: -0.8, color: '#FFFFFF' },
+  overlayText: { position: 'absolute', left: 16, right: 16, bottom: 14, gap: 2 },
+  name: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 32, letterSpacing: -0.7, color: '#FFFFFF' },
   countryRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  country: { fontFamily: fonts.semibold, fontSize: 16, color: '#FFFFFF' },
-  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  desc: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: dc.muted },
-  why: { backgroundColor: dc.mint, borderRadius: 20, padding: 12, gap: 4, borderLeftWidth: 5, borderLeftColor: dc.dark },
-  whyHead: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  whyIcon: { width: 30, height: 30, borderRadius: 15, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
-  whyTitle: { fontFamily: fonts.bold, fontSize: 17, color: dc.dark },
-  whyText: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
-  care: { borderRadius: 14, padding: 10, borderWidth: 1 },
-  careOk: { backgroundColor: '#EAF4EC', borderColor: '#B9D8BF' },
-  careWarn: { backgroundColor: '#FFF6E0', borderColor: '#F0D58C' },
-  careText: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: '#2B2F2E' },
-  priceCard: { flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: dc.border, padding: 10, ...cardShadow },
-  priceCol: { flex: 1, gap: 2 },
-  priceDivider: { width: 1, backgroundColor: dc.border, marginHorizontal: 14 },
-  priceLabel: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
-  price: { fontFamily: fonts.bold, fontSize: 22, color: dc.dark },
-  priceUnit: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
-  priceSmall: { fontFamily: fonts.bold, fontSize: 18, color: dc.dark, marginTop: 2 },
-  disclaimer: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: '#6F7773' },
+  country: { fontFamily: fonts.semibold, fontSize: 15, color: '#FFFFFF' },
+  panel: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 8, backgroundColor: '#FFFFFF' },
+  reason: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  chip: { backgroundColor: '#F1F3F0', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
+  chipText: { fontFamily: fonts.medium, fontSize: 12, color: dc.dark },
+  link: { fontFamily: fonts.semibold, fontSize: 13, color: dc.dark, textDecorationLine: 'underline' },
 });
