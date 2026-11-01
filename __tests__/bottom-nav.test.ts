@@ -2,7 +2,7 @@ import { DEFAULT_NAV_ITEMS, MIN_BOTTOM_PADDING, bottomPadding, isActive, tabAcce
 
 describe('DEFAULT_NAV_ITEMS', () => {
   it('segue a ordem do mockup', () => {
-    expect(DEFAULT_NAV_ITEMS.map((i) => i.label)).toEqual(['Descubra', 'Planeje', 'Aurora', 'Viagem', 'Carteira']);
+    expect(DEFAULT_NAV_ITEMS.map((i) => i.label)).toEqual(['Descubra', 'Planeje', 'Viagem', 'Carteira', 'Aurora']);
   });
   it('tem chaves únicas e exatamente um botão central em destaque, no meio', () => {
     expect(new Set(DEFAULT_NAV_ITEMS.map((i) => i.key)).size).toBe(DEFAULT_NAV_ITEMS.length);

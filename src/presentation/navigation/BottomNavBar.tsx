@@ -42,12 +42,13 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
         >
           <Image source={item.icon} style={s.fabIcon} resizeMode="contain" tintColor={COLORS.accentIcon} />
         </Pressable>
+        <Text style={[s.label, s.fabLabel, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
       </View>
     );
   }
   return (
     <Pressable {...a11y} onPress={() => onChange(item.key)} style={({ pressed }) => [s.slot, s.tab, pressed && s.pressed]}>
-      <Image source={item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} />
+      <Image source={active && item.activeIcon ? item.activeIcon : item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} />
       <Text style={[s.label, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
       <View style={[s.dot, !active && s.dotHidden]} />
     </Pressable>
@@ -93,7 +94,7 @@ const s = StyleSheet.create({
     height: FAB + RING * 2,
     borderRadius: (FAB + RING * 2) / 2,
     marginTop: -LIFT - RING,
-    marginBottom: 4,
+    marginBottom: 0,
     backgroundColor: COLORS.accent,
     borderWidth: RING,
     borderColor: homeColors.background, // anel = cor do fundo da tela
@@ -106,6 +107,7 @@ const s = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 4,
   },
+  fabLabel: { marginTop: 2, paddingBottom: 2 },
   fabIcon: { width: 28, height: 28 },
   pressed: { opacity: 0.7 },
 });

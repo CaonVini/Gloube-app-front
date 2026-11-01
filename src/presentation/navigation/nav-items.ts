@@ -5,12 +5,15 @@ export interface NavItem {
   key: string;
   label: string;
   icon: ImageSourcePropType;
+  /** Ícone alternativo quando o item está ativo (opcional). */
+  activeIcon?: ImageSourcePropType;
   highlight?: boolean;
 }
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const icons = {
   discover: require('../../../assets/images/icons/nav-discover.png'),
+  discoverActive: require('../../../assets/images/icons/nav-discover-active.png'),
   plan: require('../../../assets/images/icons/nav-plan.png'),
   aurora: require('../../../assets/images/icons/nav-aurora.png'),
   trip: require('../../../assets/images/icons/nav-trip.png'),
@@ -18,13 +21,13 @@ const icons = {
 } satisfies Record<string, ImageSourcePropType>;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-/** Itens padrão do app, na ordem do mockup. */
+/** Itens padrão do app, na ordem do mockup (o botão central em destaque é Viagem). */
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
-  { key: 'discover', label: 'Descubra', icon: icons.discover },
+  { key: 'discover', label: 'Descubra', icon: icons.discover, activeIcon: icons.discoverActive },
   { key: 'plan', label: 'Planeje', icon: icons.plan },
-  { key: 'aurora', label: 'Aurora', icon: icons.aurora, highlight: true },
-  { key: 'trip', label: 'Viagem', icon: icons.trip },
+  { key: 'trip', label: 'Viagem', icon: icons.trip, highlight: true },
   { key: 'wallet', label: 'Carteira', icon: icons.wallet },
+  { key: 'aurora', label: 'Aurora', icon: icons.aurora },
 ];
 
 /** Regras puras (testáveis sem renderizar). */
