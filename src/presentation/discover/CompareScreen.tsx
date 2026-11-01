@@ -1,13 +1,14 @@
-import { ScrollView, StyleSheet, Text, View, Image, Pressable } from 'react-native';
-import { buildComparison } from '../../domain/discover/compare';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { buildComparison, comparisonHighlights } from '../../domain/discover/compare';
 import type { Recommendation } from '../../domain/discover/types';
+import { PrimaryButton } from '../auth-ui/Button';
 import { SecondaryTextButton } from '../home/SecondaryTextButton';
-import { authColors, fonts, homeColors } from '../theme/auth-theme';
+import { fonts } from '../theme/auth-theme';
 import { destinationImages } from './assets';
-import { discoverColors } from './ui';
+import { DIcon } from './icons';
+import { Tag, cardShadow, dc } from './ui';
 
-const LABEL_W = 120;
-const COL_W = 150;
+const CARD_W = 270;
 
 interface Props {
   favorites: readonly Recommendation[];
@@ -16,54 +17,56 @@ interface Props {
   onBack: () => void;
 }
 
-/** Comparação lado a lado dos favoritos; rolagem horizontal quando há muitas colunas. */
+/** Comparação dos favoritos: um cartão por destino (rolagem horizontal), com as mesmas linhas em todos. */
 export function CompareScreen({ favorites, chosenId, onChoose, onBack }: Props) {
   const rows = buildComparison(favorites);
+  const { cheapestId, shortestId } = comparisonHighlights(favorites);
   const chosen = favorites.find((r) => r.destination.id === chosenId);
   return (
     <View style={s.root}>
-      <Text style={s.title} accessibilityRole="header">Compare seus favoritos</Text>
-      {chosen ? (
-        <View style={s.banner} accessibilityLiveRegion="polite">
-          <Text style={s.bannerText}>Você escolheu {chosen.destination.name}. Próximo passo: planejar a viagem com a Aurora (em breve).</Text>
-        </View>
-      ) : (
-        <Text style={s.sub}>Escolha o destino que mais combina com você.</Text>
-      )}
-      <ScrollView horizontal showsHorizontalScrollIndicator>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.table}>
-          <View style={s.row}>
-            <View style={{ width: LABEL_W }} />
-            {favorites.map((r) => (
-              <View key={r.destination.id} style={[s.col, r.destination.id === chosenId && s.colChosen]}>
-                <Image source={destinationImages[r.destination.id]} style={s.thumb} resizeMode="cover" />
-                <Text style={s.name} numberOfLines={2}>{r.destination.name}</Text>
-              </View>
-            ))}
+      <View style={s.head}>
+        <Text style={s.title} accessibilityRole="header">Compare seus favoritos</Text>
+        {chosen ? (
+          <View style={s.banner} accessibilityLiveRegion="polite">
+            <DIcon name="check" size={18} color={dc.dark} />
+            <Text style={s.bannerText}>Você escolheu {chosen.destination.name}. Próximo passo: planejar com a Aurora (em breve).</Text>
           </View>
-          {rows.map((row) => (
-            <View key={row.label} style={[s.row, s.line]}>
-              <Text style={[s.label, { width: LABEL_W }]}>{row.label}</Text>
-              {row.values.map((v, i) => (
-                <Text key={favorites[i]!.destination.id} style={[s.cell, v.startsWith('Confirme') && s.cellWarn]}>{v}</Text>
-              ))}
-            </View>
-          ))}
-          <View style={s.row}>
-            <View style={{ width: LABEL_W }} />
-            {favorites.map((r) => (
+        ) : (
+          <Text style={s.subtitle}>Escolha o destino que mais combina com você.</Text>
+        )}
+      </View>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.cards} style={s.flex}>
+        {favorites.map((r, i) => {
+          const id = r.destination.id;
+          const on = id === chosenId;
+          return (
+            <ScrollView key={id} style={[s.card, on && s.cardOn]} contentContainerStyle={s.cardInner} showsVerticalScrollIndicator={false}>
+              <Image source={destinationImages[id]} style={s.photo} resizeMode="cover" />
+              <Text style={s.name} numberOfLines={2}>{r.destination.name}</Text>
+              <View style={s.tags}>
+                {id === cheapestId ? <Tag tone="lime">Mais em conta</Tag> : null}
+                {id === shortestId ? <Tag tone="lime">Menos dias</Tag> : null}
+              </View>
+              {rows.map((row) => {
+                const v = row.values[i] ?? '';
+                return (
+                  <View key={row.label} style={s.row}>
+                    <Text style={s.rowLabel}>{row.label}</Text>
+                    <Text style={[s.rowValue, v.startsWith('Confirme') && s.warn]}>{v}</Text>
+                  </View>
+                );
+              })}
               <Pressable
-                key={r.destination.id}
                 accessibilityRole="button"
                 accessibilityLabel={`Escolher ${r.destination.name}`}
-                onPress={() => onChoose(r.destination.id)}
-                style={({ pressed }) => [s.choose, r.destination.id === chosenId && s.chooseOn, pressed && { opacity: 0.85 }]}
+                onPress={() => onChoose(id)}
+                style={({ pressed }) => [s.choose, on && s.chooseOn, pressed && { opacity: 0.85 }]}
               >
-                <Text style={[s.chooseText, r.destination.id === chosenId && s.chooseTextOn]}>{r.destination.id === chosenId ? 'Escolhido' : 'Escolher'}</Text>
+                <Text style={[s.chooseText, on && s.chooseTextOn]}>{on ? 'Escolhido' : 'Escolher este'}</Text>
               </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+            </ScrollView>
+          );
+        })}
       </ScrollView>
       <View style={s.footer}>
         <SecondaryTextButton title="Voltar aos destinos" onPress={onBack} />
@@ -73,24 +76,27 @@ export function CompareScreen({ favorites, chosenId, onChoose, onBack }: Props) 
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, paddingTop: 6 },
-  title: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 34, color: authColors.text, paddingHorizontal: 22 },
-  sub: { fontFamily: fonts.regular, fontSize: 15, color: homeColors.subtitle, paddingHorizontal: 22, marginTop: 4, marginBottom: 12 },
-  banner: { marginHorizontal: 22, marginTop: 8, marginBottom: 12, backgroundColor: discoverColors.selectedBg, borderRadius: 12, padding: 12 },
-  bannerText: { fontFamily: fonts.medium, fontSize: 14, lineHeight: 20, color: authColors.primary },
-  table: { paddingHorizontal: 22, paddingBottom: 12, gap: 0 },
-  row: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 8 },
-  line: { borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#E7E4DD' },
-  col: { width: COL_W, paddingHorizontal: 6, gap: 6, borderRadius: 14, paddingBottom: 6 },
-  colChosen: { backgroundColor: discoverColors.selectedBg },
-  thumb: { width: COL_W - 12, height: 80, borderRadius: 10 },
-  name: { fontFamily: fonts.bold, fontSize: 15, color: authColors.text },
-  label: { fontFamily: fonts.semibold, fontSize: 13, color: homeColors.subtitle },
-  cell: { width: COL_W, paddingHorizontal: 6, fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: authColors.body },
-  cellWarn: { color: '#8A6100' },
-  choose: { width: COL_W - 12, marginHorizontal: 6, minHeight: 42, borderRadius: 9, borderWidth: 1.5, borderColor: authColors.primary, alignItems: 'center', justifyContent: 'center' },
-  chooseOn: { backgroundColor: authColors.primary },
-  chooseText: { fontFamily: fonts.semibold, fontSize: 15, color: authColors.primary },
-  chooseTextOn: { color: authColors.primaryText },
-  footer: { paddingHorizontal: 22, paddingTop: 8 },
+  root: { flex: 1 },
+  flex: { flex: 1 },
+  head: { paddingHorizontal: 16, gap: 6, marginBottom: 12 },
+  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B' },
+  subtitle: { fontFamily: fonts.medium, fontSize: 17, color: dc.teal },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: dc.lime, borderRadius: 16, padding: 12 },
+  bannerText: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, lineHeight: 20, color: dc.dark },
+  cards: { paddingHorizontal: 16, gap: 14, paddingBottom: 8 },
+  card: { width: CARD_W, backgroundColor: '#FFFFFF', borderRadius: 24, borderWidth: 1, borderColor: dc.border, ...cardShadow },
+  cardOn: { borderColor: dc.dark, borderWidth: 2 },
+  cardInner: { padding: 12, gap: 10 },
+  photo: { width: '100%', height: 130, borderRadius: 16 },
+  name: { fontFamily: fonts.bold, fontSize: 22, lineHeight: 27, color: dc.dark },
+  tags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  row: { gap: 2, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: dc.border },
+  rowLabel: { fontFamily: fonts.medium, fontSize: 12, color: dc.muted },
+  rowValue: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 21, color: '#1A1A1A' },
+  warn: { color: '#8A6100' },
+  choose: { minHeight: 46, borderRadius: 14, borderWidth: 1.5, borderColor: dc.dark, alignItems: 'center', justifyContent: 'center', marginTop: 6 },
+  chooseOn: { backgroundColor: dc.dark },
+  chooseText: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },
+  chooseTextOn: { color: '#FFFFFF' },
+  footer: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 12, width: '100%', maxWidth: 512, alignSelf: 'center' },
 });

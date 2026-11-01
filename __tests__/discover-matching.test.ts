@@ -1,5 +1,5 @@
 import { DESTINATIONS } from '../src/domain/discover/catalog';
-import { buildComparison, pickFavorites } from '../src/domain/discover/compare';
+import { buildComparison, comparisonHighlights, pickFavorites } from '../src/domain/discover/compare';
 import { formatBRL } from '../src/domain/discover/budget';
 import { maskDate, parseBrDate } from '../src/domain/discover/dates';
 import { distanceKm, transportCost } from '../src/domain/discover/geo';
@@ -179,5 +179,16 @@ describe('comparação de favoritos', () => {
     picked.forEach((r, i) => {
       if (!r.destination.pets.verified) expect(pets.values[i]).toBe('Confirme antes de reservar');
     });
+  });
+});
+
+describe('comparisonHighlights', () => {
+  it('marca o mais barato e o de menos dias; sem destaque com menos de 2 favoritos', () => {
+    const recs = recommend(answers({ reach: 'brasil', climate: 'tanto-faz', experiences: [], budget: 'flexivel', days: 7 }), DESTINATIONS, TODAY);
+    const two = [recs.find((r) => r.destination.id === 'noronha')!, recs.find((r) => r.destination.id === 'chapada')!];
+    const h = comparisonHighlights(two);
+    expect(h.cheapestId).toBe('chapada');
+    expect(h.shortestId).toBe('chapada');
+    expect(comparisonHighlights(two.slice(0, 1))).toEqual({ cheapestId: null, shortestId: null });
   });
 });

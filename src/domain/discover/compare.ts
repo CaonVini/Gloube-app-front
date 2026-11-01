@@ -37,3 +37,11 @@ export function buildComparison(recs: readonly Recommendation[]): CompareRow[] {
 export function pickFavorites(recs: readonly Recommendation[], ids: ReadonlySet<string>): Recommendation[] {
   return recs.filter((r) => ids.has(r.destination.id));
 }
+
+/** Destaques simples entre os favoritos: o mais barato e o de menor exigência de dias. */
+export function comparisonHighlights(recs: readonly Recommendation[]): { cheapestId: string | null; shortestId: string | null } {
+  if (recs.length < 2) return { cheapestId: null, shortestId: null };
+  const cheapest = [...recs].sort((a, b) => a.estimatedCost - b.estimatedCost)[0];
+  const shortest = [...recs].sort((a, b) => a.destination.minDays - b.destination.minDays)[0];
+  return { cheapestId: cheapest?.destination.id ?? null, shortestId: shortest?.destination.id ?? null };
+}
