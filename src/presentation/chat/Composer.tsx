@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAX_TEXT_LENGTH, canSend, formatDuration, sanitizeText } from '../../domain/chat/messages';
 import { authColors, fonts } from '../theme/auth-theme';
 import { ChatIcon } from './ChatIcon';
-import { cc } from './chat-theme';
+import { cc, softShadow } from './chat-theme';
 
 const MIN_INPUT = 28;
 const MAX_INPUT = 104;
@@ -62,7 +62,7 @@ export const Composer = memo(function Composer(p: Props) {
       <View style={s.field}>
         <TextInput
           accessibilityLabel="Mensagem para a Aurora"
-          placeholder="Mensagem"
+          placeholder="Pergunte à Aurora…"
           placeholderTextColor={authColors.placeholder}
           value={text}
           onChangeText={setText}
@@ -107,12 +107,12 @@ function Option({ icon, label, onPress }: { icon: 'camera' | 'gallery'; label: s
 }
 
 const s = StyleSheet.create({
-  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 10, paddingTop: 8, paddingBottom: 8, backgroundColor: cc.bg },
-  round: { width: 40, height: 44, alignItems: 'center', justifyContent: 'center' },
-  field: { flex: 1, minHeight: 44, maxHeight: 128, paddingVertical: 8, borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: authColors.border, paddingHorizontal: 16, justifyContent: 'center' },
+  bar: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 10, backgroundColor: cc.bg },
+  round: { width: 44, height: 44, borderRadius: 22, backgroundColor: cc.mint, alignItems: 'center', justifyContent: 'center' },
+  field: { flex: 1, minHeight: 44, maxHeight: 128, paddingVertical: 8, borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: cc.border, paddingHorizontal: 18, justifyContent: 'center', ...softShadow },
   input: { fontFamily: fonts.regular, fontSize: 16, color: authColors.body, paddingVertical: 0, outlineStyle: 'none' } as never,
-  action: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
-  recField: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  action: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', ...softShadow },
+  recField: { backgroundColor: '#FFFFFF', flexDirection: 'row', alignItems: 'center', gap: 10 },
   redDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: cc.danger },
   recText: { fontFamily: fonts.medium, fontSize: 15, color: authColors.body },
   backdrop: { flex: 1, backgroundColor: authColors.overlay, justifyContent: 'flex-end' },

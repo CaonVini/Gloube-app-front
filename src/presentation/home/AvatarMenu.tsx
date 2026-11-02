@@ -10,10 +10,12 @@ interface Props {
   onSignOut: () => void;
   /** Foto opcional: quando presente, é o único elemento do gatilho (sem iniciais nem seta). */
   photo?: ImageSourcePropType;
+  /** Quando informado, o menu mostra "Meu perfil". */
+  onProfile?: () => void;
 }
 
 /** Avatar com iniciais + chevron; ao tocar abre um menu simples com a opção "Sair". */
-export function AvatarMenu({ initials, fullName, onSignOut, photo }: Props) {
+export function AvatarMenu({ initials, fullName, onSignOut, photo, onProfile }: Props) {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
 
@@ -43,6 +45,11 @@ export function AvatarMenu({ initials, fullName, onSignOut, photo }: Props) {
         <Pressable style={s.backdrop} onPress={() => setOpen(false)} accessibilityLabel="Fechar menu">
           <View style={[s.menu, { top: Math.max(insets.top, 47) + 62 }]}>
             <Text style={s.menuName} numberOfLines={1}>{fullName}</Text>
+            {onProfile ? (
+              <Pressable accessibilityRole="menuitem" onPress={() => { setOpen(false); onProfile(); }} style={({ pressed }) => [s.item, pressed && s.pressed]}>
+                <Text style={s.itemTextDark}>Meu perfil</Text>
+              </Pressable>
+            ) : null}
             <Pressable
               accessibilityRole="menuitem"
               onPress={() => { setOpen(false); onSignOut(); }}
@@ -73,5 +80,6 @@ const s = StyleSheet.create({
   },
   menuName: { fontFamily: fonts.medium, fontSize: 14, color: authColors.muted, paddingHorizontal: 12, paddingVertical: 6 },
   item: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10 },
+  itemTextDark: { fontFamily: fonts.semibold, fontSize: 16, color: authColors.text },
   itemText: { fontFamily: fonts.semibold, fontSize: 16, color: authColors.danger },
 });

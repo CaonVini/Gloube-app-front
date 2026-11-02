@@ -9,6 +9,12 @@ const sources = {
   play: require('../../../assets/images/chat/play.png'),
   pause: require('../../../assets/images/chat/pause.png'),
   stop: require('../../../assets/images/chat/stop.png'),
+  person: require('../../../assets/images/chat/person.png'),
+  sliders: require('../../../assets/images/chat/sliders.png'),
+  bell: require('../../../assets/images/chat/bell.png'),
+  help: require('../../../assets/images/chat/help.png'),
+  check: require('../../../assets/images/discover/icons/check.png'),
+  chevron: require('../../../assets/images/icons/chevron-right.png'),
   plus: require('../../../assets/images/icons/plus.png'),
   close: require('../../../assets/images/icons/close.png'),
 } satisfies Record<string, ImageSourcePropType>;

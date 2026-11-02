@@ -80,3 +80,21 @@ describe('capMessages / nextMessageId', () => {
     expect(new Set(Array.from({ length: 50 }, nextMessageId)).size).toBe(50);
   });
 });
+
+import { dayLabel, withDateSeparators, type ChatMessage } from '../src/domain/chat/messages';
+
+describe('datas', () => {
+  const now = new Date(2026, 10, 4, 12, 0).getTime();
+  const at = (d: number, h = 10) => new Date(2026, 10, d, h, 0).getTime();
+  it('dayLabel', () => {
+    expect(dayLabel(at(4), now)).toBe('Hoje');
+    expect(dayLabel(at(3), now)).toBe('Ontem');
+    expect(dayLabel(at(1), now)).toBe('Domingo');
+    expect(dayLabel(new Date(2026, 9, 1).getTime(), now)).toBe('01/10/2026');
+  });
+  it('withDateSeparators insere um separador por dia', () => {
+    const m = (id: string, t: number): ChatMessage => ({ id, author: 'user', at: t, kind: 'text', text: id });
+    const rows = withDateSeparators([m('a', at(3)), m('b', at(3, 15)), m('c', at(4))], now);
+    expect(rows.map((r) => ('label' in r ? r.label : r.id))).toEqual(['Ontem', 'a', 'b', 'Hoje', 'c']);
+  });
+});

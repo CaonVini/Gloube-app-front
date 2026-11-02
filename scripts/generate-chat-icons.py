@@ -73,6 +73,43 @@ def stop():
     save(img, "stop")
 
 
+def person():
+    img, d = canvas()
+    d.ellipse(p(32, 12, 64, 44), outline="black", width=6 * K)
+    d.arc(p(16, 52, 80, 116), 180, 360, fill="black", width=6 * K)
+    save(img, "person")
+
+
+def sliders():
+    img, d = canvas()
+    for y, x in ((26, 34), (48, 62), (70, 40)):
+        d.line(p(14, y, 82, y), fill="black", width=5 * K)
+        d.ellipse(p(x - 9, y - 9, x + 9, y + 9), fill=(0, 0, 0, 0))
+        d.ellipse(p(x - 9, y - 9, x + 9, y + 9), outline="black", width=5 * K)
+    save(img, "sliders")
+
+
+def bell():
+    img, d = canvas()
+    d.pieslice(p(22, 14, 74, 66), 180, 360, fill="black")
+    d.polygon([(a * K, b * K) for a, b in [(22, 40), (74, 40), (80, 68), (16, 68)]], fill="black")
+    d.rounded_rectangle(p(12, 64, 84, 72), radius=4 * K, fill="black")
+    d.pieslice(p(38, 66, 58, 86), 0, 180, fill="black")
+    d.ellipse(p(28, 20, 68, 60), fill="black")
+    d.ellipse(p(32, 30, 64, 62), fill=(0, 0, 0, 0))
+    d.ellipse(p(44, 8, 52, 16), fill="black")
+    save(img, "bell")
+
+
+def help_circle():
+    img, d = canvas()
+    d.ellipse(p(10, 10, 86, 86), outline="black", width=6 * K)
+    d.arc(p(34, 24, 62, 52), 180, 80, fill="black", width=6 * K)
+    d.line(p(48, 50, 48, 58), fill="black", width=6 * K)
+    d.ellipse(p(44, 64, 52, 72), fill="black")
+    save(img, "help")
+
+
 if __name__ == "__main__":
-    for fn in (send, mic, camera, gallery, play, pause, stop):
+    for fn in (send, mic, camera, gallery, play, pause, stop, person, sliders, bell, help_circle):
         fn()

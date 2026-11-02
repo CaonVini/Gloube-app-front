@@ -91,3 +91,38 @@ export function nextMessageId(): string {
   seq += 1;
   return `m${Date.now().toString(36)}${seq}`;
 }
+
+export interface DateSeparator { kind: 'date'; id: string; label: string }
+export type ChatRow = ChatMessage | DateSeparator;
+
+const WEEKDAYS = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+
+function startOfDay(at: number): number {
+  const d = new Date(at);
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+/** "Hoje", "Ontem", dia da semana (últimos 6 dias) ou "03/11/2026". */
+export function dayLabel(at: number, now: number = Date.now()): string {
+  const diff = Math.round((startOfDay(now) - startOfDay(at)) / 86_400_000);
+  if (diff <= 0) return 'Hoje';
+  if (diff === 1) return 'Ontem';
+  const d = new Date(at);
+  if (diff < 7) return WEEKDAYS[d.getDay()]!;
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+}
+
+/** Insere um separador de data antes da primeira mensagem de cada dia. */
+export function withDateSeparators(messages: readonly ChatMessage[], now: number = Date.now()): ChatRow[] {
+  const out: ChatRow[] = [];
+  let lastDay = -1;
+  for (const m of messages) {
+    const day = startOfDay(m.at);
+    if (day !== lastDay) {
+      out.push({ kind: 'date', id: `d${day}`, label: dayLabel(m.at, now) });
+      lastDay = day;
+    }
+    out.push(m);
+  }
+  return out;
+}

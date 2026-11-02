@@ -1,10 +1,11 @@
 import * as ImagePicker from 'expo-image-picker';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View, type ListRenderItem } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { QUICK_SUGGESTIONS, buildReply, typingDelay } from '../../domain/chat/aurora-replies';
-import { capMessages, nextMessageId, sanitizeText, validateImage, type ChatMessage } from '../../domain/chat/messages';
+import { capMessages, nextMessageId, sanitizeText, validateImage, withDateSeparators, type ChatMessage, type ChatRow } from '../../domain/chat/messages';
 import { BottomNavBar, DEFAULT_NAV_ITEMS, useNavRouting } from '../navigation';
+import { AppHeader } from '../home/AppHeader';
+import { useDemoSession } from '../session/DemoSession';
 import { useTripContext } from '../session/TripContext';
 import { fonts } from '../theme/auth-theme';
 import { ChatEmptyState } from './ChatEmptyState';
@@ -12,10 +13,10 @@ import { auroraAvatar, ChatIcon } from './ChatIcon';
 import { Composer } from './Composer';
 import { MessageBubble } from './MessageBubble';
 import { TypingIndicator } from './TypingIndicator';
-import { MAX_COLUMN, cc } from './chat-theme';
+import { MAX_COLUMN, cc, softShadow } from './chat-theme';
 import { useVoiceRecorder } from './useVoiceRecorder';
 
-const keyOf = (m: ChatMessage) => m.id;
+const keyOf = (r: ChatRow) => r.id;
 const NOTICE_MS = 5000;
 
 /**
@@ -23,7 +24,7 @@ const NOTICE_MS = 5000;
  * e as respostas vêm de regras simples (domain/chat/aurora-replies) usando o destino/locais da viagem em andamento.
  */
 export function ChatScreen() {
-  const insets = useSafeAreaInsets();
+  const { user, signOut } = useDemoSession();
   const onNav = useNavRouting('aurora');
   const { trip } = useTripContext();
   const tripRef = useRef(trip);
@@ -34,7 +35,8 @@ export function ChatScreen() {
   const [notice, setNotice] = useState<string | null>(null);
   const [activeAudio, setActiveAudio] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const listRef = useRef<FlatList<ChatMessage>>(null);
+  const listRef = useRef<FlatList<ChatRow>>(null);
+  const rows = useMemo(() => withDateSeparators(messages), [messages]);
   const replyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const noticeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
@@ -98,30 +100,36 @@ export function ChatScreen() {
     onError: showNotice,
   });
 
-  const renderItem = useCallback<ListRenderItem<ChatMessage>>(
-    ({ item }) => <MessageBubble msg={item} activeAudioId={activeAudio} onAudioStart={setActiveAudio} onOpenImage={setPreview} />,
-    [activeAudio],
-  );
+  const renderItem = useCallback<ListRenderItem<ChatRow>>(({ item, index }) => {
+    if ('label' in item) return <View style={s.dateWrap}><Text style={s.datePill}>{item.label}</Text></View>;
+    const prev = rows[index - 1];
+    const showAvatar = item.author === 'aurora' && !(prev && 'author' in prev && prev.author === 'aurora');
+    return <MessageBubble msg={item} showAvatar={showAvatar} activeAudioId={activeAudio} onAudioStart={setActiveAudio} onOpenImage={setPreview} />;
+  }, [activeAudio, rows]);
 
   const scrollEnd = useCallback(() => listRef.current?.scrollToEnd({ animated: true }), []);
 
   return (
     <View style={s.root}>
-      <View style={[s.header, { paddingTop: Math.max(insets.top, 16) + 4 }]}>
-        <View style={s.headerRow}>
-          <Image source={auroraAvatar} style={s.headAvatar} accessibilityLabel="Foto da Aurora" />
-          <View style={s.headText}>
-            <Text style={s.name} accessibilityRole="header">Aurora</Text>
-            <Text style={s.status} numberOfLines={1} accessibilityLiveRegion="polite">{typing ? 'digitando…' : 'Agente de viagem'}</Text>
-          </View>
+      <View style={s.top}>
+        <AppHeader fullName={user.fullName} onSignOut={signOut} />
+      <View style={s.agent}>
+        <View style={s.agentAvatarWrap}>
+          <Image source={auroraAvatar} style={s.agentAvatar} accessibilityLabel="Foto da Aurora" />
+          <View style={s.onlineDot} />
         </View>
+        <View style={s.headText}>
+          <Text style={s.name} accessibilityRole="header">Aurora</Text>
+          <Text style={s.status} numberOfLines={1} accessibilityLiveRegion="polite">{typing ? 'digitando…' : 'Assistente de viagem · online'}</Text>
+        </View>
+      </View>
       </View>
 
       <KeyboardAvoidingView style={s.flex} behavior={Platform.OS === 'web' ? undefined : 'padding'}>
         <View style={s.chat}>
           <FlatList
             ref={listRef}
-            data={messages}
+            data={rows}
             keyExtractor={keyOf}
             renderItem={renderItem}
             extraData={activeAudio}
@@ -173,14 +181,18 @@ export function ChatScreen() {
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: cc.bg },
   flex: { flex: 1 },
-  header: { backgroundColor: '#FFFFFF', borderBottomWidth: StyleSheet.hairlineWidth, borderColor: cc.border, paddingBottom: 10 },
-  headerRow: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#E4EDE6' },
+  top: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center', paddingHorizontal: 16 },
+  agent: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFFFF', borderRadius: 22, paddingHorizontal: 14, paddingVertical: 10, marginBottom: 8, ...softShadow },
+  agentAvatarWrap: { width: 48, height: 48 },
+  agentAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: cc.mint },
+  onlineDot: { position: 'absolute', right: 0, bottom: 0, width: 13, height: 13, borderRadius: 7, backgroundColor: cc.online, borderWidth: 2, borderColor: '#FFFFFF' },
   headText: { flex: 1 },
   name: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22, color: cc.dark },
   status: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 16, color: cc.teal },
+  dateWrap: { alignItems: 'center', marginVertical: 10 },
+  datePill: { fontFamily: fonts.semibold, fontSize: 12, color: '#6F7773', backgroundColor: '#EFEAE2', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12, overflow: 'hidden' },
   chat: { flex: 1, width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center' },
-  listContent: { flexGrow: 1, paddingVertical: 10 },
+  listContent: { flexGrow: 1, paddingTop: 6, paddingBottom: 14 },
   column: { width: '100%', maxWidth: MAX_COLUMN, alignSelf: 'center' },
   notice: { marginHorizontal: 14, marginBottom: 4, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14, backgroundColor: '#FBEDEC', borderWidth: 1, borderColor: '#F0C9C6', maxWidth: MAX_COLUMN - 28, alignSelf: 'stretch' },
   noticeText: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: cc.danger },

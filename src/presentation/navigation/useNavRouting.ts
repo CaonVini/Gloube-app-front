@@ -12,7 +12,7 @@ export function useNavRouting(activeKey: string) {
     if (key === activeKey) return;
     const href = navHref(key);
     if (!href) return;
-    if (activeKey === 'aurora') router.replace(href as never);
+    if (activeKey === 'aurora' || activeKey === 'profile') router.replace(href as never);
     else router.push(href as never);
   }, [router, activeKey]);
 }

@@ -26,7 +26,7 @@ export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, siz
       onPress={onPress}
       style={({ pressed }) => [s.primary, size === 'hero' && s.hero, size === 'half' && s.half, off && s.off, pressed && s.pressed]}
     >
-      {size === 'half' ? null : <View style={s.side}>{loading ? null : leftIcon}</View>}
+      {size === 'half' || (!leftIcon && !loading) ? null : <View style={s.side}>{loading ? null : leftIcon}</View>}
       {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' && s.primaryTextHalf]} numberOfLines={size === 'half' ? 2 : 1}>{title}</Text>}
       <View style={[s.side, s.arrow, size === 'half' && s.sideHalf]}>{loading ? null : <ArrowRightIcon />}</View>
     </Pressable>

@@ -1,6 +1,7 @@
 import { memo, useEffect, useRef } from 'react';
-import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
-import { cc } from './chat-theme';
+import { Animated, Easing, Image, Platform, StyleSheet, View } from 'react-native';
+import { auroraAvatar } from './ChatIcon';
+import { cc, softShadow } from './chat-theme';
 
 function Dot({ delay }: { delay: number }) {
   const v = useRef(new Animated.Value(0)).current;
@@ -21,6 +22,7 @@ function Dot({ delay }: { delay: number }) {
 export const TypingIndicator = memo(function TypingIndicator() {
   return (
     <View style={s.row} accessible accessibilityLabel="Aurora está digitando" accessibilityLiveRegion="polite">
+      <Image source={auroraAvatar} style={s.avatar} accessible={false} />
       <View style={s.bubble}>
         <Dot delay={0} /><Dot delay={150} /><Dot delay={300} />
       </View>
@@ -29,7 +31,8 @@ export const TypingIndicator = memo(function TypingIndicator() {
 });
 
 const s = StyleSheet.create({
-  row: { paddingHorizontal: 12, marginVertical: 3, flexDirection: 'row' },
-  bubble: { flexDirection: 'row', gap: 5, backgroundColor: cc.received, borderRadius: 18, borderBottomLeftRadius: 5, paddingHorizontal: 14, paddingVertical: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: cc.border },
+  row: { paddingHorizontal: 14, marginVertical: 3, flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
+  avatar: { width: 30, height: 30, borderRadius: 15, backgroundColor: cc.mint },
+  bubble: { flexDirection: 'row', gap: 5, backgroundColor: cc.received, borderRadius: 20, borderBottomLeftRadius: 6, paddingHorizontal: 16, paddingVertical: 15, ...softShadow },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: cc.teal },
 });
