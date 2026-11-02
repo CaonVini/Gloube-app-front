@@ -34,6 +34,24 @@ const sources = {
 } satisfies Record<string, ImageSourcePropType>;
 /* eslint-enable @typescript-eslint/no-require-imports */
 
+/**
+ * URL de um asset em qualquer plataforma. No react-native-web `Image.resolveAssetSource` NÃO existe (causa do crash
+ * "resolveAssetSource is not a function"), então só é usado se for função; o require pode ser string ou {uri}.
+ */
+export function assetUri(src: unknown): string | undefined {
+  if (typeof src === 'string') return src;
+  if (src && typeof src === 'object') {
+    const o = src as { uri?: unknown; default?: unknown };
+    if (typeof o.uri === 'string') return o.uri;
+    if (o.default !== undefined) return assetUri(o.default);
+  }
+  const resolve = (Image as unknown as { resolveAssetSource?: (s: unknown) => { uri?: string } | null }).resolveAssetSource;
+  if (typeof resolve === 'function') {
+    try { return resolve(src)?.uri; } catch { return undefined; }
+  }
+  return undefined;
+}
+
 export type DiscoverIconName = keyof typeof sources;
 
 /**
@@ -44,9 +62,9 @@ export type DiscoverIconName = keyof typeof sources;
 export function DIcon({ name, size = 24, color }: { name: DiscoverIconName; size?: number; color: string }) {
   const hidden = { accessible: false, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' } as const;
   if (Platform.OS === 'web') {
-    const uri = Image.resolveAssetSource(sources[name])?.uri;
+    const uri = assetUri(sources[name]);
     if (uri) {
-      const mask = `url("${uri}")`;
+      const mask = `url("${uri.replace(/["\\]/g, '')}")`;
       const style = { width: size, height: size, backgroundColor: color, WebkitMaskImage: mask, maskImage: mask, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskPosition: 'center' };
       return <View {...hidden} style={style as never} />;
     }

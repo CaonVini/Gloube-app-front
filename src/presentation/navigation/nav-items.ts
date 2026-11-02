@@ -1,13 +1,12 @@
 import type { ImageSourcePropType } from 'react-native';
 
-/** Item da barra inferior. `highlight` marca o botão central circular (ação principal, ex.: Aurora). */
+/** Item da barra inferior. */
 export interface NavItem {
   key: string;
   label: string;
   icon: ImageSourcePropType;
   /** Ícone alternativo quando o item está ativo (opcional). */
   activeIcon?: ImageSourcePropType;
-  highlight?: boolean;
 }
 
 /* eslint-disable @typescript-eslint/no-require-imports */
@@ -25,7 +24,7 @@ const icons = {
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
   { key: 'discover', label: 'Descubra', icon: icons.discover, activeIcon: icons.discoverActive },
   { key: 'plan', label: 'Planeje', icon: icons.plan },
-  { key: 'trip', label: 'Viagem', icon: icons.trip, highlight: true },
+  { key: 'trip', label: 'Viagem', icon: icons.trip },
   { key: 'wallet', label: 'Carteira', icon: icons.wallet },
   { key: 'aurora', label: 'Aurora', icon: icons.aurora },
 ];

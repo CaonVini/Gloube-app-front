@@ -9,16 +9,9 @@ const COLORS = {
   border: '#ECE9E3',
   active: '#1F3D36', // verde escuro Gloube
   inactive: '#8B9692', // cinza-esverdeado discreto
-  onDark: '#FFFFFF',
 } as const;
 
-const FAB = 40; // diâmetro do destaque central (círculo verde escuro)
-const RING = 2; // anel na cor da barra: separa a bola do fundo sem halo colorido
 const ICON_AREA = 30; // altura fixa da faixa dos ícones: os rótulos de todas as abas ficam alinhados
-const LIFT = 6; // quanto a bola sobe em relação aos demais ícones: só um pouco
-const BALL = FAB + RING * 2;
-
-const BALL_MARGIN = (ICON_AREA - BALL) / 2 - LIFT;
 
 interface Props {
   items: readonly NavItem[];
@@ -34,16 +27,6 @@ interface TabProps {
 
 const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   const a11y = tabAccessibility(item, active);
-  if (item.highlight) {
-    return (
-      <View style={s.slot}>
-        <Pressable {...a11y} onPress={() => onChange(item.key)} hitSlop={6} style={({ pressed }) => [s.fab, pressed && s.pressed]}>
-          <Image source={item.icon} style={s.fabIcon} resizeMode="contain" tintColor={COLORS.onDark} />
-        </Pressable>
-        <Text style={[s.label, s.fabLabel, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
-      </View>
-    );
-  }
   return (
     <Pressable {...a11y} onPress={() => onChange(item.key)} style={({ pressed }) => [s.slot, s.tab, pressed && s.pressed]}>
       {/* Indicador discreto: fio curto no topo da barra sobre a aba ativa. */}
@@ -88,23 +71,5 @@ const s = StyleSheet.create({
   icon: { width: 22, height: 22 },
   label: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14, letterSpacing: 0.3, color: COLORS.inactive },
   labelActive: { fontFamily: fonts.semibold, color: COLORS.active },
-  fab: {
-    width: BALL,
-    height: BALL,
-    borderRadius: BALL / 2,
-    marginTop: BALL_MARGIN,
-    backgroundColor: COLORS.active,
-    borderWidth: RING,
-    borderColor: COLORS.bar,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#1F3D36',
-    shadowOpacity: 0.22,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
-  },
-  fabLabel: { marginTop: ICON_AREA + 4 - BALL - BALL_MARGIN, paddingBottom: 4 }, // rótulo na mesma altura dos demais,
-  fabIcon: { width: 22, height: 22 },
   pressed: { opacity: 0.7 },
 });

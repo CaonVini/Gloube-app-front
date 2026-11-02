@@ -4,11 +4,9 @@ describe('DEFAULT_NAV_ITEMS', () => {
   it('segue a ordem do mockup', () => {
     expect(DEFAULT_NAV_ITEMS.map((i) => i.label)).toEqual(['Descubra', 'Planeje', 'Viagem', 'Carteira', 'Aurora']);
   });
-  it('tem chaves únicas e exatamente um botão central em destaque, no meio', () => {
+  it('tem chaves únicas e nenhum botão em destaque (5 abas iguais)', () => {
     expect(new Set(DEFAULT_NAV_ITEMS.map((i) => i.key)).size).toBe(DEFAULT_NAV_ITEMS.length);
-    const highlighted = DEFAULT_NAV_ITEMS.filter((i) => i.highlight);
-    expect(highlighted).toHaveLength(1);
-    expect(DEFAULT_NAV_ITEMS[2]).toBe(highlighted[0]);
+    expect(DEFAULT_NAV_ITEMS.some((i) => (i as { highlight?: boolean }).highlight)).toBe(false);
   });
 });
 
