@@ -22,8 +22,8 @@ const icons = {
 
 /** Itens padrão do app, na ordem do mockup (o botão central em destaque é Viagem). */
 export const DEFAULT_NAV_ITEMS: readonly NavItem[] = [
-  { key: 'discover', label: 'Descubra', icon: icons.discover, activeIcon: icons.discoverActive },
-  { key: 'plan', label: 'Planeje', icon: icons.plan },
+  { key: 'discover', label: 'Planeje', icon: icons.discover, activeIcon: icons.discoverActive },
+  { key: 'plan', label: 'Roteiro', icon: icons.plan },
   { key: 'trip', label: 'Viagem', icon: icons.trip },
   { key: 'wallet', label: 'Carteira', icon: icons.wallet },
   { key: 'aurora', label: 'Aurora', icon: icons.aurora },

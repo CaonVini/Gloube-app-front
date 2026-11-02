@@ -2,7 +2,7 @@ import { DEFAULT_NAV_ITEMS, MIN_BOTTOM_PADDING, bottomPadding, isActive, tabAcce
 
 describe('DEFAULT_NAV_ITEMS', () => {
   it('segue a ordem do mockup', () => {
-    expect(DEFAULT_NAV_ITEMS.map((i) => i.label)).toEqual(['Descubra', 'Planeje', 'Viagem', 'Carteira', 'Aurora']);
+    expect(DEFAULT_NAV_ITEMS.map((i) => i.label)).toEqual(['Planeje', 'Roteiro', 'Viagem', 'Carteira', 'Aurora']);
   });
   it('tem chaves únicas e nenhum botão em destaque (5 abas iguais)', () => {
     expect(new Set(DEFAULT_NAV_ITEMS.map((i) => i.key)).size).toBe(DEFAULT_NAV_ITEMS.length);
@@ -30,7 +30,7 @@ describe('tabAccessibility', () => {
   it('expõe role tab, rótulo e estado selecionado', () => {
     expect(tabAccessibility(DEFAULT_NAV_ITEMS[0]!, true)).toEqual({
       accessibilityRole: 'tab',
-      accessibilityLabel: 'Descubra',
+      accessibilityLabel: 'Planeje',
       accessibilityState: { selected: true },
     });
     expect(tabAccessibility(DEFAULT_NAV_ITEMS[1]!, false).accessibilityState.selected).toBe(false);
