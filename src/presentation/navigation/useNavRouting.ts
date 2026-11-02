@@ -1,10 +1,10 @@
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
-import { navHref } from './nav-items';
+import { navHref, shouldReplace } from './nav-items';
 
 /**
  * Navegação da barra inferior. Só as abas com tela pronta navegam (Planeje e Aurora); as demais continuam
- * fictícias (sem efeito). Saindo da Aurora trocamos a tela (replace) para não empilhar abas no histórico.
+ * fictícias (sem efeito). Saindo da Aurora ou do perfil trocamos a tela (replace) para não empilhar abas no histórico.
  */
 export function useNavRouting(activeKey: string) {
   const router = useRouter();
@@ -12,7 +12,7 @@ export function useNavRouting(activeKey: string) {
     if (key === activeKey) return;
     const href = navHref(key);
     if (!href) return;
-    if (activeKey === 'aurora' || activeKey === 'profile') router.replace(href as never);
+    if (shouldReplace(activeKey)) router.replace(href as never);
     else router.push(href as never);
   }, [router, activeKey]);
 }

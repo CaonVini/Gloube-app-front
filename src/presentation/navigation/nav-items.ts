@@ -53,3 +53,8 @@ const NAV_HREF: Readonly<Record<string, string>> = { discover: '/planner', auror
 export function navHref(key: string): string | undefined {
   return NAV_HREF[key];
 }
+
+/** Saindo da Aurora ou do Meu perfil trocamos a tela (replace), para não empilhar abas no histórico. */
+export function shouldReplace(activeKey: string): boolean {
+  return activeKey === 'aurora' || activeKey === 'profile';
+}
