@@ -53,3 +53,23 @@ describe('textos e validação', () => {
   });
   it('normalize remove acentos', () => expect(normalize(' Tóquio ')).toBe('toquio'));
 });
+
+import { reorderTarget, shiftFor } from '../src/domain/trip-plan';
+
+describe('arrastar e soltar de destinos', () => {
+  it('reorderTarget arredonda pelo passo e fica dentro da lista', () => {
+    expect(reorderTarget(0, 0, 60, 3)).toBe(0);
+    expect(reorderTarget(0, 35, 60, 3)).toBe(1);
+    expect(reorderTarget(0, 29, 60, 3)).toBe(0);
+    expect(reorderTarget(2, -130, 60, 3)).toBe(0);
+    expect(reorderTarget(1, 9999, 60, 3)).toBe(2);
+    expect(reorderTarget(1, -9999, 60, 3)).toBe(0);
+    expect(reorderTarget(1, Number.NaN, 60, 3)).toBe(1);
+    expect(reorderTarget(0, 10, 0, 3)).toBe(0);
+  });
+  it('shiftFor abre espaço para o item arrastado', () => {
+    expect([0, 1, 2, 3].map((i) => shiftFor(i, 0, 2))).toEqual([0, -1, -1, 0]);
+    expect([0, 1, 2, 3].map((i) => shiftFor(i, 3, 1))).toEqual([0, 1, 1, 0]);
+    expect([0, 1, 2].map((i) => shiftFor(i, 1, 1))).toEqual([0, 0, 0]);
+  });
+});
