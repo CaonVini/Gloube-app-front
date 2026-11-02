@@ -26,9 +26,10 @@ export function PrimaryButton({ title, onPress, loading, disabled, leftIcon, siz
       onPress={onPress}
       style={({ pressed }) => [s.primary, size === 'hero' && s.hero, size === 'half' && s.half, off && s.off, pressed && s.pressed]}
     >
-      {size === 'half' ? null : <View style={s.side}>{loading ? null : leftIcon}</View>}
-      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' && s.primaryTextHalf]} numberOfLines={size === 'half' ? 2 : 1}>{title}</Text>}
-      <View style={[s.side, s.arrow, size === 'half' && s.sideHalf]}>{loading ? null : <ArrowRightIcon />}</View>
+      {/* Rótulo centralizado de verdade: ícone e seta ficam posicionados à parte e não empurram o texto. */}
+      {size === 'half' || loading || !leftIcon ? null : <View pointerEvents="none" style={s.leftSlot}>{leftIcon}</View>}
+      {loading ? <ActivityIndicator color={authColors.primaryText} /> : <Text style={[s.primaryText, size === 'half' ? s.primaryTextHalf : s.primaryTextPad]} numberOfLines={size === 'half' ? 2 : 1}>{title}</Text>}
+      {loading ? null : <View pointerEvents="none" style={[s.rightSlot, size === 'half' && s.rightSlotHalf]}><ArrowRightIcon /></View>}
     </Pressable>
   );
 }
@@ -67,9 +68,10 @@ const s = StyleSheet.create({
   hero: { minHeight: 58, borderRadius: 22 },
   primaryTextHalf: { fontSize: 14, lineHeight: 17, textAlign: 'left', paddingLeft: 6 },
   half: { minHeight: 54, borderRadius: 20, paddingHorizontal: 12 },
-  side: { width: 34 },
-  sideHalf: { width: 18 },
-  arrow: { alignItems: 'flex-end' },
+  leftSlot: { position: 'absolute', left: 20, top: 0, bottom: 0, justifyContent: 'center' },
+  rightSlot: { position: 'absolute', right: 20, top: 0, bottom: 0, justifyContent: 'center' },
+  rightSlotHalf: { right: 12 },
+  primaryTextPad: { paddingHorizontal: 34 },
   primaryText: { flex: 1, textAlign: 'center', color: authColors.primaryText, fontFamily: fonts.semibold, fontSize: 16 },
   social: {
     minHeight: 41, borderRadius: radius.field, borderWidth: 1, borderColor: authColors.border,
