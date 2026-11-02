@@ -47,3 +47,9 @@ export function tabAccessibility(item: NavItem, active: boolean) {
     accessibilityState: { selected: active },
   };
 }
+
+/** Rotas das abas que já têm tela. As demais (Roteiro, Viagem, Carteira) continuam fictícias. */
+const NAV_HREF: Readonly<Record<string, string>> = { discover: '/planner', aurora: '/aurora' };
+export function navHref(key: string): string | undefined {
+  return NAV_HREF[key];
+}

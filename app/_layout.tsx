@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/presentation/auth/AuthProvider';
 import { Button, Muted, Screen } from '../src/presentation/components/ui';
 import { DemoSessionProvider, useDemoSession } from '../src/presentation/session/DemoSession';
+import { TripContextProvider } from '../src/presentation/session/TripContext';
 import { fontAssets } from '../src/presentation/theme/auth-theme';
 
 function RootStack() {
@@ -50,8 +51,10 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <DemoSessionProvider>
-        <StatusBar style="dark" />
-        <RootStack />
+        <TripContextProvider>
+          <StatusBar style="dark" />
+          <RootStack />
+        </TripContextProvider>
       </DemoSessionProvider>
     </AuthProvider>
   );

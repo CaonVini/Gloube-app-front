@@ -6,7 +6,12 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "plugins": ["expo-router", "expo-secure-store"],
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      ["expo-image-picker", { "photosPermission": "A Aurora usa suas fotos apenas para você compartilhar no chat.", "cameraPermission": "A Aurora usa a câmera apenas para você tirar uma foto e enviar no chat.", "microphonePermission": false }],
+      ["expo-audio", { "microphonePermission": "A Aurora usa o microfone apenas para gravar seus áudios no chat." }]
+    ],
     "experiments": { "typedRoutes": true },
     "ios": { "supportsTablet": true, "bundleIdentifier": "com.aurora.app" },
     "android": { "package": "com.aurora.app" },
