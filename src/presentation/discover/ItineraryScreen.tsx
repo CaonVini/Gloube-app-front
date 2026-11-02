@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Platform, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type LayoutChangeEvent } from 'react-native';
 import type { TripPreview } from '../../domain/discover/choice';
 import { PrimaryButton } from '../auth-ui/Button';
-import { SecondaryTextButton } from '../home/SecondaryTextButton';
 import { fonts } from '../theme/auth-theme';
 import { destinationImages } from './assets';
 import { DIcon } from './icons';
@@ -171,15 +170,29 @@ export function ItineraryScreen({ previews, onEditPlaces, onBackToChoice, onDone
       </View>
 
       {p.notes.map((n) => <Text key={n} style={s.note}>{n}</Text>)}
-      <SecondaryTextButton title="Editar locais" onPress={onEditPlaces} />
-      {onBackToChoice ? <SecondaryTextButton title="Escolher outro destino" onPress={onBackToChoice} /> : null}
-      <SecondaryTextButton title="Voltar ao início" onPress={onDone} />
+      <View style={s.links}>
+        <SoftLink title="Editar locais" onPress={onEditPlaces} />
+        {onBackToChoice ? <SoftLink title="Escolher outro destino" onPress={onBackToChoice} /> : null}
+        <SoftLink title="Voltar ao início" onPress={onDone} />
+      </View>
     </ScrollView>
+  );
+}
+
+/** Ação secundária discreta: link de texto pequeno, alvo de toque ≥ 44px. */
+function SoftLink({ title, onPress }: { title: string; onPress: () => void }) {
+  return (
+    <Pressable accessibilityRole="link" accessibilityLabel={title} onPress={onPress} style={s.linkHit}>
+      <Text style={s.linkText}>{title}</Text>
+    </Pressable>
   );
 }
 
 const s = StyleSheet.create({
   flex: { flex: 1 },
+  links: { alignItems: 'center', marginTop: 4, marginBottom: 8 },
+  linkHit: { minHeight: 44, minWidth: 44, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+  linkText: { fontFamily: fonts.medium, fontSize: 14, color: '#6F827B' },
   content: { width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16, paddingBottom: 12, gap: 12 },
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 14, padding: 32 },
   loadingText: { fontFamily: fonts.medium, fontSize: 16, color: dc.dark, textAlign: 'center' },

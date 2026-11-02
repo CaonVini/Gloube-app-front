@@ -2,7 +2,7 @@ import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { KIND_LABEL, type Place, type PlaceKind } from '../../domain/discover/places';
 import { fonts } from '../theme/auth-theme';
-import { destinationImages, placeImages } from './assets';
+import { placeImages } from './assets';
 import { DIcon, type DiscoverIconName } from './icons';
 import { cardShadow, dc } from './ui';
 
@@ -33,7 +33,7 @@ interface Props {
 
 /** Card de um local: foto grande (do local, do destino ou fundo de cor), tag, nome e frase curta. */
 export const PlaceCard = memo(function PlaceCard({ place, destinationId, destinationName, width, height }: Props) {
-  const photo = placeImages[place.id] ?? destinationImages[destinationId];
+  const photo = placeImages[place.id];
   const [from, to] = TONES[place.kind];
   return (
     <View style={[s.card, cardShadow, { width, height }]}>
@@ -57,14 +57,17 @@ export const PlaceCard = memo(function PlaceCard({ place, destinationId, destina
       </View>
       <View style={s.panel}>
         <Text style={s.blurb} numberOfLines={2}>{place.blurb}</Text>
-        <Text style={s.note} numberOfLines={1}>Horários e valores: confirme antes de ir.</Text>
+        <View style={s.noteRow}>
+          <View style={s.info}><Text style={s.infoText}>i</Text></View>
+          <Text style={s.note} numberOfLines={1}>Confirme horários e valores antes de ir.</Text>
+        </View>
       </View>
     </View>
   );
 });
 
 export const PlaceBackCard = memo(function PlaceBackCard({ place, destinationId, width, height }: Props) {
-  const photo = placeImages[place.id] ?? destinationImages[destinationId];
+  const photo = placeImages[place.id];
   const [from, to] = TONES[place.kind];
   return (
     <View style={[s.card, { width, height }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -76,7 +79,7 @@ export const PlaceBackCard = memo(function PlaceBackCard({ place, destinationId,
 
 /** Miniatura com foto para o resumo: foto, tipo, nome e um X discreto para remover. */
 export const PlaceTile = memo(function PlaceTile({ place, destinationId, destinationName, height, onRemove }: { place: Place; destinationId: string; destinationName?: string; height: number; onRemove: () => void }) {
-  const photo = placeImages[place.id] ?? destinationImages[destinationId];
+  const photo = placeImages[place.id];
   const [from, to] = TONES[place.kind];
   return (
     <View style={[s.tile, cardShadow, { height }]}>
@@ -117,13 +120,16 @@ const s = StyleSheet.create({
   destText: { fontFamily: fonts.semibold, fontSize: 11, color: '#FFFFFF' },
   overlay: { position: 'absolute', left: 16, right: 16, bottom: 14 },
   name: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 32, letterSpacing: -0.7, color: '#FFFFFF' },
-  panel: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 6, backgroundColor: '#FFFFFF' },
-  blurb: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
+  panel: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 16, gap: 10, backgroundColor: '#FFFFFF' },
+  blurb: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22, color: '#1F2A27' },
+  noteRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  info: { width: 15, height: 15, borderRadius: 8, borderWidth: 1, borderColor: '#B5BDB9', alignItems: 'center', justifyContent: 'center' },
+  infoText: { fontFamily: fonts.semibold, fontSize: 9, lineHeight: 11, color: dc.muted },
   tile: { flex: 1, borderRadius: 20, overflow: 'hidden', backgroundColor: dc.dark },
   tileText: { position: 'absolute', left: 12, right: 12, bottom: 10, gap: 1 },
   tileKind: { fontFamily: fonts.medium, fontSize: 9, letterSpacing: 1.3, color: 'rgba(255,255,255,0.85)' },
   tileName: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 19, letterSpacing: -0.2, color: '#FFFFFF' },
   tileX: { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
   xBar: { position: 'absolute', width: 12, height: 2, borderRadius: 1, backgroundColor: dc.dark },
-  note: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
+  note: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted, flexShrink: 1 },
 });

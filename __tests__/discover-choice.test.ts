@@ -100,3 +100,34 @@ describe('datas e orçamento indefinidos', () => {
     expect(periodNote({ mode: 'indefinido' })).toContain('Sem datas definidas');
   });
 });
+
+import { likedByMatch, matchPercent } from '../src/domain/discover/match';
+import { DESTINATIONS as _DEST } from '../src/domain/discover/catalog';
+import type { Recommendation as _Rec } from '../src/domain/discover/types';
+
+describe('% de match', () => {
+  const mk = (id: string, cost = 3000): _Rec => ({ destination: _DEST.find((d) => d.id === id)!, score: 1, estimatedCost: cost, transportCost: 500, why: 'x', care: [] });
+  const base = { ..._emptyAnswers(), climate: 'frio' as const, experiences: ['neve' as const, 'montanha' as const], companion: 'casal' as const, budget: '5k-10k' as const, days: 6 };
+  it('100% quando todos os critérios batem', () => {
+    const r = mk('bariloche', 6000);
+    expect(matchPercent(r, { ...base, experiences: ['neve'] }).percent).toBe(100);
+  });
+  it('é transparente: mostra os critérios e fica entre 0 e 100', () => {
+    const m = matchPercent(mk('maldivas', 20000), base);
+    expect(m.percent).toBeGreaterThanOrEqual(0);
+    expect(m.percent).toBeLessThan(100);
+    expect(m.criteria.map((c) => c.id)).toEqual(['experiencias', 'clima', 'companhia', 'orcamento', 'duracao']);
+  });
+  it('"Ainda não defini" tira o orçamento da conta; sem respostas o critério não pesa', () => {
+    const m = matchPercent(mk('bariloche', 99999), { ...base, budget: 'indefinido' });
+    expect(m.criteria.some((c) => c.id === 'orcamento')).toBe(false);
+    expect(matchPercent(mk('bariloche'), { ...base, experiences: [] }).criteria.some((c) => c.id === 'experiencias')).toBe(false);
+  });
+  it('lista só os curtidos, do maior para o menor match', () => {
+    const recs = [mk('maldivas', 20000), mk('bariloche', 6000), mk('gramado', 4000)];
+    const out = likedByMatch(recs, new Set(['maldivas', 'bariloche']), base);
+    expect(out.map((x) => x.rec.destination.id)).toEqual(['bariloche', 'maldivas']);
+    expect(out[0]!.match.percent).toBeGreaterThanOrEqual(out[1]!.match.percent);
+    expect(likedByMatch(recs, new Set(), base)).toEqual([]);
+  });
+});

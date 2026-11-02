@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { applyReaction, buildTripPreview, orderForChoice } from '../../domain/discover/choice';
+import { applyReaction, buildTripPreview } from '../../domain/discover/choice';
 import { selectedPlaces } from '../../domain/discover/places';
 import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
@@ -86,7 +86,6 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
       <View style={s.flex}>
         <View style={[s.column, s.resultsHead]}>
           <Text style={s.resultsTitle} accessibilityRole="header">Seus destinos</Text>
-          <Text style={s.compareLink} accessibilityRole="button" accessibilityLabel="Comparar destinos" onPress={() => setPhase('choose')}>Comparar destinos</Text>
         </View>
         <ResultsDeck recs={recs} favorites={favorites} onReact={react} onCompare={() => setPhase('choose')} onRestart={restart} onEditAnswers={editAnswers} />
       </View>,
@@ -95,8 +94,9 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   if (phase === 'choose') {
     return shell(
       <ChooseScreen
-        recs={orderForChoice(recs, favorites)}
+        recs={recs}
         favorites={favorites}
+        answers={finalizeAnswers(answers)}
         onBack={() => setPhase('results')}
         onAdjust={editAnswers}
         onConfirm={(r) => { setChosen(r); setPhase('places'); }}
@@ -173,7 +173,6 @@ const s = StyleSheet.create({
   metaWarn: { color: '#8A6100' },
   skip: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  resultsHead: { marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  compareLink: { fontFamily: fonts.bold, fontSize: 15, color: dc.teal, paddingVertical: 6, paddingHorizontal: 4 },
+  resultsHead: { marginBottom: 8 },
   resultsTitle: { fontFamily: fonts.bold, fontSize: 26, lineHeight: 32, letterSpacing: -0.6, color: '#0B0B0B' },
 });

@@ -1,6 +1,5 @@
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { formatBRL } from '../../domain/discover/budget';
 import { firstSentence } from '../../domain/discover/choice';
 import type { Experience, Recommendation } from '../../domain/discover/types';
 import { fonts } from '../theme/auth-theme';
@@ -39,12 +38,9 @@ export const DestinationCard = memo(function DestinationCard({ rec, width, heigh
       </View>
       <View style={s.panel}>
         <Text style={s.reason} numberOfLines={2}>{firstSentence(rec.why)}</Text>
-        <View style={s.chips}>
-          <View style={s.chip}><Text style={s.chipText}>~{formatBRL(rec.estimatedCost)} por pessoa (estimativa)</Text></View>
-          <View style={s.chip}><Text style={s.chipText}>Mín. {d.minDays} dias</Text></View>
-        </View>
-        <Pressable accessibilityRole="button" accessibilityLabel={`Ver detalhes de ${d.name}`} onPress={() => onDetails(rec)} hitSlop={8}>
-          <Text style={s.link}>Ver detalhes ↗</Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={`Ver detalhes de ${d.name}`} onPress={() => onDetails(rec)} hitSlop={8} style={s.moreRow}>
+          <Text style={s.link}>Ver detalhes</Text>
+          <DIcon name="chevronRight" size={14} color={dc.dark} />
         </Pressable>
       </View>
     </View>
@@ -73,10 +69,11 @@ const s = StyleSheet.create({
   name: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 32, letterSpacing: -0.7, color: '#FFFFFF' },
   countryRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   country: { fontFamily: fonts.semibold, fontSize: 15, color: '#FFFFFF' },
-  panel: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 14, gap: 8, backgroundColor: '#FFFFFF' },
-  reason: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#2B2F2E' },
+  panel: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 16, gap: 10, backgroundColor: '#FFFFFF' },
+  reason: { fontFamily: fonts.medium, fontSize: 16, lineHeight: 22, color: '#1F2A27' },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { backgroundColor: '#F1F3F0', borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
   chipText: { fontFamily: fonts.medium, fontSize: 12, color: dc.dark },
-  link: { fontFamily: fonts.semibold, fontSize: 13, color: dc.dark, textDecorationLine: 'underline' },
+  moreRow: { flexDirection: 'row', alignItems: 'center', gap: 2, alignSelf: 'flex-start' },
+  link: { fontFamily: fonts.semibold, fontSize: 14, color: dc.dark },
 });

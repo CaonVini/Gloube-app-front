@@ -1,4 +1,4 @@
-import { Image, type ImageSourcePropType } from 'react-native';
+import { Image, Platform, View, type ImageSourcePropType } from 'react-native';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const sources = {
@@ -36,17 +36,20 @@ const sources = {
 
 export type DiscoverIconName = keyof typeof sources;
 
-/** Glifo PNG leve (96px) tingido via `tintColor`; decorativo: o controle que o contém leva o rótulo. */
+/**
+ * Glifo PNG leve (96px) tingido com `color`; decorativo: o controle que o contém leva o rótulo.
+ * Na web usa máscara CSS (cor sólida + o PNG como máscara): não depende de um filtro SVG por imagem, que em alguns
+ * navegadores/GPUs deixava ícones invisíveis. No nativo usa `tintColor`.
+ */
 export function DIcon({ name, size = 24, color }: { name: DiscoverIconName; size?: number; color: string }) {
-  return (
-    <Image
-      source={sources[name]}
-      style={{ width: size, height: size }}
-      resizeMode="contain"
-      tintColor={color}
-      accessible={false}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    />
-  );
+  const hidden = { accessible: false, accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' } as const;
+  if (Platform.OS === 'web') {
+    const uri = Image.resolveAssetSource(sources[name])?.uri;
+    if (uri) {
+      const mask = `url("${uri}")`;
+      const style = { width: size, height: size, backgroundColor: color, WebkitMaskImage: mask, maskImage: mask, WebkitMaskSize: 'contain', maskSize: 'contain', WebkitMaskRepeat: 'no-repeat', maskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskPosition: 'center' };
+      return <View {...hidden} style={style as never} />;
+    }
+  }
+  return <Image source={sources[name]} style={{ width: size, height: size }} resizeMode="contain" tintColor={color} {...hidden} />;
 }

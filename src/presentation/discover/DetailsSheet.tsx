@@ -1,4 +1,5 @@
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { firstSentence } from '../../domain/discover/choice';
 import { buildComparison } from '../../domain/discover/compare';
 import type { Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
@@ -23,8 +24,8 @@ export function DetailsSheet({ rec, onClose }: { rec: Recommendation | null; onC
                   {rec.destination.experiences.map((e) => <Tag key={e}>{e.charAt(0).toUpperCase() + e.slice(1)}</Tag>)}
                 </View>
                 <Text style={s.h}>Por que combina com você</Text>
-                <Text style={s.desc}>{rec.why}</Text>
-                <Text style={s.h}>Estimativas (fictícias, por pessoa)</Text>
+                <Text style={s.desc}>{firstSentence(rec.why)}</Text>
+                <Text style={s.h}>Estimativa por pessoa</Text>
                 {rows.map((r) => (
                   <View key={r.label} style={s.row}>
                     <Text style={s.rowLabel}>{r.label}</Text>

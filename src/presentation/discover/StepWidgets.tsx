@@ -99,7 +99,7 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
       })}
 
       {mode === 'mes' ? (
-        <View style={[s.cal, { gap: 10 }]}>
+        <View style={[s.cal, { gap: compact ? 6 : 10 }]}>
           <View style={s.monthHead}>
             <Pressable accessibilityRole="button" accessibilityLabel="Ano anterior" disabled={mesYear <= today.getFullYear()} onPress={() => setMes(mesMonth, mesYear - 1)} hitSlop={10} style={[s.navBtn, mesYear <= today.getFullYear() && { opacity: 0.3 }]}>
               <DIcon name="chevronLeft" size={20} color={dc.dark} />
@@ -126,7 +126,7 @@ export function PeriodStep({ answers: a, onChange, today }: { answers: Answers; 
             ))}
           </View>
           <Text style={s.calNote} accessibilityLiveRegion="polite">
-            {mesMonth && isMonthYearValid(mesMonth, mesYear, today) ? `${(MONTH_NAMES[mesMonth - 1] ?? '').replace(/^./, (ch) => ch.toUpperCase())} de ${mesYear}. Os dias você escolhe na próxima etapa.` : 'Escolha o mês da viagem.'}
+            {mesMonth && isMonthYearValid(mesMonth, mesYear, today) ? `${(MONTH_NAMES[mesMonth - 1] ?? '').replace(/^./, (ch) => ch.toUpperCase())} de ${mesYear}. Os dias ficam para depois.` : 'Escolha o mês da viagem.'}
           </Text>
         </View>
       ) : null}
@@ -270,7 +270,7 @@ export function BudgetStep({ answers: a, onChange }: { answers: Answers; onChang
 
 const s = StyleSheet.create({
   fill: { flex: 1, gap: 10 },
-  opt: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 60, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
+  opt: { flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 54, paddingHorizontal: 16, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF' },
   optOn: { borderColor: dc.dark, backgroundColor: '#EEF3EF' },
   optTitle: { fontFamily: fonts.semibold, fontSize: 17, color: dc.dark },
   optHint: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
@@ -302,7 +302,7 @@ const s = StyleSheet.create({
   dayText: { fontFamily: fonts.regular, fontSize: 14, color: dc.dark },
   dayTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
   monthGrid: { flex: 1, gap: 8 },
-  monthRow: { flex: 1, minHeight: 44, maxHeight: 60, flexDirection: 'row', gap: 8 },
+  monthRow: { flex: 1, minHeight: 34, maxHeight: 56, flexDirection: 'row', gap: 8 },
   monthCell: { flex: 1, borderRadius: 16, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   monthCellOn: { backgroundColor: dc.dark, borderColor: dc.dark },
   monthCellText: { fontFamily: fonts.semibold, fontSize: 16, color: dc.dark },

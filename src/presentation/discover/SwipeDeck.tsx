@@ -25,7 +25,7 @@ export interface SwipeDeckProps<T> {
   headerRight?: ReactNode;
 }
 
-const PEEK = 24;
+const PEEK = 12;
 
 /**
  * Pilha de cards estilo Tinder, só para NAVEGAR: arrastar (ou os botões) vai para o anterior/próximo,
@@ -40,8 +40,9 @@ export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onRe
   const total = recs.length;
   idx.current = index;
 
-  const cw = Math.max(200, Math.min(area.w - PEEK * 2 - 8, 400));
-  const ch = Math.max(240, area.h - 4);
+  const cw = Math.max(220, Math.min(area.w - 32, 420));
+  const ch = Math.max(240, area.h - PEEK - 10);
+  const backDy = PEEK + ch * 0.035; // o card de trás aparece como uma borda logo abaixo do da frente
   const travel = Math.max(cw, 240);
 
   const react = useCallback((liked: boolean) => {
@@ -90,7 +91,7 @@ export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onRe
 
   return (
     <View style={s.root}>
-      <View style={s.posRow}>
+      <View style={[s.posRow, headerRight ? s.posRowSplit : null]}>
         <Text style={s.position} accessibilityLiveRegion="polite">{positionText(index, total)}</Text>
         {headerRight}
       </View>
@@ -98,7 +99,7 @@ export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onRe
         {area.w > 0 ? (
           <View style={{ width: cw, height: ch }}>
             {nextRec ? (
-              <Animated.View style={[s.abs, { transform: [{ translateX: clampIn(range, [0, PEEK, 0]) }, { rotate: clampIn(range, ['0deg', '4deg', '0deg']) }, { scale: clampIn(range, [1, 0.94, 1]) }] }]}>
+              <Animated.View style={[s.abs, { transform: [{ translateY: clampIn(range, [0, backDy, 0]) }, { scale: clampIn(range, [1, 0.93, 1]) }] }]}>
                 {renderBack(nextRec, cw, ch)}
               </Animated.View>
             ) : null}
@@ -133,11 +134,12 @@ const s = StyleSheet.create({
   flex: { flex: 1 },
   stage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 2 },
   abs: { position: 'absolute', top: 0, left: 0 },
+  posRowSplit: { justifyContent: 'space-between', paddingHorizontal: 22, width: '100%', maxWidth: 512, alignSelf: 'center' },
   posRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingBottom: 6 },
   position: { fontFamily: fonts.medium, fontSize: 13, color: dc.muted, textAlign: 'center' },
-  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 56, paddingHorizontal: 16, paddingTop: 8, paddingBottom: 6, width: '100%', maxWidth: 512, alignSelf: 'center' },
+  footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 80, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, width: '100%', maxWidth: 512, alignSelf: 'center' },
   footSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  actBtn: { width: 60, height: 60, borderRadius: 30, alignItems: 'center', justifyContent: 'center' },
+  actBtn: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },
   nopeBtn: { borderWidth: 1.5, borderColor: '#D9663F', backgroundColor: '#FFFFFF' },
   likeBtn: { backgroundColor: dc.dark },
   xBar: { position: 'absolute', width: 24, height: 3, borderRadius: 2, backgroundColor: '#D9663F' },
