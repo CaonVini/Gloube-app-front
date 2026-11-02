@@ -1,4 +1,4 @@
-import { DEFAULT_NAV_ITEMS, MIN_BOTTOM_PADDING, bottomPadding, isActive, tabAccessibility } from '../src/presentation/navigation/nav-items';
+import { DEFAULT_NAV_ITEMS, MIN_BOTTOM_PADDING, bottomPadding, isActive, navHref, tabAccessibility } from '../src/presentation/navigation/nav-items';
 
 describe('DEFAULT_NAV_ITEMS', () => {
   it('segue a ordem do mockup', () => {
@@ -34,5 +34,13 @@ describe('tabAccessibility', () => {
       accessibilityState: { selected: true },
     });
     expect(tabAccessibility(DEFAULT_NAV_ITEMS[1]!, false).accessibilityState.selected).toBe(false);
+  });
+});
+
+describe('navHref', () => {
+  it('só Planeje e Aurora têm rota; as demais abas seguem fictícias', () => {
+    expect(navHref('aurora')).toBe('/aurora');
+    expect(navHref('discover')).toBe('/planner');
+    expect(navHref('wallet')).toBeUndefined();
   });
 });

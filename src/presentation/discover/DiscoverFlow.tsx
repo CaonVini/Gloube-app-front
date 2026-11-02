@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { applyReaction, buildTripPreview } from '../../domain/discover/choice';
@@ -7,7 +7,8 @@ import { recommend } from '../../domain/discover/matching';
 import { emptyAnswers, finalizeAnswers, isStepComplete, visibleSteps } from '../../domain/discover/quiz';
 import type { Answers, Recommendation } from '../../domain/discover/types';
 import { PrimaryButton } from '../auth-ui/Button';
-import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
+import { BottomNavBar, DEFAULT_NAV_ITEMS, useNavRouting } from '../navigation';
+import { useTripContext } from '../session/TripContext';
 import { fonts, homeColors } from '../theme/auth-theme';
 import { ChooseScreen } from './ChooseScreen';
 import { ItineraryScreen } from './ItineraryScreen';
@@ -17,8 +18,6 @@ import { ResultsDeck } from './ResultsDeck';
 import { DiscoverHeader, RoundButton, SegmentedProgress, StepTitle, dc } from './ui';
 
 type Phase = 'quiz' | 'results' | 'choose' | 'places' | 'itinerary';
-
-const noop = () => {};
 
 interface Props {
   fullName: string;
@@ -31,6 +30,8 @@ interface Props {
 /** Orquestra o fluxo: questionário → destinos (um por vez) → comparação. Estado 100% local (sem API). */
 export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props) {
   const insets = useSafeAreaInsets();
+  const onNav = useNavRouting('discover');
+  const { setTrip } = useTripContext();
   const today = useMemo(() => new Date(), []);
   const [phase, setPhase] = useState<Phase>('quiz');
   const [stepIndex, setStepIndex] = useState(0);
@@ -40,6 +41,13 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
   const [chosen, setChosen] = useState<Recommendation | null>(null);
   const [placeSel, setPlaceSel] = useState<Readonly<Record<string, readonly string[]>>>({});
   const [showHint, setShowHint] = useState(false);
+
+  // Compartilha com a Aurora (só em memória) o destino escolhido ou os curtidos, e os locais selecionados.
+  useEffect(() => {
+    const destinations = chosen ? [chosen.destination.name] : recs.filter((r) => favorites.has(r.destination.id)).map((r) => r.destination.name);
+    const places = chosen ? selectedPlaces(chosen.destination.id, placeSel[chosen.destination.id] ?? []).map((pl) => pl.name) : [];
+    setTrip({ destinations, places });
+  }, [chosen, recs, favorites, placeSel, setTrip]);
 
   const steps = useMemo(() => visibleSteps(answers), [answers]);
   const step = steps[Math.min(stepIndex, steps.length - 1)]!;
@@ -77,7 +85,7 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
       </View>
       {children}
       {/* Navegação fictícia: "Descubra" ativo. Fica de fora do questionário para dar espaço aos cards (sem rolagem). */}
-      {withNav ? <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={noop} /> : <View style={{ height: Math.max(insets.bottom, 12) }} />}
+      {withNav ? <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={onNav} /> : <View style={{ height: Math.max(insets.bottom, 12) }} />}
     </View>
   );
 

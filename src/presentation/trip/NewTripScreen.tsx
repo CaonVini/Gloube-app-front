@@ -7,7 +7,7 @@ import {
 } from '../../domain/trip-plan';
 import { PrimaryButton } from '../auth-ui/Button';
 import { AppHeader } from '../home/AppHeader';
-import { BottomNavBar, DEFAULT_NAV_ITEMS } from '../navigation';
+import { BottomNavBar, DEFAULT_NAV_ITEMS, useNavRouting } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
 
@@ -31,6 +31,7 @@ interface Props {
 
 /** Passo 1 de 3 de "Nova viagem". Tudo local/fictício: origem simulada, busca em catálogo local, sem rede. */
 export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props) {
+  const onNav = useNavRouting('discover');
   const { width, height } = useWindowDimensions();
   const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const originRef = useRef<React.ComponentRef<typeof TextInput>>(null);
@@ -218,12 +219,11 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
         </View>
       </View>
       {/* Navegação fictícia: "Descubra" fixo como aba ativa desta tela. */}
-      <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={noop} />
+      <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="discover" onChange={onNav} />
     </View>
   );
 }
 
-function noop() {}
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: homeColors.background },
