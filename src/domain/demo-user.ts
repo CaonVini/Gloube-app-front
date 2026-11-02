@@ -2,9 +2,10 @@
 export interface DemoUser {
   firstName: string;
   fullName: string;
+  email: string;
 }
 
-export const DEMO_USER: DemoUser = { firstName: 'Vinicius', fullName: 'Vinicius Costa' };
+export const DEMO_USER: DemoUser = { firstName: 'Vinicius', fullName: 'Vinicius Caon', email: 'vinicius@email.com' };
 
 /** Iniciais (até 2 letras, maiúsculas) a partir do nome completo. Ex.: "Vinicius Costa" -> "VC". */
 export function getInitials(fullName: string): string {

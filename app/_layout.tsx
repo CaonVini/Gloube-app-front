@@ -5,6 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 import { AuthProvider, useAuth } from '../src/presentation/auth/AuthProvider';
 import { Button, Muted, Screen } from '../src/presentation/components/ui';
 import { DemoSessionProvider, useDemoSession } from '../src/presentation/session/DemoSession';
+import { ProfileProvider } from '../src/presentation/session/ProfileContext';
 import { TripContextProvider } from '../src/presentation/session/TripContext';
 import { fontAssets } from '../src/presentation/theme/auth-theme';
 
@@ -51,10 +52,12 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <DemoSessionProvider>
-        <TripContextProvider>
-          <StatusBar style="dark" />
-          <RootStack />
-        </TripContextProvider>
+        <ProfileProvider>
+          <TripContextProvider>
+            <StatusBar style="dark" />
+            <RootStack />
+          </TripContextProvider>
+        </ProfileProvider>
       </DemoSessionProvider>
     </AuthProvider>
   );
