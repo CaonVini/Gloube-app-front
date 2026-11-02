@@ -5,6 +5,11 @@ import { authColors, fonts } from '../theme/auth-theme';
 import { TripIcon } from './TripIcon';
 
 const GAP = 10;
+
+/** Altura exata da lista: n linhas + n-1 espaços (nada sobra, a lista não força espaço em branco). */
+export function listHeight(count: number, rowHeight: number): number {
+  return count <= 0 ? 0 : count * rowHeight + (count - 1) * GAP;
+}
 const BADGE_COL = 44;
 const FIELD_BG = '#F3F1EC';
 const BADGE_BG = '#D3E4D8';
@@ -114,7 +119,7 @@ export const DestinationList = memo(function DestinationList({ items, rowHeight,
     if (to >= 0 && to < n) onReorder(index, to);
   };
 
-  const height = n * rowHeight + Math.max(0, n - 1) * GAP;
+  const height = listHeight(n, rowHeight);
   return (
     <View style={{ height }}>
       {items.map((d, i) => (

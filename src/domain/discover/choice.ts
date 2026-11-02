@@ -68,10 +68,9 @@ export function periodNote(period: Period): string | null {
   return 'Sem datas definidas: a duração é a que você informou e os valores podem mudar quando você escolher as datas.';
 }
 
-function baseNotes(needs: readonly string[], hadPlaces: boolean): string[] {
-  const notes: string[] = [hadPlaces
-    ? 'Prévia ilustrativa montada com os locais que você escolheu: horários, reservas e valores serão refinados nas próximas etapas.'
-    : 'Prévia ilustrativa: você não escolheu locais, então sugerimos um roteiro geral. Horários, reservas e valores serão refinados depois.'];
+/** Só avisos de cuidado (pets/acessibilidade): os textos de rodapé genéricos da prévia foram removidos. */
+function baseNotes(needs: readonly string[], _hadPlaces: boolean): string[] {
+  const notes: string[] = [];
   if (needs.includes('pets')) notes.push('Pets: confirme as regras de cada hospedagem e passeio antes de reservar.');
   if (needs.includes('acessibilidade')) notes.push('Acessibilidade: confirme os acessos de cada local antes de reservar.');
   return notes;
@@ -99,7 +98,7 @@ export function buildDirectPreview(cityName: string, places: readonly Place[], n
     title: `${total} ${total === 1 ? 'dia' : 'dias'} em ${cityName}`,
     summary: '',
     days: buildDays(total, [], places),
-    notes: [...baseNotes(needs, places.length > 0), 'Duração sugerida pela quantidade de locais; as datas ficam para a próxima etapa.'],
+    notes: baseNotes(needs, places.length > 0),
   };
 }
 
@@ -181,9 +180,6 @@ export function buildTripPreview(a: {
   const generic = buildDays(days, [], []).at(0)?.items ?? [];
   const labels = [...names, ...generic].slice(0, SLOT_TIMES.length);
   const notes = [...baseNotes(a.needs ?? [], a.places.length > 0)];
-  const pn = a.period ? periodNote(a.period) : 'Sem datas definidas: os valores podem mudar quando você escolher as datas.';
-  if (pn) notes.push(pn);
-  if (a.suggestedDuration) notes.push('Duração sugerida pela quantidade de locais; as datas ficam para a próxima etapa.');
   return {
     id: a.id,
     destination: a.name,

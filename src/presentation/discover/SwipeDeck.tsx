@@ -94,7 +94,7 @@ export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onRe
     <View style={s.root}>
       {positionText || headerRight ? (
         <View style={[s.posRow, headerRight ? s.posRowSplit : null]}>
-          {positionText ? <Text style={s.position} accessibilityLiveRegion="polite">{positionText(index, total)}</Text> : <View />}
+          {positionText ? <View style={s.pill}><Text style={s.position} accessibilityLiveRegion="polite" accessibilityLabel={`Card ${index + 1} de ${total}`}>{positionText(index, total)}</Text></View> : <View />}
           {headerRight}
         </View>
       ) : null}
@@ -139,7 +139,8 @@ const s = StyleSheet.create({
   abs: { position: 'absolute', top: 0, left: 0 },
   posRowSplit: { justifyContent: 'space-between', paddingHorizontal: 22, width: '100%', maxWidth: 512, alignSelf: 'center' },
   posRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 14, paddingBottom: 6 },
-  position: { fontFamily: fonts.medium, fontSize: 13, color: dc.muted, textAlign: 'center' },
+  pill: { backgroundColor: dc.mint, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 4 },
+  position: { fontFamily: fonts.semibold, fontSize: 13, letterSpacing: 0.6, color: dc.dark, textAlign: 'center' },
   footer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 80, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 8, width: '100%', maxWidth: 512, alignSelf: 'center' },
   footSide: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   actBtn: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center' },

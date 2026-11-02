@@ -70,11 +70,11 @@ export function PlacesScreen({ targets, selection, onChange, onBack, onContinue 
           renderBack={(i, w, h) => <PlaceBackCard place={i.place} destinationId={i.destinationId} width={w} height={h} />}
           onReact={react}
           onFinish={goSummary}
+          positionText={(i, n) => `${i + 1}/${n}`}
           likeLabel="Gostei, incluir no roteiro e ver o próximo"
           nopeLabel="Não gostei, próximo local"
           likeStamp="NO ROTEIRO"
           nopeStamp="PULAR"
-          headerRight={<Text style={s.skip} accessibilityRole="button" accessibilityLabel="Pular a escolha de locais" onPress={goSummary}>Pular</Text>}
         />
       </View>
     );
@@ -132,10 +132,6 @@ export function PlacesScreen({ targets, selection, onChange, onBack, onContinue 
         ) : null}
       </ScrollView>
       <View style={s.foot}>
-        <View style={s.auroraRow}>
-          <DIcon name="sparkle" size={16} color={dc.muted} />
-          <Text style={s.auroraText}>A Aurora organiza os lugares pelos seus dias.</Text>
-        </View>
         <View style={s.footRow}>
           <RoundButton icon="chevronLeft" label="Voltar" onPress={onBack} />
           <View style={s.flex}><PrimaryButton title="Montar meu roteiro" onPress={onContinue} size="hero" /></View>
@@ -149,7 +145,6 @@ const s = StyleSheet.create({
   root: { flex: 1, width: '100%', maxWidth: 512, alignSelf: 'center', paddingHorizontal: 16 },
   flex: { flex: 1 },
   head: { paddingBottom: 8 },
-  skip: { fontFamily: fonts.bold, fontSize: 14, color: dc.teal, paddingVertical: 2, paddingHorizontal: 4 },
   list: { paddingBottom: 8 },
   group: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dc.border, paddingTop: 4, marginBottom: 8 },
   groupHead: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 },
@@ -158,8 +153,6 @@ const s = StyleSheet.create({
   groupFoot: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   linkRow: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
   link: { fontFamily: fonts.medium, fontSize: 15, color: dc.teal },
-  auroraRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 8 },
-  auroraText: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
   foot: { paddingTop: 8, paddingBottom: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: dc.border },
   footRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
 });

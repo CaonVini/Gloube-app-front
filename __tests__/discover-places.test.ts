@@ -60,9 +60,9 @@ describe('roteiro baseado nos locais', () => {
     const text = pv.days.flatMap((d) => d.items).join('|');
     expect(text).toContain('Torre Eiffel');
     expect(text).toContain('Louvre');
-    expect(pv.notes.join(' ')).toContain('locais que você escolheu');
+    expect(pv.notes).toEqual([]);
     const none = buildDirectPreview('Paris', []);
-    expect(none.notes.join(' ')).toContain('não escolheu locais');
+    expect(none.notes).toEqual([]);
     expect(none.days).toHaveLength(3);
   });
   it('distribui nos dias do meio, preservando todos os locais', () => {
@@ -85,9 +85,9 @@ describe('roteiro baseado nos locais', () => {
     const text = pv.days.flatMap((d) => d.items).join('|');
     expect(text).toContain('Torre Eiffel');
     expect(text).toContain('Louvre');
-    expect(pv.notes.join(' ')).toContain('locais que você escolheu');
+    expect(pv.notes).toEqual([]);
     const none = buildDirectPreview('Paris', []);
-    expect(none.notes.join(' ')).toContain('não escolheu locais');
+    expect(none.notes).toEqual([]);
     expect(none.days).toHaveLength(3);
   });
   it('prévia do Descubra respeita os dias das respostas e inclui os locais', () => {
@@ -133,11 +133,10 @@ describe('prévia "Sua viagem já tem forma."', () => {
     expect(t.chips).toEqual(['3 dias', 'Ritmo livre']);
     expect(t.dateLabel).toBe('Datas a definir');
   });
-  it('avisa quando não há datas exatas e quando a duração é sugerida', () => {
+  it('mostra o mês/ano no rótulo e não traz textos de rodapé', () => {
     const t = buildTripPreview({ id: 'paris', name: 'Paris', country: 'França', days: 4, places: ps, period: { mode: 'mes', month: 7, year: 2027 }, suggestedDuration: true });
     expect(t.dateLabel).toBe('Julho de 2027');
-    expect(t.notes.join(' ')).toContain('julho de 2027');
-    expect(t.notes.join(' ')).toContain('Duração sugerida');
+    expect(t.notes).toEqual([]); // sem textos de rodapé na prévia
   });
   it('periodLabel cobre virada de mês e 1 dia sem bloqueio', () => {
     expect(periodLabel({ mode: 'definidas', startDate: '28/12/2026', endDate: '03/01/2027' })).toBe('28 dez – 3 jan');

@@ -80,6 +80,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
 
         <View style={[s.column, s.flex]}>
           <View style={[s.card, { paddingHorizontal: m.pad, paddingVertical: m.pad, gap: compact ? 6 : 10 }]}>
+            <View style={{ gap: compact ? 6 : 10 }}>
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Onde estamos?</Text>
             {compact ? null : <Text style={s.hint}>De qual cidade você vai sair?</Text>}
             <View style={[s.field, { minHeight: m.field }]}>
@@ -106,6 +107,9 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               <Text style={s.link}>Usar minha localização</Text>
             </Pressable>
 
+            </View>
+
+            <View style={{ gap: compact ? 6 : 10, zIndex: 5 }}>
             <View style={s.divider} />
 
             <Text style={[s.h2, { fontSize: m.h2, lineHeight: m.h2 + 5 }]} accessibilityRole="header">Para onde vamos?</Text>
@@ -139,6 +143,8 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
                   ))}
                 </View>
               ) : null}
+            </View>
+
             </View>
 
             {/* Timeline: ocupa o espaço que sobra na tela (flex). Só rola se houver muitos destinos. */}
@@ -197,7 +203,7 @@ const s = StyleSheet.create({
   title: { fontFamily: fonts.bold, letterSpacing: -0.6, color: '#0B0B0B', marginTop: 8 },
   subtitle: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 20, color: '#3E7C86', marginTop: 0 },
   card: {
-    flex: 1, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
+    flexGrow: 0, flexShrink: 1, marginTop: 10, backgroundColor: '#FFFFFF', borderRadius: 18, borderWidth: 1, borderColor: '#ECE9E3', gap: 6,
     shadowColor: '#1F3D36', shadowOpacity: 0.05, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 1,
   },
   h2: { fontFamily: fonts.bold, color: authColors.text },
@@ -216,8 +222,8 @@ const s = StyleSheet.create({
     shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 },
   },
   suggestion: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
-  list: { flex: 1 },
-  listContent: { flexGrow: 1, justifyContent: 'center' },
+  list: { flexGrow: 0, flexShrink: 1 },
+  listContent: {},
   city: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 19, color: '#111' },
   country: { fontFamily: fonts.regular, fontSize: 13, color: authColors.link },
   note: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
