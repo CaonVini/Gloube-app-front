@@ -1,47 +1,42 @@
-import { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { MONTH_NAMES, maskDate, parseBrDate } from '../../domain/discover/dates';
-import { BUDGETS } from '../../domain/discover/budget';
-import { ORIGINS } from '../../domain/discover/geo';
+import type { ReactNode } from 'react';
+import { useRef } from 'react';
+import { PanResponder, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { MAX_DAYS, MIN_DAYS, clampDays, toggleExperience, toggleNeed, type StepId } from '../../domain/discover/quiz';
-import type { Answers, BudgetId, Climate, Companion, Experience, Need, Reach } from '../../domain/discover/types';
-import { Input } from '../auth-ui/Input';
-import { authColors, fonts, homeColors } from '../theme/auth-theme';
-import type { DiscoverIconName } from './icons';
-import { Chip, ImageTile, OptionCard, dc } from './ui';
+import type { Answers, Climate, Companion, Experience, Need, Reach } from '../../domain/discover/types';
+import { fonts } from '../theme/auth-theme';
+import type { QuizPhotoKey } from './assets';
+import { BudgetStep, PeriodStep } from './StepWidgets';
+import { PhotoCard, dc } from './ui';
 
-const CLIMATES: { id: Climate; label: string; hint: string; icon: DiscoverIconName }[] = [
-  { id: 'frio', label: 'Frio', hint: 'Cobertor, lareira e clima de montanha.', icon: 'flake' },
-  { id: 'calor', label: 'Calor', hint: 'Sol, mar e roupas leves.', icon: 'sun' },
-  { id: 'tanto-faz', label: 'Tanto faz', hint: 'O clima não é decisivo para mim.', icon: 'contrast' },
+const CLIMATES: { id: Climate; label: string; hint: string; photo: QuizPhotoKey }[] = [
+  { id: 'frio', label: 'Frio', hint: 'Refúgios e aconchego', photo: 'clima-frio' },
+  { id: 'calor', label: 'Calor', hint: 'Sol e dias leves', photo: 'clima-calor' },
+  { id: 'tanto-faz', label: 'Tanto faz', hint: 'O clima não é decisivo para mim', photo: 'clima-tanto-faz' },
 ];
-const EXPERIENCES: { id: Experience; label: string }[] = [
-  { id: 'praia', label: 'Praia' }, { id: 'montanha', label: 'Montanha' }, { id: 'cidade', label: 'Cidade' },
-  { id: 'natureza', label: 'Natureza' }, { id: 'neve', label: 'Neve' },
+const EXPERIENCES: { id: Experience; label: string; hint: string; photo: QuizPhotoKey }[] = [
+  { id: 'praia', label: 'Praia', hint: 'Mar e areia', photo: 'exp-praia' },
+  { id: 'montanha', label: 'Montanha', hint: 'Altitude e vistas', photo: 'exp-montanha' },
+  { id: 'cidade', label: 'Cidade', hint: 'Cultura e noites', photo: 'exp-cidade' },
+  { id: 'natureza', label: 'Natureza', hint: 'Trilhas e cachoeiras', photo: 'exp-natureza' },
+  { id: 'neve', label: 'Neve', hint: 'Paisagens geladas', photo: 'exp-neve' },
 ];
-const REACHES: { id: Reach; label: string; hint: string; icon: DiscoverIconName }[] = [
-  { id: 'perto', label: 'Perto de casa', hint: 'Destinos nacionais a até ~1.000 km da sua cidade.', icon: 'home' },
-  { id: 'brasil', label: 'Pelo Brasil', hint: 'Qualquer lugar do país.', icon: 'pin' },
-  { id: 'internacional', label: 'Internacional', hint: 'Fora do Brasil (pode exigir passaporte e visto).', icon: 'world' },
+const REACHES: { id: Reach; label: string; hint: string; photo: QuizPhotoKey }[] = [
+  { id: 'perto', label: 'Perto de casa', hint: 'Até ~1.000 km da sua cidade', photo: 'alcance-perto' },
+  { id: 'brasil', label: 'Pelo Brasil', hint: 'Qualquer lugar do país', photo: 'alcance-brasil' },
+  { id: 'internacional', label: 'Internacional', hint: 'Fora do Brasil (pode exigir passaporte e visto)', photo: 'alcance-internacional' },
 ];
-const COMPANIONS: { id: Companion; label: string; hint: string; icon: DiscoverIconName }[] = [
-  { id: 'casal', label: 'Casal', hint: 'Uma viagem a dois.', icon: 'couple' },
-  { id: 'amigos', label: 'Amigos', hint: 'Aventura em grupo.', icon: 'friends' },
-  { id: 'familia', label: 'Família', hint: 'Todo mundo junto.', icon: 'family' },
-  { id: 'solo', label: 'Solo', hint: 'Só você e o mundo.', icon: 'solo' },
+const COMPANIONS: { id: Companion; label: string; hint: string; photo: QuizPhotoKey }[] = [
+  { id: 'casal', label: 'Casal', hint: 'Uma viagem a dois', photo: 'comp-casal' },
+  { id: 'amigos', label: 'Amigos', hint: 'Aventura em grupo', photo: 'comp-amigos' },
+  { id: 'familia', label: 'Família', hint: 'Todo mundo junto', photo: 'comp-familia' },
+  { id: 'solo', label: 'Solo', hint: 'Só você e o mundo', photo: 'comp-solo' },
 ];
-const NEEDS: { id: Need; label: string; hint: string; icon: DiscoverIconName }[] = [
-  { id: 'criancas', label: 'Crianças', hint: 'Passeios e ritmo pensados para os pequenos.', icon: 'child' },
-  { id: 'idosos', label: 'Idosos', hint: 'Menos deslocamento e mais conforto.', icon: 'elder' },
-  { id: 'acessibilidade', label: 'Acessibilidade', hint: 'Só mostramos como adequado o que for verificado.', icon: 'access' },
-  { id: 'pets', label: 'Pets', hint: 'Só mostramos como adequado o que for verificado.', icon: 'paw' },
+const NEEDS: { id: Need; label: string; hint: string; photo: QuizPhotoKey }[] = [
+  { id: 'criancas', label: 'Crianças', hint: 'Passeios para os pequenos', photo: 'care-criancas' },
+  { id: 'idosos', label: 'Idosos', hint: 'Mais conforto no ritmo', photo: 'care-idosos' },
+  { id: 'acessibilidade', label: 'Acessibilidade', hint: 'Informação verificada', photo: 'care-acessibilidade' },
+  { id: 'pets', label: 'Pets', hint: 'Informação verificada', photo: 'care-pets' },
 ];
-const PERIODS = {
-  definidas: { label: 'Tenho datas definidas', hint: 'Informe a data de ida.', icon: 'calendar' },
-  mes: { label: 'Tenho um mês aproximado', hint: 'Escolha o mês da viagem.', icon: 'calendarMonth' },
-  indefinido: { label: 'Ainda não sei', hint: 'Tudo bem, a gente segue sem data.', icon: 'help' },
-} as const;
-const BUDGET_ICONS: Record<BudgetId, DiscoverIconName> = { 'ate-2k': 'coin1', '2k-5k': 'coin2', '5k-10k': 'coin3', '10k-mais': 'coin4', flexivel: 'infinity' };
 
 interface Props {
   step: StepId;
@@ -50,69 +45,120 @@ interface Props {
   today: Date;
 }
 
-/** Conteúdo de cada etapa do questionário. Sem estado próprio: tudo vem de `answers` (fonte única). */
-export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
-  const { width } = useWindowDimensions();
-  const tileSize = useMemo(() => Math.floor((Math.min(width, 480 + 32) - 32 - 12) / 2), [width]);
+function Row({ children }: { children: ReactNode }) {
+  return <View style={s.row}>{children}</View>;
+}
 
+/** Conteúdo de cada etapa. Ocupa o espaço disponível (flex) para caber na tela sem rolagem. Sem estado próprio. */
+export function QuizStepContent({ step, answers: a, onChange, today }: Props) {
   switch (step) {
     case 'clima':
-      return <View style={s.list}>{CLIMATES.map((c) => <OptionCard key={c.id} icon={c.icon} label={c.label} hint={c.hint} selected={a.climate === c.id} onPress={() => onChange({ climate: c.id })} />)}</View>;
-    case 'experiencias':
       return (
-        <View style={s.grid}>
-          {EXPERIENCES.map((e) => (
-            <ImageTile key={e.id} kind={e.id} label={e.label} size={tileSize} selected={a.experiences.includes(e.id)} onPress={() => onChange({ experiences: toggleExperience(a.experiences, e.id) })} />
-          ))}
+        <View style={s.fill}>
+          <Row>{CLIMATES.slice(0, 2).map((c) => <PhotoCard key={c.id} photo={c.photo} title={c.label} subtitle={c.hint} selected={a.climate === c.id} onPress={() => onChange({ climate: c.id })} />)}</Row>
+          <Row>{CLIMATES.slice(2).map((c) => <PhotoCard key={c.id} photo={c.photo} title={c.label} subtitle={c.hint} selected={a.climate === c.id} onPress={() => onChange({ climate: c.id })} />)}</Row>
         </View>
       );
-    case 'alcance':
-      return <View style={s.list}>{REACHES.map((r) => <OptionCard key={r.id} icon={r.icon} label={r.label} hint={r.hint} selected={a.reach === r.id} onPress={() => onChange({ reach: r.id })} />)}</View>;
-    case 'origem':
-      return <View style={s.chips}>{ORIGINS.map((o) => <Chip key={o.id} label={o.label} selected={a.origin === o.id} onPress={() => onChange({ origin: o.id })} />)}</View>;
-    case 'companhia':
-      return <View style={s.list}>{COMPANIONS.map((c) => <OptionCard key={c.id} icon={c.icon} label={c.label} hint={c.hint} selected={a.companion === c.id} onPress={() => onChange({ companion: c.id })} />)}</View>;
-    case 'cuidados':
-      return <View style={s.list}>{NEEDS.map((n) => <OptionCard key={n.id} multi icon={n.icon} label={n.label} hint={n.hint} selected={a.needs.includes(n.id)} onPress={() => onChange({ needs: toggleNeed(a.needs, n.id) })} />)}</View>;
-    case 'periodo': {
-      const mode = a.period.mode;
-      const startDate = a.period.mode === 'definidas' ? a.period.startDate : '';
-      const dateError = startDate.length === 10 && !parseBrDate(startDate, today) ? 'Informe uma data válida a partir de hoje.' : undefined;
+    case 'experiencias': {
+      const toggleE = (id: Experience) => onChange({ experiences: toggleExperience(a.experiences, id) });
+      const card = (e: (typeof EXPERIENCES)[number]) => <PhotoCard key={e.id} multi compact photo={e.photo} title={e.label} subtitle={e.hint} selected={a.experiences.includes(e.id)} onPress={() => toggleE(e.id)} />;
       return (
-        <View style={s.list}>
-          <OptionCard {...PERIODS.definidas} selected={mode === 'definidas'} onPress={() => onChange({ period: { mode: 'definidas', startDate } })} />
-          {mode === 'definidas' ? (
-            <Input label="Data de ida (DD/MM/AAAA)" keyboardType="number-pad" maxLength={10} placeholder="15/01/2027" value={startDate} error={dateError} onChangeText={(t) => onChange({ period: { mode: 'definidas', startDate: maskDate(t) } })} />
-          ) : null}
-          <OptionCard {...PERIODS.mes} selected={mode === 'mes'} onPress={() => onChange({ period: { mode: 'mes', month: a.period.mode === 'mes' ? a.period.month : null } })} />
-          {mode === 'mes' ? (
-            <View style={s.chips}>
-              {MONTH_NAMES.map((m, i) => <Chip key={m} label={m.charAt(0).toUpperCase() + m.slice(1)} selected={a.period.mode === 'mes' && a.period.month === i + 1} onPress={() => onChange({ period: { mode: 'mes', month: i + 1 } })} />)}
-            </View>
-          ) : null}
-          <OptionCard {...PERIODS.indefinido} selected={mode === 'indefinido'} onPress={() => onChange({ period: { mode: 'indefinido' } })} />
+        <View style={s.fill}>
+          <Row>{EXPERIENCES.slice(0, 2).map(card)}</Row>
+          <Row>{EXPERIENCES.slice(2, 4).map(card)}</Row>
+          <Row>{EXPERIENCES.slice(4).map(card)}</Row>
         </View>
       );
     }
-    case 'dias':
+    case 'alcance':
       return (
-        <View style={s.stepper}>
-          <StepButton label="−" onPress={() => onChange({ days: clampDays(a.days - 1) })} a11y="Diminuir um dia" />
-          <View accessibilityLiveRegion="polite" style={s.daysBox}>
-            <Text style={s.daysNumber}>{a.days}</Text>
-            <Text style={s.daysLabel}>{a.days === 1 ? 'dia' : 'dias'}</Text>
+        <View style={s.fill}>
+          {REACHES.map((r) => <Row key={r.id}><PhotoCard photo={r.photo} title={r.label} subtitle={r.hint} selected={a.reach === r.id} onPress={() => onChange({ reach: r.id })} /></Row>)}
+        </View>
+      );
+    case 'companhia':
+      return (
+        <View style={s.fill}>
+          <Row>{COMPANIONS.slice(0, 2).map((c) => <PhotoCard key={c.id} photo={c.photo} title={c.label} subtitle={c.hint} selected={a.companion === c.id} onPress={() => onChange({ companion: c.id })} />)}</Row>
+          <Row>{COMPANIONS.slice(2).map((c) => <PhotoCard key={c.id} photo={c.photo} title={c.label} subtitle={c.hint} selected={a.companion === c.id} onPress={() => onChange({ companion: c.id })} />)}</Row>
+        </View>
+      );
+    case 'cuidados': {
+      const card = (n: (typeof NEEDS)[number]) => <PhotoCard key={n.id} multi compact photo={n.photo} title={n.label} subtitle={n.hint} selected={a.needs.includes(n.id)} onPress={() => onChange({ needs: toggleNeed(a.needs, n.id) })} />;
+      return (
+        <View style={s.fill}>
+          <Row>{NEEDS.slice(0, 2).map(card)}</Row>
+          <Row>{NEEDS.slice(2).map(card)}</Row>
+        </View>
+      );
+    }
+    case 'periodo':
+      return <PeriodStep answers={a} onChange={onChange} today={today} />;
+    case 'dias': {
+      return (
+        <View style={s.daysCard}>
+          <Text style={s.daysKicker}>DURAÇÃO DA VIAGEM</Text>
+          <View style={s.stepper}>
+            <StepButton label="−" a11y="Diminuir um dia" onPress={() => onChange({ days: clampDays(a.days - 1) })} />
+            <View accessibilityLiveRegion="polite" style={s.daysBox}>
+              <Text style={s.daysNumber}>{a.days}</Text>
+              <Text style={s.daysLabel}>{a.days === 1 ? 'dia' : 'dias'}</Text>
+            </View>
+            <StepButton label="+" a11y="Aumentar um dia" onPress={() => onChange({ days: clampDays(a.days + 1) })} />
           </View>
-          <StepButton label="+" onPress={() => onChange({ days: clampDays(a.days + 1) })} a11y="Aumentar um dia" />
-          <Text style={s.range}>De {MIN_DAYS} a {MAX_DAYS} dias</Text>
+          <DaysSlider days={a.days} onChange={(d) => onChange({ days: d })} />
         </View>
       );
+    }
     case 'orcamento':
-      return (
-        <View style={s.list}>
-          {BUDGETS.map((b) => <OptionCard key={b.id} icon={BUDGET_ICONS[b.id]} label={b.label} hint={b.id === 'flexivel' ? 'Não limitamos por valor.' : 'Por pessoa, com passagem e hospedagem.'} selected={a.budget === b.id} onPress={() => onChange({ budget: b.id as BudgetId })} />)}
-        </View>
-      );
+      return <BudgetStep answers={a} onChange={onChange} />;
   }
+}
+
+/** Régua fina arrastável (ou toque) de MIN_DAYS a MAX_DAYS. Área de toque alta; a linha visual é fina. */
+function DaysSlider({ days, onChange }: { days: number; onChange: (d: number) => void }) {
+  const box = useRef<React.ComponentRef<typeof View>>(null);
+  const geo = useRef({ left: 0, width: 1 });
+  const latest = useRef({ days, onChange });
+  latest.current = { days, onChange };
+  const set = (pageX: number) => {
+    const ratio = Math.min(1, Math.max(0, (pageX - geo.current.left) / geo.current.width));
+    const d = clampDays(Math.round(MIN_DAYS + ratio * (MAX_DAYS - MIN_DAYS)));
+    if (d !== latest.current.days) latest.current.onChange(d);
+  };
+  const pan = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderTerminationRequest: () => false,
+      onPanResponderGrant: (e) => {
+        const x = e.nativeEvent.pageX;
+        box.current?.measureInWindow((left, _y, width) => { geo.current = { left, width: Math.max(1, width) }; set(x); });
+      },
+      onPanResponderMove: (_e, g) => set(g.moveX),
+    }),
+  ).current;
+  const onLayout = (_e: LayoutChangeEvent) => box.current?.measureInWindow((left, _y, width) => { geo.current = { left, width: Math.max(1, width) }; });
+  const pct = ((days - MIN_DAYS) / (MAX_DAYS - MIN_DAYS)) * 100;
+  return (
+    <View style={s.trackBox}>
+      <View
+        ref={box}
+        onLayout={onLayout}
+        {...pan.panHandlers}
+        accessible
+        accessibilityRole="adjustable"
+        accessibilityLabel="Duração da viagem em dias"
+        accessibilityValue={{ min: MIN_DAYS, max: MAX_DAYS, now: days }}
+        accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+        onAccessibilityAction={(ev) => onChange(clampDays(days + (ev.nativeEvent.actionName === 'increment' ? 1 : -1)))}
+        style={s.trackHit}
+      >
+        <View style={s.track}><View style={[s.trackFill, { width: `${pct}%` }]} /><View style={[s.knob, { left: `${pct}%` }]} /></View>
+      </View>
+      <View style={s.trackLabels}><Text style={s.range}>{MIN_DAYS} dia</Text><Text style={s.range}>{MAX_DAYS} dias</Text></View>
+    </View>
+  );
 }
 
 function StepButton({ label, onPress, a11y }: { label: string; onPress: () => void; a11y: string }) {
@@ -124,14 +170,21 @@ function StepButton({ label, onPress, a11y }: { label: string; onPress: () => vo
 }
 
 const s = StyleSheet.create({
-  list: { gap: 12 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  stepBtn: { width: 56, height: 56, borderRadius: 28, backgroundColor: dc.lime, alignItems: 'center', justifyContent: 'center' },
-  stepBtnText: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 32, color: dc.dark },
-  stepper: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: 18, paddingVertical: 24 },
-  daysBox: { minWidth: 90, alignItems: 'center' },
-  daysNumber: { fontFamily: fonts.bold, fontSize: 64, lineHeight: 70, color: dc.dark },
-  daysLabel: { fontFamily: fonts.medium, fontSize: 16, color: homeColors.subtitle },
-  range: { width: '100%', textAlign: 'center', fontFamily: fonts.regular, fontSize: 13, color: authColors.muted },
+  fill: { flex: 1, gap: 12 },
+  row: { flex: 1, flexDirection: 'row', gap: 12 },
+  daysCard: { flex: 1, justifyContent: 'space-evenly', alignItems: 'center', paddingVertical: 8 },
+  daysKicker: { fontFamily: fonts.medium, fontSize: 12, letterSpacing: 2, color: dc.muted },
+  stepper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 8 },
+  stepBtn: { width: 52, height: 52, borderRadius: 26, borderWidth: 1, borderColor: dc.dark, alignItems: 'center', justifyContent: 'center' },
+  stepBtnText: { fontFamily: fonts.regular, fontSize: 28, lineHeight: 32, color: dc.dark },
+  daysBox: { alignItems: 'center' },
+  daysNumber: { fontFamily: fonts.bold, fontSize: 96, lineHeight: 104, letterSpacing: -3, color: dc.dark },
+  daysLabel: { fontFamily: fonts.regular, fontSize: 16, letterSpacing: 1, color: dc.muted },
+  trackBox: { alignSelf: 'stretch', gap: 10, paddingHorizontal: 8 },
+  trackHit: { height: 40, justifyContent: 'center' },
+  track: { height: 2, borderRadius: 1, backgroundColor: '#D9DDDA', justifyContent: 'center' },
+  trackFill: { position: 'absolute', left: 0, height: 2, backgroundColor: dc.dark },
+  knob: { position: 'absolute', width: 22, height: 22, borderRadius: 11, marginLeft: -11, top: -10, backgroundColor: dc.lime, borderWidth: 1.5, borderColor: dc.dark },
+  trackLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  range: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted },
 });

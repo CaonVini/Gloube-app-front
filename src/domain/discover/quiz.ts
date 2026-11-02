@@ -1,8 +1,10 @@
-import { parseBrDate } from './dates';
+import { findBudget } from './budget';
+import { isMonthYearValid, nightsBetween, parseBrDate } from './dates';
+import { resolveOrigin } from './geo';
 import type { Answers, Need, Experience } from './types';
 
 export type StepId =
-  | 'clima' | 'experiencias' | 'alcance' | 'origem' | 'companhia'
+  | 'clima' | 'experiencias' | 'alcance' | 'companhia'
   | 'cuidados' | 'periodo' | 'dias' | 'orcamento';
 
 export interface StepDef {
@@ -17,22 +19,22 @@ export const STEPS: readonly StepDef[] = [
   { id: 'clima', title: 'Qual clima você procura?', subtitle: 'Escolha o que mais combina com a sua viagem.', optional: false },
   { id: 'experiencias', title: 'Que tipo de lugar te atrai?', subtitle: 'Você pode escolher mais de uma opção.', optional: true },
   { id: 'alcance', title: 'Até onde você quer ir?', optional: false },
-  { id: 'origem', title: 'De onde você sai?', subtitle: 'Usamos isso para estimar passagem e tempo de deslocamento.', optional: false },
   { id: 'companhia', title: 'Com quem você vai viajar?', optional: false },
-  { id: 'cuidados', title: 'Alguém precisa de atenção especial?', subtitle: 'Pode marcar mais de uma, ou pular se não se aplica.', optional: true },
-  { id: 'periodo', title: 'Quando você pretende viajar?', optional: false },
+  { id: 'cuidados', title: 'Algum cuidado especial?', subtitle: 'Marque o que se aplica ou pule.', optional: true },
+  { id: 'periodo', title: 'Quando começa sua próxima viagem?', subtitle: 'Datas exatas, só o mês ou ainda nada.', optional: false },
   { id: 'dias', title: 'Quantos dias de viagem?', subtitle: 'Considere o tempo no destino.', optional: false },
-  { id: 'orcamento', title: 'Qual o orçamento por pessoa?', subtitle: 'Valores aproximados, incluindo passagem (ida e volta) e hospedagem.', optional: false },
+  { id: 'orcamento', title: 'Qual é seu orçamento por pessoa?', subtitle: 'Para toda a viagem, incluindo passagem de ida e volta e hospedagem.', optional: false },
 ];
 
 export const MIN_DAYS = 1;
 export const MAX_DAYS = 30;
 export const DEFAULT_DAYS = 7;
 
-export function emptyAnswers(): Answers {
+export function emptyAnswers(originText?: string | null): Answers {
+  const o = resolveOrigin(originText);
   return {
-    climate: null, experiences: [], reach: null, origin: null, companion: null,
-    needs: [], period: { mode: null }, days: DEFAULT_DAYS, budget: null,
+    climate: null, experiences: [], reach: null, origin: o.id, originAssumed: o.assumed, companion: null,
+    needs: [], period: { mode: null }, days: DEFAULT_DAYS, budget: null, customBudget: null,
   };
 }
 
@@ -54,21 +56,38 @@ export function toggleNeed(list: readonly Need[], item: Need): Need[] {
 }
 
 /** Uma etapa está completa quando a resposta é válida. Opcionais sempre estão (podem ficar vazias). */
+/** Dias definidos pelas datas (ida e volta válidas), ou null se ainda precisamos perguntar. */
+export function daysFromDates(a: Answers): number | null {
+  if (a.period.mode !== 'definidas') return null;
+  const nights = nightsBetween(a.period.startDate, a.period.endDate);
+  return nights === null ? null : Math.min(MAX_DAYS, Math.max(MIN_DAYS, nights));
+}
+
+/** Etapas exibidas: a de duração só aparece quando as datas não definem os dias (ex.: "Ainda não sei"). */
+export function visibleSteps(a: Answers): readonly StepDef[] {
+  return daysFromDates(a) === null ? STEPS : STEPS.filter((s) => s.id !== 'dias');
+}
+
+/** Respostas finais: com datas exatas, os dias vêm do intervalo escolhido. */
+export function finalizeAnswers(a: Answers): Answers {
+  const d = daysFromDates(a);
+  return d === null ? a : { ...a, days: d };
+}
+
 export function isStepComplete(id: StepId, a: Answers, today: Date = new Date()): boolean {
   switch (id) {
     case 'clima': return a.climate !== null;
     case 'experiencias': return true;
     case 'alcance': return a.reach !== null;
-    case 'origem': return a.origin !== null;
     case 'companhia': return a.companion !== null;
     case 'cuidados': return true;
     case 'periodo':
       if (a.period.mode === 'indefinido') return true;
-      if (a.period.mode === 'mes') return a.period.month !== null;
+      if (a.period.mode === 'mes') return isMonthYearValid(a.period.month, a.period.year, today);
       if (a.period.mode === 'definidas') return parseBrDate(a.period.startDate, today) !== null;
       return false;
     case 'dias': return a.days >= MIN_DAYS && a.days <= MAX_DAYS;
-    case 'orcamento': return a.budget !== null;
+    case 'orcamento': return findBudget(a.budget, a.customBudget) !== undefined;
   }
 }
 

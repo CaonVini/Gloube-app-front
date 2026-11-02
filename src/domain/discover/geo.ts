@@ -49,3 +49,23 @@ export function transportCost(from: MacroRegion, to: DestinationZone, domestic: 
   const raw = 150 + km * (domestic ? 0.5 : 0.75);
   return Math.round(raw / 50) * 50;
 }
+
+/** Origem usada quando a pessoa não informou (ou digitou algo que não reconhecemos) na tela Nova viagem. */
+export const DEFAULT_ORIGIN_ID = 'sao-paulo';
+
+function norm(t: string): string {
+  return t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+}
+
+/**
+ * Converte o texto livre de "Onde estamos?" (ex.: "São Paulo, Brasil") numa origem conhecida.
+ * Sem correspondência, devolve a origem padrão com `assumed: true` (a UI/explicação deixa isso claro).
+ */
+export function resolveOrigin(text: string | null | undefined): { id: string; assumed: boolean } {
+  const q = norm(text ?? '');
+  if (q) {
+    const hit = ORIGINS.find((o) => q.includes(norm(o.label)) || norm(o.label).includes(q));
+    if (hit) return { id: hit.id, assumed: false };
+  }
+  return { id: DEFAULT_ORIGIN_ID, assumed: true };
+}

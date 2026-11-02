@@ -1,21 +1,17 @@
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { fonts, homeColors } from '../theme/auth-theme';
+import { fonts } from '../theme/auth-theme';
 import { bottomPadding, isActive, tabAccessibility, type NavItem } from './nav-items';
 
 const COLORS = {
   bar: '#FFFFFF',
-  border: '#E7E4DD',
-  active: '#1F3D36',
-  inactive: '#4B5654',
-  accent: '#F1EF71', // amarelo-limão da ilustração da Home
-  accentIcon: '#1F3D36',
+  border: '#ECE9E3',
+  active: '#1F3D36', // verde escuro Gloube
+  inactive: '#8B9692', // cinza-esverdeado discreto
 } as const;
 
-const FAB = 64; // diâmetro do botão central
-const RING = 6; // anel na cor do fundo que "recorta" a barra
-const LIFT = 26; // quanto o botão sobe acima da barra
+const ICON_AREA = 30; // altura fixa da faixa dos ícones: os rótulos de todas as abas ficam alinhados
 
 interface Props {
   items: readonly NavItem[];
@@ -31,26 +27,12 @@ interface TabProps {
 
 const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
   const a11y = tabAccessibility(item, active);
-  if (item.highlight) {
-    return (
-      <View style={s.slot}>
-        <Pressable
-          {...a11y}
-          onPress={() => onChange(item.key)}
-          style={({ pressed }) => [s.fab, pressed && s.pressed]}
-          hitSlop={6}
-        >
-          <Image source={item.icon} style={s.fabIcon} resizeMode="contain" tintColor={COLORS.accentIcon} />
-        </Pressable>
-        <Text style={[s.label, s.fabLabel, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
-      </View>
-    );
-  }
   return (
     <Pressable {...a11y} onPress={() => onChange(item.key)} style={({ pressed }) => [s.slot, s.tab, pressed && s.pressed]}>
-      <Image source={active && item.activeIcon ? item.activeIcon : item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} />
+      {/* Indicador discreto: fio curto no topo da barra sobre a aba ativa. */}
+      {active ? <View style={s.indicator} /> : null}
+      <View style={s.iconArea}><Image source={active && item.activeIcon ? item.activeIcon : item.icon} style={s.icon} resizeMode="contain" tintColor={active ? COLORS.active : COLORS.inactive} /></View>
       <Text style={[s.label, active && s.labelActive]} numberOfLines={1}>{item.label}</Text>
-      <View style={[s.dot, !active && s.dotHidden]} />
     </Pressable>
   );
 });
@@ -59,10 +41,7 @@ const Tab = memo(function Tab({ item, active, onChange }: TabProps) {
 export function BottomNavBar({ items, activeKey, onChange }: Props) {
   const insets = useSafeAreaInsets();
   return (
-    <View
-      accessibilityRole="tablist"
-      style={[s.bar, { paddingBottom: bottomPadding(insets.bottom) }]}
-    >
+    <View accessibilityRole="tablist" style={[s.bar, { paddingBottom: bottomPadding(insets.bottom) }]}>
       {items.map((item) => (
         <Tab key={item.key} item={item} active={isActive(item, activeKey)} onChange={onChange} />
       ))}
@@ -73,41 +52,24 @@ export function BottomNavBar({ items, activeKey, onChange }: Props) {
 const s = StyleSheet.create({
   bar: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
     backgroundColor: COLORS.bar,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 26,
+    borderTopRightRadius: 26,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderColor: COLORS.border,
-    paddingTop: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
+    shadowColor: '#1F3D36',
+    shadowOpacity: 0.06,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: -4 },
+    elevation: 8,
   },
-  slot: { flex: 1, alignItems: 'center' },
-  tab: { gap: 3, minHeight: 48, paddingVertical: 2 },
-  icon: { width: 24, height: 24 },
-  label: { fontFamily: fonts.regular, fontSize: 12, lineHeight: 16, color: COLORS.inactive },
-  labelActive: { fontFamily: fonts.bold, color: COLORS.active },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: COLORS.active },
-  dotHidden: { opacity: 0 },
-  fab: {
-    width: FAB + RING * 2,
-    height: FAB + RING * 2,
-    borderRadius: (FAB + RING * 2) / 2,
-    marginTop: -LIFT - RING,
-    marginBottom: 0,
-    backgroundColor: COLORS.accent,
-    borderWidth: RING,
-    borderColor: homeColors.background, // anel = cor do fundo da tela
-    alignItems: 'center',
-    justifyContent: 'center',
-    // sombra sutil só no ícone/botão (iOS + Android)
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 4,
-  },
-  fabLabel: { marginTop: 2, paddingBottom: 2 },
-  fabIcon: { width: 28, height: 28 },
+  slot: { flex: 1, alignItems: 'center', paddingTop: 12 },
+  tab: { gap: 4, minHeight: 62, paddingBottom: 4 },
+  iconArea: { height: ICON_AREA, alignItems: 'center', justifyContent: 'center' },
+  indicator: { position: 'absolute', top: -StyleSheet.hairlineWidth, width: 18, height: 2, borderRadius: 1, backgroundColor: COLORS.active },
+  icon: { width: 22, height: 22 },
+  label: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14, letterSpacing: 0.3, color: COLORS.inactive },
+  labelActive: { fontFamily: fonts.semibold, color: COLORS.active },
   pressed: { opacity: 0.7 },
 });

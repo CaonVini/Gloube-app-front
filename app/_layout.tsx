@@ -9,6 +9,9 @@ import { fontAssets } from '../src/presentation/theme/auth-theme';
 
 function RootStack() {
   const { status, retryBoot } = useAuth();
+  // Fluxo fictício: a guarda usa a sessão de demonstração (em memória), não a API.
+  // Hooks sempre ANTES dos returns antecipados (regra dos hooks): a ordem não pode mudar entre renders.
+  const { signedIn: authed } = useDemoSession();
 
   if (status === 'loading') {
     return (
@@ -26,8 +29,6 @@ function RootStack() {
     );
   }
 
-  // Fluxo fictício: a guarda usa a sessão de demonstração (em memória), não a API.
-  const { signedIn: authed } = useDemoSession();
   // Stack.Protected: rotas só existem para o estado correspondente (sem "piscar" a tela errada).
   return (
     <Stack screenOptions={{ headerShown: false }}>

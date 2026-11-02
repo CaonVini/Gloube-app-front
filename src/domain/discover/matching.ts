@@ -16,7 +16,7 @@ const COMPANION_PHRASE: Record<Companion, string> = {
 
 /** Pronto para ranquear: todas as perguntas obrigatórias respondidas. */
 export function isReadyToRank(a: Answers): boolean {
-  return a.climate !== null && a.reach !== null && findOrigin(a.origin) !== undefined && a.companion !== null && a.budget !== null;
+  return a.climate !== null && a.reach !== null && findOrigin(a.origin) !== undefined && a.companion !== null && findBudget(a.budget, a.customBudget) !== undefined;
 }
 
 export function estimateCost(d: Destination, originRegion: Parameters<typeof transportCost>[0], days: number) {
@@ -27,7 +27,7 @@ export function estimateCost(d: Destination, originRegion: Parameters<typeof tra
 /** Regras eliminatórias: viagem inviável (alcance, duração, orçamento, clima oposto, restrição verificada). */
 export function passesHardFilters(d: Destination, a: Answers): boolean {
   const origin = findOrigin(a.origin);
-  const budget = findBudget(a.budget);
+  const budget = findBudget(a.budget, a.customBudget);
   if (!origin || !budget || !a.reach || !a.climate) return false;
 
   if (a.reach === 'internacional' && d.domestic) return false;
@@ -64,8 +64,8 @@ function scoreOf(d: Destination, a: Answers, total: number, month: number | null
   if (a.needs.includes('criancas')) score += d.kidFriendly ? 5 : -10;
   if (a.needs.includes('idosos')) score += d.seniorFriendly ? 5 : -10;
 
-  const band = findBudget(a.budget) ?? BUDGETS[BUDGETS.length - 1]!;
-  if (band.id === 'flexivel') score += 5;
+  const band = findBudget(a.budget, a.customBudget) ?? BUDGETS[BUDGETS.length - 1]!;
+  if (!Number.isFinite(band.max)) score += 6; // sem limite definido: neutro
   else if (total >= band.min && total <= band.max) score += 10;
   else if (total < band.min) score += 6;
   else score += 2;
@@ -108,9 +108,9 @@ export function buildWhy(d: Destination, a: Answers, total: number, month: numbe
 
   const parts: string[] = [];
   parts.push(choices.length > 0 ? `Você escolheu ${joinPt(choices)}.` : 'Cabe no que você informou sobre origem, duração e orçamento.');
-  const budget = findBudget(a.budget);
-  const fit = budget && budget.id !== 'flexivel' && total <= budget.max ? ' Isso cabe no seu orçamento.' : '';
-  parts.push(`${originLabel ? `Saindo de ${originLabel}, ` : ''}a estimativa é de cerca de ${formatBRL(total)} por pessoa para ${a.days} ${a.days === 1 ? 'dia' : 'dias'}.${fit}`);
+  const budget = findBudget(a.budget, a.customBudget);
+  const fit = budget && Number.isFinite(budget.max) && total <= budget.max ? ' Isso cabe no seu orçamento.' : '';
+  parts.push(`${originLabel ? (a.originAssumed ? `Sem origem informada, estimamos a partir de ${originLabel}: ` : `Saindo de ${originLabel}, `) : ''}a estimativa é de cerca de ${formatBRL(total)} por pessoa para ${a.days} ${a.days === 1 ? 'dia' : 'dias'}.${fit}`);
   if (month !== null && d.bestMonths.includes(month)) parts.push(`${capitalize(MONTH_NAMES[month - 1] ?? '')} é uma boa época para ir.`);
   return parts.join(' ');
 }

@@ -1,11 +1,8 @@
 import { memo, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { Experience } from '../../domain/discover/types';
-import { getInitials } from '../../domain/demo-user';
-import { GloubeLogo } from '../auth-ui/GloubeLogo';
-import { AvatarMenu } from '../home/AvatarMenu';
+import { AppHeader } from '../home/AppHeader';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
-import { experienceImages } from './assets';
+import { type QuizPhotoKey, quizPhotos } from './assets';
 import { DIcon, type DiscoverIconName } from './icons';
 
 /** Paleta do fluxo (mesma do app: verde escuro, teal, creme e o amarelo-limão da navbar). */
@@ -28,14 +25,9 @@ export const cardShadow = {
   elevation: 2,
 } as const;
 
-/** Cabeçalho do app: logo Gloube + avatar (mesmo da Home / Nova viagem). */
+/** Cabeçalho do app: o mesmo componente das demais telas. */
 export function DiscoverHeader({ fullName, onSignOut }: { fullName: string; onSignOut: () => void }) {
-  return (
-    <View style={s.header}>
-      <GloubeLogo width={150} tone="dark" />
-      <AvatarMenu initials={getInitials(fullName)} fullName={fullName} onSignOut={onSignOut} />
-    </View>
-  );
+  return <AppHeader fullName={fullName} onSignOut={onSignOut} />;
 }
 
 /** Rótulo em caixa alta + barra em segmentos + "n de N". */
@@ -86,7 +78,7 @@ export const OptionCard = memo(function OptionCard({ icon, label, hint, selected
       style={({ pressed }) => [s.option, cardShadow, selected && s.optionOn, pressed && s.pressed]}
     >
       <View style={[s.iconCircle, selected && s.iconCircleOn]}>
-        <DIcon name={icon} size={30} color={dc.dark} />
+        <DIcon name={icon} size={28} color={dc.dark} />
       </View>
       <View style={s.optionText}>
         <Text style={s.optionLabel}>{label}</Text>
@@ -113,24 +105,51 @@ export const Chip = memo(function Chip({ label, selected, onPress, icon }: { lab
   );
 });
 
-/** Cartão com ilustração (praia, montanha…) e check no canto. */
-export const ImageTile = memo(function ImageTile({ kind, label, selected, size, onPress }: {
-  kind: Experience; label: string; selected: boolean; size: number; onPress: () => void;
-}) {
-  const img = size - 16;
+const SHADE_BANDS = 28;
+
+/** Degradê escuro na base, feito com faixas translúcidas (sem dependência nativa extra). */
+function Shade({ height }: { height: string }) {
+  return (
+    <View pointerEvents="none" style={[s.shade, { height: height as `${number}%` }]}>
+      {Array.from({ length: SHADE_BANDS }, (_, i) => (
+        <View key={i} style={{ flex: 1, backgroundColor: `rgba(8,24,20,${(0.72 * Math.pow((i + 1) / SHADE_BANDS, 1.8)).toFixed(3)})` }} />
+      ))}
+    </View>
+  );
+}
+
+export function SelectDot({ on, variant = 'photo' }: { on: boolean; variant?: 'photo' | 'light' }) {
+  return <View style={[s.dot, variant === 'light' && s.dotLight, on && s.dotOn]}>{on ? <DIcon name="check" size={16} color="#FFFFFF" /> : null}</View>;
+}
+
+interface PhotoCardProps {
+  photo: QuizPhotoKey;
+  title: string;
+  subtitle?: string;
+  selected: boolean;
+  multi?: boolean;
+  compact?: boolean;
+  onPress: () => void;
+}
+
+/** Cartão com foto de fundo, degradê escuro, título/subtítulo brancos e indicador de seleção no canto. Preenche o espaço do pai (flex). */
+export const PhotoCard = memo(function PhotoCard({ photo, title, subtitle, selected, multi, compact, onPress }: PhotoCardProps) {
   return (
     <Pressable
-      accessibilityRole="checkbox"
+      accessibilityRole={multi ? 'checkbox' : 'radio'}
       accessibilityState={{ checked: selected }}
-      accessibilityLabel={label}
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
       onPress={onPress}
-      style={({ pressed }) => [s.tile, cardShadow, { width: size }, selected && s.optionOn, pressed && s.pressed]}
+      style={({ pressed }) => [s.photoCard, cardShadow, pressed && s.pressed]}
     >
-      <View>
-        <Image source={experienceImages[kind]} style={{ width: img, height: Math.round(img * 0.78), borderRadius: 14 }} resizeMode="cover" />
-        <View style={s.tileCheck}><CheckBadge on={selected} /></View>
+      <Image source={quizPhotos[photo]} style={s.photoImg} resizeMode="cover" />
+      <Shade height={compact ? '55%' : '50%'} />
+      <View style={s.photoSelect}><SelectDot on={selected} /></View>
+      <View style={[s.photoText, compact && { padding: 12 }]}>
+        <Text style={[s.photoTitle, compact && { fontSize: 19, lineHeight: 23 }]} numberOfLines={1}>{title}</Text>
+        {subtitle ? <Text style={[s.photoSub, compact && { fontSize: 13, lineHeight: 17 }]} numberOfLines={2}>{subtitle}</Text> : null}
       </View>
-      <Text style={s.tileLabel}>{label}</Text>
+      {selected ? <View pointerEvents="none" style={s.photoRing} /> : null}
     </Pressable>
   );
 });
@@ -165,19 +184,19 @@ const s = StyleSheet.create({
   bars: { flex: 1, flexDirection: 'row', gap: 4 },
   bar: { flex: 1, height: 4, borderRadius: 2, backgroundColor: '#E1E3E0' },
   barOn: { backgroundColor: dc.dark },
-  titleBox: { marginTop: 26, gap: 4 },
-  title: { fontFamily: fonts.bold, fontSize: 30, lineHeight: 36, letterSpacing: -0.8, color: '#0B0B0B' },
-  subtitle: { fontFamily: fonts.medium, fontSize: 17, lineHeight: 24, color: dc.teal },
+  titleBox: { marginTop: 16, gap: 4 },
+  title: { fontFamily: fonts.bold, fontSize: 28, lineHeight: 33, letterSpacing: -0.6, color: '#0B0B0B' },
+  subtitle: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 22, color: '#3E7C86' },
   option: {
-    flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 72, paddingHorizontal: 14, paddingVertical: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 14, minHeight: 64, paddingHorizontal: 14, paddingVertical: 8,
     borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card,
   },
   optionOn: { borderColor: dc.dark, borderWidth: 2 },
-  iconCircle: { width: 48, height: 48, borderRadius: 24, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
+  iconCircle: { width: 44, height: 44, borderRadius: 22, backgroundColor: dc.mint, alignItems: 'center', justifyContent: 'center' },
   iconCircleOn: { backgroundColor: dc.lime },
   optionText: { flex: 1, gap: 2 },
   optionLabel: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22, color: dc.dark },
-  optionHint: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 19, color: dc.muted },
+  optionHint: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 17, color: dc.muted },
   check: { width: 24, height: 24, borderRadius: 12, borderWidth: 1.5, borderColor: '#C9CDCB', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   checkOn: { borderColor: dc.dark, backgroundColor: dc.dark },
   chip: {
@@ -187,7 +206,7 @@ const s = StyleSheet.create({
   chipOn: { backgroundColor: dc.dark, borderColor: dc.dark },
   chipText: { fontFamily: fonts.medium, fontSize: 15, color: authColors.body },
   chipTextOn: { fontFamily: fonts.semibold, color: '#FFFFFF' },
-  tile: { padding: 8, gap: 10, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card },
+  tileUnused: { padding: 8, gap: 10, borderRadius: 20, borderWidth: 1, borderColor: dc.border, backgroundColor: dc.card },
   tileCheck: { position: 'absolute', top: 8, right: 8 },
   tileLabel: { fontFamily: fonts.bold, fontSize: 17, color: dc.dark, paddingHorizontal: 4, paddingBottom: 4 },
   tag: { backgroundColor: dc.mint, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 6 },
@@ -196,5 +215,17 @@ const s = StyleSheet.create({
     width: 56, height: 56, borderRadius: 18, borderWidth: 1, borderColor: dc.border, backgroundColor: '#FFFFFF',
     alignItems: 'center', justifyContent: 'center', ...cardShadow,
   },
-  pressed: { opacity: 0.8 },
+  pressed: { opacity: 0.85 },
+  photoCard: { flex: 1, borderRadius: 24, overflow: 'hidden', backgroundColor: '#1F3D36' },
+  // Imagem ancorada no topo e ~20% mais alta que o cartão: o rodapé (onde fica o texto) corta a base da foto e o assunto não fica sob o título.
+  photoImg: { position: 'absolute', top: 0, left: 0, width: '100%', height: '118%' },
+  shade: { position: 'absolute', left: 0, right: 0, bottom: 0 },
+  photoSelect: { position: 'absolute', top: 12, right: 12 },
+  photoText: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, gap: 2 },
+  photoTitle: { fontFamily: fonts.bold, fontSize: 24, lineHeight: 29, letterSpacing: -0.3, color: '#FFFFFF' },
+  photoSub: { fontFamily: fonts.regular, fontSize: 14, lineHeight: 19, color: 'rgba(255,255,255,0.92)' },
+  photoRing: { ...StyleSheet.absoluteFill, borderRadius: 24, borderWidth: 3, borderColor: dc.lime },
+  dot: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: '#FFFFFF', backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  dotLight: { borderColor: '#C9CDCB', backgroundColor: '#FFFFFF' },
+  dotOn: { backgroundColor: dc.dark },
 });

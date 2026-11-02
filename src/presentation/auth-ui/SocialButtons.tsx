@@ -10,9 +10,9 @@ interface Props {
 
 export function SocialButtons({ onGoogle, onFacebook, disabled }: Props) {
   return (
-    <View style={{ gap: 5 }}>
-      <SocialButton title="Continuar com Google" icon={<GoogleIcon />} onPress={onGoogle} disabled={disabled} />
-      <SocialButton title="Continuar com Facebook" icon={<FacebookIcon />} onPress={onFacebook} disabled={disabled} />
+    <View style={{ flexDirection: 'row', gap: 8 }}>
+      <SocialButton title="Continuar com Google" label="Google" icon={<GoogleIcon />} onPress={onGoogle} disabled={disabled} />
+      <SocialButton title="Continuar com Facebook" label="Facebook" icon={<FacebookIcon />} onPress={onFacebook} disabled={disabled} />
     </View>
   );
 }

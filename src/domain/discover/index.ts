@@ -5,3 +5,6 @@ export * from './compare';
 export * from './budget';
 export * from './dates';
 export { ORIGINS, findOrigin } from './geo';
+export * from './choice';
+export * from './places';
+export * from './match';
