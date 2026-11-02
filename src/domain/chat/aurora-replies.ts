@@ -9,16 +9,6 @@ export interface TripContext {
 }
 export const EMPTY_TRIP: TripContext = { destinations: [], places: [] };
 
-/** Sugestões de DÚVIDAS (a Aurora não monta roteiro: isso é na aba Roteiro). */
-export const QUICK_SUGGESTIONS = [
-  'Preciso de visto ou documentos?',
-  'Como costuma ser o clima?',
-  'Qual moeda levar?',
-  'Como me locomover por lá?',
-  'É seguro viajar?',
-  'O que comer na região?',
-] as const;
-
 const GREETING = 'Oi! Eu sou a Aurora. Tire suas dúvidas sobre documentos, clima, moeda, transporte, segurança ou comida local. Sobre o que quer saber?';
 const OFFICIAL = 'Confirme sempre em fontes oficiais antes de viajar.';
 

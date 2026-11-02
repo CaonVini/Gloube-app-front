@@ -1,7 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, Image, KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View, type ListRenderItem } from 'react-native';
-import { QUICK_SUGGESTIONS, buildReply, typingDelay } from '../../domain/chat/aurora-replies';
+import { buildReply, typingDelay } from '../../domain/chat/aurora-replies';
 import { capMessages, nextMessageId, sanitizeText, validateImage, withDateSeparators, type ChatMessage, type ChatRow } from '../../domain/chat/messages';
 import { BottomNavBar, DEFAULT_NAV_ITEMS, useNavRouting } from '../navigation';
 import { AppHeader } from '../home/AppHeader';
@@ -133,7 +133,7 @@ export function ChatScreen() {
             keyExtractor={keyOf}
             renderItem={renderItem}
             extraData={activeAudio}
-            ListEmptyComponent={<ChatEmptyState suggestions={QUICK_SUGGESTIONS} onPick={sendText} />}
+            ListEmptyComponent={<ChatEmptyState />}
             ListFooterComponent={typing ? <TypingIndicator /> : undefined}
             contentContainerStyle={s.listContent}
             onContentSizeChange={scrollEnd}
@@ -159,6 +159,7 @@ export function ChatScreen() {
             onPickGallery={() => pickImage('gallery')}
             recording={rec.recording}
             recordingMs={rec.durationMs}
+            metering={rec.metering}
             onStartRecording={rec.start}
             onStopRecording={rec.stopAndSend}
             onCancelRecording={rec.cancel}

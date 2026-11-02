@@ -1,4 +1,4 @@
-import { EMPTY_TRIP, QUICK_SUGGESTIONS, buildReply, typingDelay } from '../src/domain/chat/aurora-replies';
+import { EMPTY_TRIP, buildReply, typingDelay } from '../src/domain/chat/aurora-replies';
 import type { ChatMessage } from '../src/domain/chat/messages';
 
 const text = (t: string): ChatMessage => ({ id: '1', author: 'user', at: 0, kind: 'text', text: t });
@@ -12,9 +12,10 @@ describe('buildReply', () => {
       expect(r).toContain('não monto roteiros');
     }
   });
-  it('responde cada sugestão rápida com um tema próprio', () => {
-    const replies = QUICK_SUGGESTIONS.map((q) => buildReply(text(q), EMPTY_TRIP));
-    expect(new Set(replies).size).toBe(QUICK_SUGGESTIONS.length);
+  it('responde os temas de dúvida (documentos, clima, moeda, transporte, segurança, comida)', () => {
+    const qs = ['Preciso de visto ou documentos?', 'Como costuma ser o clima?', 'Qual moeda levar?', 'Como me locomover por lá?', 'É seguro viajar?', 'O que comer na região?'];
+    const replies = qs.map((q) => buildReply(text(q), EMPTY_TRIP));
+    expect(new Set(replies).size).toBe(qs.length);
     replies.forEach((r) => expect(r).not.toContain('não monto'));
   });
   it('usa o destino quando existe', () => {

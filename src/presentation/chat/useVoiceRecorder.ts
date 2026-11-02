@@ -12,7 +12,7 @@ interface Options {
  * (o próprio recorder para em MAX_AUDIO_MS) e libera o microfone ao parar, cancelar ou sair da tela.
  */
 export function useVoiceRecorder({ onRecorded, onError }: Options) {
-  const recorder = useAudioRecorder(RecordingPresets.LOW_QUALITY); // voz: arquivo pequeno
+  const recorder = useAudioRecorder({ ...RecordingPresets.LOW_QUALITY, isMeteringEnabled: true }); // voz: arquivo pequeno
   const state = useAudioRecorderState(recorder, 200);
   const [active, setActive] = useState(false);
   const activeRef = useRef(false);
@@ -78,6 +78,8 @@ export function useVoiceRecorder({ onRecorded, onError }: Options) {
   return {
     recording: active,
     durationMs: active ? state.durationMillis : 0,
+    /** Nível do microfone em dBFS (pode faltar em alguns aparelhos). */
+    metering: active ? state.metering : undefined,
     start,
     stopAndSend: useCallback(() => finish(false), [finish]),
     cancel: useCallback(() => finish(true), [finish]),
