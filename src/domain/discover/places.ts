@@ -17,6 +17,20 @@ export const KIND_LABEL: Record<PlaceKind, string> = {
   icone: 'ÍCONE', museu: 'CULTURA', natureza: 'NATUREZA', passeio: 'PASSEIO', sabor: 'SABORES', bairro: 'BAIRRO',
 };
 
+const KIND_CATEGORY: Record<PlaceKind, string> = { icone: 'Ícone', museu: 'Cultura', natureza: 'Natureza', passeio: 'Passeio', sabor: 'Sabores', bairro: 'Bairro' };
+const KIND_TYPE: Record<PlaceKind, string> = { icone: 'Monumento', museu: 'Museu', natureza: 'Parque', passeio: 'Experiência', sabor: 'Gastronomia', bairro: 'Passeio' };
+
+/** Texto "Categoria • Tipo" da linha do resumo. */
+export function placeSubtitle(kind: PlaceKind): string {
+  return `${KIND_CATEGORY[kind]} • ${KIND_TYPE[kind]}`;
+}
+
+/** "Paris", "Paris e Roma", "Paris, Roma e Lisboa". */
+export function joinNames(names: readonly string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  return `${names.slice(0, -1).join(', ')} e ${names[names.length - 1]}`;
+}
+
 type Row = readonly [name: string, kind: PlaceKind, blurb: string];
 
 const slug = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');

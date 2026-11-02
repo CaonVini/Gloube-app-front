@@ -213,10 +213,6 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
           </Pressable>
 
           <View style={s.footer}>
-            <View style={s.countBox}>
-              <View style={s.countSeal}><Text style={s.countSealText}>{destinations.length}</Text></View>
-              <Text style={s.count} accessibilityLiveRegion="polite" numberOfLines={1}>{destinations.length === 1 ? 'destino' : 'destinos'}</Text>
-            </View>
             <View style={s.flex}><PrimaryButton title="Próximo" onPress={() => (ready ? onNext?.(destinations.map((d) => d.id)) : originRef.current?.focus())} size="hero" /></View>
           </View>
         </View>
@@ -285,13 +281,9 @@ const s = StyleSheet.create({
   bannerTitle: { fontFamily: fonts.bold, fontSize: 15, lineHeight: 19, color: '#111' },
   bannerText: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
   footer: { flexDirection: 'row', alignItems: 'center', gap: 16, paddingTop: 8, paddingBottom: 8 },
-  countBox: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  countSeal: { minWidth: 28, height: 28, borderRadius: 14, paddingHorizontal: 6, backgroundColor: '#F1EF71', alignItems: 'center', justifyContent: 'center' },
-  countSealText: { fontFamily: fonts.bold, fontSize: 14, color: authColors.text },
   strip: { flexDirection: 'row', alignItems: 'center' },
   stripSide: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
   stripGap: { width: 92 },
-  count: { fontFamily: fonts.medium, fontSize: 14, color: homeColors.subtitle },
   stripHint: { fontFamily: fonts.regular, fontSize: 12, color: homeColors.subtitle },
   pinCircle: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#D3E1D7', alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.7 },

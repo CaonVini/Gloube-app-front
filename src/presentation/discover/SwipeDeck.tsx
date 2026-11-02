@@ -15,7 +15,8 @@ export interface SwipeDeckProps<T> {
   onReact: (item: T, liked: boolean) => void;
   /** Chamado depois de reagir ao último card. */
   onFinish: () => void;
-  positionText: (index: number, total: number) => string;
+  /** Opcional: texto de posição (omitido nas telas de cards, sem contador). */
+  positionText?: (index: number, total: number) => string;
   likeLabel: string;
   nopeLabel: string;
   /** Texto dos carimbos que aparecem ao arrastar. */
@@ -32,7 +33,7 @@ const PEEK = 12;
  * nada é descartado ou escolhido. O coração só favorita.
  */
 export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onReact, onFinish: onCompare, positionText, likeLabel, nopeLabel, likeStamp = 'GOSTEI', nopeStamp = 'NÃO', headerRight }: SwipeDeckProps<T>) {
-    const [area, setArea] = useState({ w: 0, h: 0 });
+  const [area, setArea] = useState({ w: 0, h: 0 });
   const [index, setIndex] = useState(0);
   const x = useRef(new Animated.Value(0)).current;
   const busy = useRef(false);
@@ -91,10 +92,12 @@ export function SwipeDeck<T>({ items: recs, keyOf, renderFront, renderBack, onRe
 
   return (
     <View style={s.root}>
-      <View style={[s.posRow, headerRight ? s.posRowSplit : null]}>
-        <Text style={s.position} accessibilityLiveRegion="polite">{positionText(index, total)}</Text>
-        {headerRight}
-      </View>
+      {positionText || headerRight ? (
+        <View style={[s.posRow, headerRight ? s.posRowSplit : null]}>
+          {positionText ? <Text style={s.position} accessibilityLiveRegion="polite">{positionText(index, total)}</Text> : <View />}
+          {headerRight}
+        </View>
+      ) : null}
       <View style={s.stage} onLayout={onLayout}>
         {area.w > 0 ? (
           <View style={{ width: cw, height: ch }}>

@@ -34,7 +34,6 @@ export function ResultsDeck({ recs, favorites, onReact, onCompare, onRestart, on
       </View>
     );
   }
-  const fav = favorites.size;
   return (
     <>
       <SwipeDeck
@@ -44,7 +43,6 @@ export function ResultsDeck({ recs, favorites, onReact, onCompare, onRestart, on
         renderBack={(r, w, h) => <BackCard rec={r} width={w} height={h} />}
         onReact={(r, liked) => onReact(r.destination.id, liked)}
         onFinish={onCompare}
-        positionText={(i, n) => `${i + 1} de ${n} destinos${fav > 0 ? `  ·  ${fav} ${fav === 1 ? 'curtido' : 'curtidos'}` : ''}`}
         likeLabel="Gostei, salvar nos favoritos e ver o próximo"
         nopeLabel="Não gostei, próximo destino"
       />

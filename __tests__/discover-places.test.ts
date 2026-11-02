@@ -1,6 +1,6 @@
 import { DESTINATIONS } from '../src/domain/discover/catalog';
 import { buildDirectPreview, buildItineraryPreview } from '../src/domain/discover/choice';
-import { PLACES, distributePlaces, placesFor, selectedPlaces, suggestedDays, togglePlace, MAX_PLACES_PER_DESTINATION } from '../src/domain/discover/places';
+import { PLACES, joinNames, placeSubtitle, distributePlaces, placesFor, selectedPlaces, suggestedDays, togglePlace, MAX_PLACES_PER_DESTINATION } from '../src/domain/discover/places';
 import { emptyAnswers } from '../src/domain/discover/quiz';
 import { DESTINATION_CATALOG } from '../src/domain/trip-plan';
 
@@ -142,5 +142,18 @@ describe('prévia "Sua viagem já tem forma."', () => {
   it('periodLabel cobre virada de mês e 1 dia sem bloqueio', () => {
     expect(periodLabel({ mode: 'definidas', startDate: '28/12/2026', endDate: '03/01/2027' })).toBe('28 dez – 3 jan');
     expect(buildTripPreview({ id: 'x', name: 'X', country: 'Y', days: 1, places: [] }).lockedLabel).toBeNull();
+  });
+});
+
+describe('resumo de locais', () => {
+  it('placeSubtitle usa "Categoria • Tipo"', () => {
+    expect(placeSubtitle('icone')).toBe('Ícone • Monumento');
+    expect(placeSubtitle('museu')).toBe('Cultura • Museu');
+  });
+  it('joinNames junta nomes em português', () => {
+    expect(joinNames([])).toBe('');
+    expect(joinNames(['Paris'])).toBe('Paris');
+    expect(joinNames(['Paris', 'Roma'])).toBe('Paris e Roma');
+    expect(joinNames(['Paris', 'Roma', 'Lisboa'])).toBe('Paris, Roma e Lisboa');
   });
 });

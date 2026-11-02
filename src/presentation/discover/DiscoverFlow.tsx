@@ -101,7 +101,6 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
         onAdjust={editAnswers}
         onConfirm={(r) => { setChosen(r); setPhase('places'); }}
       />,
-      false,
     );
   }
   if (phase === 'places' && chosen) {
@@ -113,7 +112,6 @@ export function DiscoverFlow({ fullName, onSignOut, onExit, originText }: Props)
         onBack={() => setPhase('choose')}
         onContinue={() => setPhase('itinerary')}
       />,
-      false,
     );
   }
   if (phase === 'itinerary' && chosen) {

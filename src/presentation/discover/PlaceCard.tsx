@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { KIND_LABEL, type Place, type PlaceKind } from '../../domain/discover/places';
+import { KIND_LABEL, placeSubtitle, type Place, type PlaceKind } from '../../domain/discover/places';
 import { fonts } from '../theme/auth-theme';
 import { placeImages } from './assets';
 import { DIcon, type DiscoverIconName } from './icons';
@@ -77,36 +77,50 @@ export const PlaceBackCard = memo(function PlaceBackCard({ place, destinationId,
   );
 });
 
-/** Miniatura com foto para o resumo: foto, tipo, nome e um X discreto para remover. */
-export const PlaceTile = memo(function PlaceTile({ place, destinationId, destinationName, height, onRemove }: { place: Place; destinationId: string; destinationName?: string; height: number; onRemove: () => void }) {
+/** Linha do resumo: miniatura (foto ou cor + ícone), nome, "Categoria • Tipo" e check que alterna a escolha. */
+export const PlaceRow = memo(function PlaceRow({ place, checked, onToggle }: { place: Place; checked: boolean; onToggle: () => void }) {
   const photo = placeImages[place.id];
   const [from, to] = TONES[place.kind];
   return (
-    <View style={[s.tile, cardShadow, { height }]}>
-      {photo ? (
-        <Image source={photo} style={s.img} resizeMode="cover" accessibilityLabel={`Imagem de ${place.name}`} />
-      ) : (
-        <View style={s.tone} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          {Array.from({ length: 12 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: mix(from, to, i / 11) }} />)}
-          <View style={s.glyph}><DIcon name={GLYPH[place.kind]} size={Math.min(84, height * 0.5)} color="rgba(255,255,255,0.16)" /></View>
-        </View>
-      )}
-      <View pointerEvents="none" style={[s.shade, { height: '70%' }]}>
-        {Array.from({ length: 14 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: `rgba(8,24,20,${(0.78 * Math.pow((i + 1) / 14, 1.8)).toFixed(3)})` }} />)}
+    <View style={s.row}>
+      <View style={s.thumb} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {photo ? (
+          <Image source={photo} style={s.img} resizeMode="cover" />
+        ) : (
+          <>
+            {Array.from({ length: 6 }, (_, i) => <View key={i} style={{ flex: 1, backgroundColor: mix(from, to, i / 5) }} />)}
+            <View style={s.glyphThumb}><DIcon name={GLYPH[place.kind]} size={26} color="rgba(255,255,255,0.7)" /></View>
+          </>
+        )}
       </View>
-      <View pointerEvents="none" style={s.tileText}>
-        <Text style={s.tileKind} numberOfLines={1}>{KIND_LABEL[place.kind]}{destinationName ? ` · ${destinationName.toUpperCase()}` : ''}</Text>
-        <Text style={s.tileName} numberOfLines={2}>{place.name}</Text>
+      <View style={s.rowText}>
+        <Text style={s.rowName} numberOfLines={2}>{place.name}</Text>
+        <Text style={s.rowSub} numberOfLines={1}>{placeSubtitle(place.kind)}</Text>
       </View>
-      <Pressable accessibilityRole="button" accessibilityLabel={`Remover ${place.name} do roteiro`} onPress={onRemove} hitSlop={6} style={({ pressed }) => [s.tileX, pressed && { opacity: 0.8 }]}>
-        <View style={[s.xBar, { transform: [{ rotate: '45deg' }] }]} />
-        <View style={[s.xBar, { transform: [{ rotate: '-45deg' }] }]} />
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked }}
+        accessibilityLabel={`${place.name} no roteiro`}
+        onPress={onToggle}
+        hitSlop={8}
+        style={({ pressed }) => [s.check, checked ? s.checkOn : s.checkOff, pressed && { opacity: 0.8 }]}
+      >
+        {checked ? <DIcon name="check" size={16} color="#FFFFFF" /> : null}
       </Pressable>
     </View>
   );
 });
 
 const s = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: dc.border },
+  thumb: { width: 76, height: 60, borderRadius: 12, overflow: 'hidden', backgroundColor: dc.dark },
+  glyphThumb: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  rowText: { flex: 1, gap: 2 },
+  rowName: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 20, color: '#0B0B0B' },
+  rowSub: { fontFamily: fonts.regular, fontSize: 13, color: dc.muted },
+  check: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  checkOn: { backgroundColor: dc.dark },
+  checkOff: { borderWidth: 1.5, borderColor: '#B5BDB9' },
   card: { borderRadius: 26, overflow: 'hidden', backgroundColor: '#FFFFFF' },
   photo: { flex: 1, minHeight: 120, backgroundColor: dc.dark },
   img: { position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' },
@@ -125,11 +139,5 @@ const s = StyleSheet.create({
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   info: { width: 15, height: 15, borderRadius: 8, borderWidth: 1, borderColor: '#B5BDB9', alignItems: 'center', justifyContent: 'center' },
   infoText: { fontFamily: fonts.semibold, fontSize: 9, lineHeight: 11, color: dc.muted },
-  tile: { flex: 1, borderRadius: 20, overflow: 'hidden', backgroundColor: dc.dark },
-  tileText: { position: 'absolute', left: 12, right: 12, bottom: 10, gap: 1 },
-  tileKind: { fontFamily: fonts.medium, fontSize: 9, letterSpacing: 1.3, color: 'rgba(255,255,255,0.85)' },
-  tileName: { fontFamily: fonts.bold, fontSize: 16, lineHeight: 19, letterSpacing: -0.2, color: '#FFFFFF' },
-  tileX: { position: 'absolute', top: 8, right: 8, width: 28, height: 28, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' },
-  xBar: { position: 'absolute', width: 12, height: 2, borderRadius: 1, backgroundColor: dc.dark },
   note: { fontFamily: fonts.regular, fontSize: 12, color: dc.muted, flexShrink: 1 },
 });

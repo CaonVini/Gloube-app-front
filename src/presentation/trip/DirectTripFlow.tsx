@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buildTripPreview } from '../../domain/discover/choice';
 import { selectedPlaces, suggestedDays } from '../../domain/discover/places';
 import type { Destination } from '../../domain/trip-plan';
@@ -20,7 +19,6 @@ interface Props {
 
 /** Destino já definido → direto para a escolha de locais e a prévia do roteiro. Tudo local/fictício. */
 export function DirectTripFlow({ fullName, onSignOut, onExit, destinations }: Props) {
-  const insets = useSafeAreaInsets();
   const [phase, setPhase] = useState<'places' | 'itinerary'>('places');
   const [selection, setSelection] = useState<Readonly<Record<string, readonly string[]>>>({});
   const targets = useMemo(() => destinations.map((d) => ({ id: d.id, name: d.city })), [destinations]);
@@ -35,7 +33,7 @@ export function DirectTripFlow({ fullName, onSignOut, onExit, destinations }: Pr
       {phase === 'places'
         ? <PlacesScreen targets={targets} selection={selection} onChange={setSelection} onBack={onExit} onContinue={() => setPhase('itinerary')} />
         : <ItineraryScreen previews={previews} onEditPlaces={() => setPhase('places')} onDone={onExit} />}
-      {phase === 'itinerary' ? <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="plan" onChange={noop} /> : <View style={{ height: Math.max(insets.bottom, 12) }} />}
+      <BottomNavBar items={DEFAULT_NAV_ITEMS} activeKey="plan" onChange={noop} />
     </View>
   );
 }
