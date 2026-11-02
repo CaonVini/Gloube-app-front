@@ -9,13 +9,13 @@ import { PrimaryButton } from '../auth-ui/Button';
 import { AppHeader } from '../home/AppHeader';
 import { BottomNavBar, DEFAULT_NAV_ITEMS, useNavRouting } from '../navigation';
 import { authColors, fonts, homeColors } from '../theme/auth-theme';
+import { DestinationList } from './DestinationList';
 import { TripIcon } from './TripIcon';
 
 const MAX_COLUMN = 480;
 const H_PADDING = 16;
 const FIELD_BG = '#F3F1EC';
 const BANNER_BG = '#E4EDE6';
-const BADGE_BG = '#D3E4D8';
 const INITIAL_DESTINATIONS: readonly Destination[] = [
   { id: 'paris', city: 'Paris', country: 'França' },
   { id: 'roma', city: 'Roma', country: 'Itália' },
@@ -49,7 +49,7 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
   const avail = Math.min(width, MAX_COLUMN + H_PADDING * 2) - H_PADDING * 2;
   const titleSize = Math.max(20, Math.min(28, Math.floor(avail / 14.8)));
   const m = useMemo(() => ({
-    field: Math.round(38 * k), row: Math.round(44 * k), badge: Math.round(40 * k), h2: Math.round(19 * k), pad: Math.round(16 * k),
+    field: Math.round(38 * k), row: Math.max(40, Math.round(48 * k)), badge: Math.round(40 * k), h2: Math.round(19 * k), pad: Math.round(16 * k),
   }), [k]);
 
   const add = useCallback((d: Destination) => {
@@ -57,10 +57,8 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
     setQuery('');
   }, []);
   const remove = useCallback((id: string) => setDestinations((list) => removeDestination(list, id)), []);
-  // O ícone de menu sobe o item; o primeiro desce (sem biblioteca de gestos, acessível por toque).
-  const shift = useCallback((index: number) => {
-    setDestinations((list) => moveDestination(list, index, index === 0 ? 1 : index - 1));
-  }, []);
+  const reorder = useCallback((from: number, to: number) => setDestinations((list) => moveDestination(list, from, to)), []);
+  const [scrollOn, setScrollOn] = useState(true);
 
   return (
     <View style={s.root}>
@@ -151,51 +149,11 @@ export function NewTripScreen({ fullName, onSignOut, onNext, onDiscover }: Props
               bounces={false}
               overScrollMode="never"
               nestedScrollEnabled
+              scrollEnabled={scrollOn}
             >
-              {destinations.map((d, i) => (
-                <View key={d.id} style={s.item}>
-                  <View style={[s.row, { minHeight: m.row }]}>
-                    <View style={s.badgeCol}>
-                      <View style={[s.badge, { width: m.badge, height: m.badge, borderRadius: m.badge / 2 }]}><Text style={[s.badgeText, { fontSize: 16 }]}>{i + 1}</Text></View>
-                    </View>
-                    <Pressable
-                      accessibilityLabel={`${d.city}, ${d.country}. Toque e segure para remover.`}
-                      onLongPress={() => remove(d.id)}
-                      style={s.dest}
-                    >
-                      <View style={s.pinCircle}><TripIcon name="pin" size={16} color={authColors.text} /></View>
-                      <View style={s.destText}>
-                        <Text style={s.city} numberOfLines={1}>{d.city}</Text>
-                        <Text style={s.country} numberOfLines={1}>{d.country}</Text>
-                      </View>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={i === 0 ? `Mover ${d.city} para baixo` : `Mover ${d.city} para cima`}
-                        disabled={destinations.length < 2}
-                        onPress={() => shift(i)}
-                        hitSlop={10}
-                        style={({ pressed }) => [pressed && s.pressed, destinations.length < 2 && s.off]}
-                      >
-                        <TripIcon name="grip" size={24} color={authColors.placeholder} />
-                      </Pressable>
-                    </Pressable>
-                  </View>
-                  {i < destinations.length - 1 ? (
-                    <View style={s.sep}><View style={s.sepLine} /></View>
-                  ) : null}
-                </View>
-              ))}
+              <DestinationList items={destinations} rowHeight={m.row} onReorder={reorder} onRemove={remove} onDragging={(d) => setScrollOn(!d)} />
             </ScrollView>
 
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Adicionar outro destino"
-              onPress={() => searchRef.current?.focus()}
-              style={({ pressed }) => [s.linkRow, pressed && s.pressed]}
-            >
-              <View style={s.plus}><TripIcon name="plus" size={16} color="#FFFFFF" /></View>
-              <Text style={s.link}>Adicionar outro destino</Text>
-            </Pressable>
             {compact || height < 960 ? null : <Text style={s.note}>Organize as paradas na ordem da sua viagem.</Text>}
           </View>
 
@@ -260,18 +218,8 @@ const s = StyleSheet.create({
   suggestion: { minHeight: 44, justifyContent: 'center', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
   list: { flex: 1 },
   listContent: { flexGrow: 1, justifyContent: 'center' },
-  item: { flexGrow: 1, flexShrink: 1, maxHeight: 72 },
-  row: { flex: 1, flexDirection: 'row', alignItems: 'stretch', gap: 10 },
-  badgeCol: { width: 44, alignItems: 'center', justifyContent: 'center' },
-  badge: { backgroundColor: BADGE_BG, alignItems: 'center', justifyContent: 'center' },
-  sep: { width: 44, height: 12, alignItems: 'center' },
-  sepLine: { flex: 1, borderLeftWidth: 2, borderStyle: 'dotted', borderColor: authColors.link },
-  badgeText: { fontFamily: fonts.bold, fontSize: 16, color: authColors.text },
-  dest: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, backgroundColor: FIELD_BG, paddingHorizontal: 14 },
-  destText: { flex: 1 },
   city: { fontFamily: fonts.semibold, fontSize: 15, lineHeight: 19, color: '#111' },
   country: { fontFamily: fonts.regular, fontSize: 13, color: authColors.link },
-  plus: { width: 24, height: 24, borderRadius: 12, backgroundColor: authColors.link, alignItems: 'center', justifyContent: 'center' },
   note: { fontFamily: fonts.regular, fontSize: 13, color: homeColors.subtitle },
   banner: {
     marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: BANNER_BG, borderRadius: 18,

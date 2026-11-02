@@ -68,3 +68,17 @@ export function destinationsLabel(count: number): string {
 export function canAdvance(origin: string, destinations: readonly Destination[]): boolean {
   return origin.trim().length > 0 && destinations.length > 0;
 }
+
+/** Posição de destino ao arrastar: a partir de `from`, deslocado `dy` px, com linhas de altura `pitch`; sempre dentro da lista. */
+export function reorderTarget(from: number, dy: number, pitch: number, count: number): number {
+  if (count <= 0 || pitch <= 0 || !Number.isFinite(dy)) return Math.max(0, Math.min(from, count - 1));
+  return Math.max(0, Math.min(count - 1, from + Math.round(dy / pitch)));
+}
+
+/** Quanto (em linhas, -1/0/+1) o item `i` deve se afastar enquanto `from` é arrastado sobre `over`. */
+export function shiftFor(i: number, from: number, over: number): -1 | 0 | 1 {
+  if (i === from) return 0;
+  if (from < over && i > from && i <= over) return -1;
+  if (from > over && i < from && i >= over) return 1;
+  return 0;
+}
